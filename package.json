@@ -1,0 +1,44 @@
+{
+	"name": "Chinese_converter",
+	"title": "Convert between Traditional Chinese and Simplified Chinese. 繁體中文↔簡體中文轉換",
+	"version": "0.1.0",
+	"description": "Chinese converter between Traditional Chinese and Simplified Chinese. 繁體中文↔簡體中文轉換",
+	"keywords": [ "Chinese", "conversion" ],
+	"author": {
+		"name": "vimunci",
+		"email": "vimunci@gmail.com",
+		"url": "https://github.com/kanasimi/CeJS"
+	},
+	"contributors": [ "vimunci" ],
+	"license": "BSD-3-Clause",
+	"bugs": {
+		"url": "https://github.com/kanasimi/Chinese_converter/issues"
+	},
+	"homepage": "https://github.com/kanasimi/Chinese_converter",
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/kanasimi/Chinese_converter.git"
+	},
+
+	"main": "Chinese_converter.js",
+	"scripts": {
+		"test": "nyc node \"_test suite/test.js\"",
+		"report-coverage": "nyc report --reporter=text-lcov > coverage.lcov && codecov"
+	},
+	"nyc": {
+		"exclude": [
+			"_test suite/*"
+		]
+	},
+
+	"engines": {
+		"node": ">=10.0"
+	},
+
+	"devDependencies": {
+		"nodejieba": "latest"
+	},
+	"dependencies": {
+		"cejs": "latest"
+	}
+}
