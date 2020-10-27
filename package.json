@@ -3,13 +3,18 @@
 	"title": "Convert between Traditional Chinese and Simplified Chinese. 繁體中文↔簡體中文轉換",
 	"version": "0.1.0",
 	"description": "Chinese converter between Traditional Chinese and Simplified Chinese. 繁體中文↔簡體中文轉換",
-	"keywords": [ "Chinese", "conversion" ],
+	"keywords": [
+		"Chinese",
+		"conversion"
+	],
 	"author": {
 		"name": "vimunci",
 		"email": "vimunci@gmail.com",
 		"url": "https://github.com/kanasimi/CeJS"
 	},
-	"contributors": [ "vimunci" ],
+	"contributors": [
+		"vimunci"
+	],
 	"license": "BSD-3-Clause",
 	"bugs": {
 		"url": "https://github.com/kanasimi/Chinese_converter/issues"
@@ -19,7 +24,6 @@
 		"type": "git",
 		"url": "git+https://github.com/kanasimi/Chinese_converter.git"
 	},
-
 	"main": "Chinese_converter.js",
 	"scripts": {
 		"test": "nyc node \"_test suite/test.js\"",
@@ -30,13 +34,11 @@
 			"_test suite/*"
 		]
 	},
-
 	"engines": {
 		"node": ">=10.0"
 	},
-
 	"devDependencies": {
-		"nodejieba": "latest"
+		"nodejieba": "^2.4.1"
 	},
 	"dependencies": {
 		"cejs": "latest"

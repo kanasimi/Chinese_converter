@@ -1,29 +1,7 @@
 ﻿/*
 
-Chinese_converter
-在人工智慧繁簡轉換前，中文分詞、判斷語境之後再做轉換會是比較準確的方式。
-
-# 中文分詞（附帶詞性標註）+自動判斷句子、段落的語境（配合維基百科專有名詞轉換）
-# 繁簡轉換（先輕量化繁簡轉換辭典負擔）
-
+TODO:
 簡化辭典複雜度
-正確率檢核：繁→簡→繁
-
-https://noob.tw/js-nlp-jieba/
-https://github.com/ldkrsi/jieba-zh_TW
-
-
--------------------------------------------------
-
-
-install Python
-
-# run as Administrator
-npm install --global windows-build-tools
-npm install -g node-gyp
-npm install -g node-pre-gyp
-npm install hexo-ruby-character --save
-npm install nodejieba
 
 */
 
@@ -42,6 +20,9 @@ try {
 }
 // assert: typeof CeL === 'function'
 
+// 在非 Windows 平台上避免 fatal 錯誤。
+CeL.env.ignore_COM_error = true;
+
 // Load modules.
 CeL.run(['application.debug',
 	// 載入不同地區語言的功能 for wiki.work()。
@@ -54,7 +35,8 @@ CeL.run(['application.debug',
 	// CeL.fs_mkdir(), CeL.wiki.read_dump()
 	'application.storage']);
 
-const nodejieba = require("nodejieba");
+const nodejieba_CN = require("nodejieba");
+nodejieba_CN.load('dictionaries/commons.txt');
 
 // --------------------------------------------------------
 
@@ -69,14 +51,14 @@ function load_dictionary(file_path) {
 }
 
 // 自動判斷句子、段落的語境（配合維基百科專有名詞轉換）
-function detect_domain(paragraphs) {
+function detect_domain(paragraphs, options) {
 	;
 }
 
 // --------------------------------------------------------
 
 function tag_paragraph(paragraph, options) {
-	return nodejieba.tag(paragraph);
+	return nodejieba_CN.tag(paragraph);
 }
 
 // 強制轉換段落/sentence。
@@ -91,27 +73,29 @@ function forced_convert(paragraph) {
  */
 function convert_paragraph(paragraph, options) {
 	const word_list = tag_paragraph.call(this, paragraph, options);
+	console.trace(word_list);
 
 	return word_list.map(word => {
-		if (!this.convertion_pairs.has(word)) {
-			return forced_convert.call(this, word);
+		if (!this.convertion_pairs.has(word.word)) {
+			return forced_convert.call(this, word.word);
 		}
 
-		const convert_to = this.convertion_pairs.get(word);
+		const convert_to = this.convertion_pairs.get(word.word);
 		if (typeof convert_to === 'string')
 			return convert_to;
 
-		//assert: convert_to=[{ word: '詞', tag: '詞性' },{ word: '詞', tag: '詞性' },...]
+		//assert: convert_to = [{ word: '詞', tag: '詞性' }, { word: '詞', tag: '詞性' }, ...]
 		for (let index = 0; index < convert_to.length; index++) {
 			const to_word = convert_to[index];
 			// 依照最佳詞性轉換。
+			// ICTPOS3.0词性标记集 https://gist.github.com/luw2007/6016931
 			if (word.tag === to_word.tag)
 				return to_word.word;
 		}
 
 		// return the best guess.
 		return convert_to[0].word;
-	});
+	}).join('');
 }
 
 /**
@@ -124,18 +108,38 @@ function convert_to_TW(paragraphs, options) {
 	if (input_string)
 		paragraphs = [paragraphs];
 
-	const domain = this.detect_domain(paragraphs);
+	options = Object.assign({ convert_to_language: 'TW' }, options);
+	const domain = this.detect_domain(paragraphs, options);
 
-	const converted_paragraphs = paragraphs.map(paragraph => convert_paragraph.call(this, paragraph, options));
+	let converted_paragraphs = paragraphs.map(paragraph => convert_paragraph.call(this, paragraph, options));
 
 	if (input_string)
 		converted_paragraphs = converted_paragraphs[0];
+
+	return converted_paragraphs;
+}
+
+function convert_to_CN(paragraphs, options) {
+	const input_string = typeof paragraphs === 'string';
+	if (input_string)
+		paragraphs = [paragraphs];
+
+	options = Object.assign({ convert_to_language: 'CN' }, options);
+	const domain = this.detect_domain(paragraphs, options);
+
+	let converted_paragraphs = paragraphs.map(paragraph => convert_paragraph.call(this, paragraph, options));
+
+	if (input_string)
+		converted_paragraphs = converted_paragraphs[0];
+
+	return converted_paragraphs;
 }
 
 // --------------------------------------------------------
 
 Object.assign(Chinese_converter.prototype, {
 	to_TW: convert_to_TW,
+	to_CN: convert_to_CN,
 
 	detect_domain,
 });
