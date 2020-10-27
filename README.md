@@ -1,5 +1,5 @@
-﻿[![npm version](https://badge.fury.io/js/Chinese_converter.svg)](https://www.npmjs.com/package/Chinese_converter)
-[![npm downloads](https://img.shields.io/npm/dm/Chinese_converter.svg)](https://www.npmjs.com/package/Chinese_converter)
+﻿[![npm version](https://badge.fury.io/js/cecc.svg)](https://www.npmjs.com/package/cecc)
+[![npm downloads](https://img.shields.io/npm/dm/cecc.svg)](https://www.npmjs.com/package/cecc)
 [![Build Status](https://travis-ci.org/kanasimi/Chinese_converter.svg?branch=master)](https://travis-ci.org/kanasimi/Chinese_converter)
 [![codecov](https://codecov.io/gh/kanasimi/Chinese_converter/branch/master/graph/badge.svg)](https://codecov.io/gh/kanasimi/Chinese_converter)
 
@@ -32,7 +32,7 @@ REM Waiting for some minutes...
 ```
 
 ```bash
-npm install Chinese_converter
+npm install cecc
 ```
 
 ## Usage
@@ -40,9 +40,9 @@ Here lists some examples of this module.
 
 ```javascript
 // load module
-const Chinese_converter = require('Chinese_converter');
+const CeCC = require('cecc');
 
-const chinese_converter = new Chinese_converter;
+const chinese_converter = new CeCC;
 chinese_converter.to_TW('简体中文');
 ```
 
