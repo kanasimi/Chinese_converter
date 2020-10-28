@@ -1,3 +1,4 @@
+[![Codacy Badge](https://api.codacy.com/project/badge/Grade/986ca401faaf4c17a7eb136be69417db)](https://app.codacy.com/gh/kanasimi/Chinese_converter?utm_source=github.com&utm_medium=referral&utm_content=kanasimi/Chinese_converter&utm_campaign=Badge_Grade)
 ﻿[![npm version](https://badge.fury.io/js/cecc.svg)](https://www.npmjs.com/package/cecc)
 [![npm downloads](https://img.shields.io/npm/dm/cecc.svg)](https://www.npmjs.com/package/cecc)
 [![Build Status](https://travis-ci.org/kanasimi/Chinese_converter.svg?branch=master)](https://travis-ci.org/kanasimi/Chinese_converter)
