@@ -1,7 +1,11 @@
 ﻿/*
 
 TODO:
+整合繁簡轉換各家辭典
 簡化辭典複雜度
+
+https://s.itho.me/techtalk/2017/%E4%B8%AD%E6%96%87%E6%96%B7%E8%A9%9E%EF%BC%9A%E6%96%B7%E5%8F%A5%E4%B8%8D%E8%A6%81%E6%82%B2%E5%8A%87.pdf
+某個詞在⼀篇⽂章中出現的頻率⾼，且在其他⽂章中很少出現，則此詞語為具代表性的關鍵詞
 
 */
 
@@ -45,7 +49,6 @@ function Chinese_converter(options) {
 }
 
 
-
 function load_dictionary(file_path) {
 	;
 }
@@ -62,27 +65,29 @@ function tag_paragraph(paragraph, options) {
 }
 
 // 強制轉換段落/sentence。
-function forced_convert_to_TW(paragraph, options) {
-	// 採行 CeL.CN_to_TW() 的原因：這是經過調試，比較準確的轉換器。採用的辭典見 https://github.com/kanasimi/CeJS/blob/master/extension/zh_conversion/corrections.txt 。 
+function forced_convert_to_TW(paragraph, index, parent, options) {
+	// 採行 CeL.CN_to_TW() 的原因：這是經過調試，比較準確的轉換器。
+	// 採用的辭典見 https://github.com/kanasimi/CeJS/blob/master/extension/zh_conversion/corrections.txt 。 
 	return CeL.CN_to_TW(paragraph);
 }
 
-function forced_convert_to_CN(paragraph, options) {
+function forced_convert_to_CN(paragraph, index, parent, options) {
 	return CeL.TW_to_CN(paragraph);
 }
 
 /**
- * 
- * @param {String}paragraph
+ * 轉換段落文字。
+ * @param {String}paragraph 段落文字
  * @param {Object}[options]
  */
 function convert_paragraph(paragraph, options) {
 	const word_list = tag_paragraph.call(this, paragraph, options);
 	console.trace(word_list);
 
-	return word_list.map(word => {
+	return word_list.map((word, index, parent) => {
 		if (!this.convertion_pairs.has(word.word)) {
-			return options.convert_to_language === 'TW' ? forced_convert_to_TW.call(this, word.word, options) : forced_convert_to_CN.call(this, word.word, options);
+			const forced_convert = options.convert_to_language === 'TW' ? forced_convert_to_TW : forced_convert_to_CN;
+			return forced_convert.call(this, word.word, index, parent, options);
 		}
 
 		const convert_to = this.convertion_pairs.get(word.word);
@@ -94,6 +99,7 @@ function convert_paragraph(paragraph, options) {
 			const to_word = convert_to[index];
 			// 依照最佳詞性轉換。
 			// ICTPOS3.0词性标记集 https://gist.github.com/luw2007/6016931
+			// CKIP中文斷詞系統 詞類標記列表 http://ckipsvr.iis.sinica.edu.tw/cat.htm https://github.com/ckiplab/ckiptagger/wiki/POS-Tags
 			if (word.tag === to_word.tag)
 				return to_word.word;
 		}

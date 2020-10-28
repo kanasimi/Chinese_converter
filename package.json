@@ -24,6 +24,7 @@
 		"type": "git",
 		"url": "git+https://github.com/kanasimi/Chinese_converter.git"
 	},
+
 	"main": "Chinese_converter.js",
 	"scripts": {
 		"test": "nyc node \"_test suite/test.js\"",
@@ -34,10 +35,14 @@
 			"_test suite/*"
 		]
 	},
+
 	"engines": {
 		"node": ">=10.0"
 	},
+
 	"devDependencies": {
+		"nyc": "latest",
+		"codecov": "latest"
 	},
 	"dependencies": {
 		"nodejieba": "^2.4.1",

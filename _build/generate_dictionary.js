@@ -121,10 +121,10 @@ async function main_process() {
 	}
 
 	for (const url of [
-		// 結巴(jieba)斷詞台灣繁體版本 切分"「台中」正確應該不會被切開"不正確
-		'https://raw.githubusercontent.com/ldkrsi/jieba-zh_TW/master/jieba/dict.txt',
 		// 支持繁體分詞更好的詞典文件
 		'https://github.com/fxsjy/jieba/raw/master/extra_dict/dict.txt.big',
+		// 結巴(jieba)斷詞台灣繁體版本 切分"「台中」正確應該不會被切開"不正確
+		'https://raw.githubusercontent.com/ldkrsi/jieba-zh_TW/master/jieba/dict.txt',
 	]) {
 		const dictionary_list = (await get_URL_cache(url)).split('\n');
 		const status = scan_dictionary_list(dictionary_list);
