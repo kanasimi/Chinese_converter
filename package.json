@@ -38,9 +38,9 @@
 		"node": ">=10.0"
 	},
 	"devDependencies": {
-		"nodejieba": "^2.4.1"
 	},
 	"dependencies": {
+		"nodejieba": "^2.4.1",
 		"cejs": "latest"
 	}
 }

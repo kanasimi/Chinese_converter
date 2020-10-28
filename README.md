@@ -9,7 +9,7 @@
 [![DeepScan grade](https://deepscan.io/api/teams/4788/projects/6757/branches/58325/badge/grade.svg)](https://deepscan.io/dashboard#view=project&tid=4788&pid=6757&bid=58325)
 
 # CeCC - Colorless echo Chinese converter
-在人工智慧繁簡轉換前，中文分詞（中文斷詞）、判斷語境之後再做轉換，會比單純詞彙比對更準確。
+在人工智慧繁簡轉換前，中文分詞（中文斷詞）、判斷語境之後再做轉換，應比單純詞彙比對更準確。辭典應可如維基百科般由眾人編輯，且記錄改變原由。
 
 ## Concepts
 1. 中文分詞（附帶詞性標註）+自動判斷句子、段落的語境（配合維基百科專有名詞轉換）
@@ -30,6 +30,8 @@ npm install --global node-pre-gyp
 npm install nodejieba
 REM Waiting for some minutes...
 ```
+
+And then nstall cecc:
 
 ```bash
 npm install cecc

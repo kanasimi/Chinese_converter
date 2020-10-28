@@ -40,7 +40,7 @@ nodejieba_CN.load('dictionaries/commons.txt');
 
 // --------------------------------------------------------
 
-function Chinese_converter() {
+function Chinese_converter(options) {
 	this.convertion_pairs = new Map;
 }
 
@@ -62,8 +62,13 @@ function tag_paragraph(paragraph, options) {
 }
 
 // 強制轉換段落/sentence。
-function forced_convert(paragraph) {
+function forced_convert_to_TW(paragraph, options) {
+	// 採行 CeL.CN_to_TW() 的原因：這是經過調試，比較準確的轉換器。採用的辭典見 https://github.com/kanasimi/CeJS/blob/master/extension/zh_conversion/corrections.txt 。 
 	return CeL.CN_to_TW(paragraph);
+}
+
+function forced_convert_to_CN(paragraph, options) {
+	return CeL.TW_to_CN(paragraph);
 }
 
 /**
@@ -77,7 +82,7 @@ function convert_paragraph(paragraph, options) {
 
 	return word_list.map(word => {
 		if (!this.convertion_pairs.has(word.word)) {
-			return forced_convert.call(this, word.word);
+			return options.convert_to_language === 'TW' ? forced_convert_to_TW.call(this, word.word, options) : forced_convert_to_CN.call(this, word.word, options);
 		}
 
 		const convert_to = this.convertion_pairs.get(word.word);
@@ -98,17 +103,11 @@ function convert_paragraph(paragraph, options) {
 	}).join('');
 }
 
-/**
- * 
- * @param {Array}paragraphs [{String}, {String}, ...]
- * @param {Object}[options]
- */
-function convert_to_TW(paragraphs, options) {
+function convert_Chiinese(paragraphs, options) {
 	const input_string = typeof paragraphs === 'string';
 	if (input_string)
 		paragraphs = [paragraphs];
 
-	options = Object.assign({ convert_to_language: 'TW' }, options);
 	const domain = this.detect_domain(paragraphs, options);
 
 	let converted_paragraphs = paragraphs.map(paragraph => convert_paragraph.call(this, paragraph, options));
@@ -119,20 +118,19 @@ function convert_to_TW(paragraphs, options) {
 	return converted_paragraphs;
 }
 
+/**
+ * 
+ * @param {Array}paragraphs [{String}, {String}, ...]
+ * @param {Object}[options]
+ */
+function convert_to_TW(paragraphs, options) {
+	options = Object.assign({ convert_to_language: 'TW' }, options);
+	return convert_Chiinese.call(this, paragraphs, options);
+}
+
 function convert_to_CN(paragraphs, options) {
-	const input_string = typeof paragraphs === 'string';
-	if (input_string)
-		paragraphs = [paragraphs];
-
 	options = Object.assign({ convert_to_language: 'CN' }, options);
-	const domain = this.detect_domain(paragraphs, options);
-
-	let converted_paragraphs = paragraphs.map(paragraph => convert_paragraph.call(this, paragraph, options));
-
-	if (input_string)
-		converted_paragraphs = converted_paragraphs[0];
-
-	return converted_paragraphs;
+	return convert_Chiinese.call(this, paragraphs, options);
 }
 
 // --------------------------------------------------------
