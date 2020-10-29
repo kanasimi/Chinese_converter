@@ -47,7 +47,7 @@ const dictionary_words = Object.create(null);
 	await main_process();
 })();
 
-function get_URL_cache(URL, options) {
+function get_URL_cache_async(URL, options) {
 	return new Promise((resolve, reject) =>
 		CeL.get_URL_cache(URL, (data, error, XMLHttp) => {
 			if (error) reject(error); else resolve(data);
@@ -57,26 +57,27 @@ function get_URL_cache(URL, options) {
 
 function parse_word_record(record) {
 	record = record.trim();
+	// @see void InserUserDictNode(const string& line) @ https://github.com/yanyiwu/nodejieba/blob/master/deps/cppjieba/DictTrie.hpp#L102
 	const data_array = record.split(/\s+/);
 	if (data_array.length !== 3)
 		return;
 	return {
 		word: data_array[0],
-		weight: +data_array[1],
+		frequency: +data_array[1],
 		tag: data_array[2]
 	};
 }
 
 function scan_dictionary_list(dictionary_list) {
-	const weights_old = [], weights_new = [], tag_convertion = Object.create(null);
+	const frequencies_old = [], frequencies_new = [], tag_convertion = Object.create(null);
 
 	function scan_line(record) {
 		const word_data = parse_word_record(record);
 		const old_word_data = word_data && dictionary_words[word_data.word];
 		if (!old_word_data)
 			return;
-		weights_old.push(old_word_data.weight);
-		weights_new.push(word_data.weight);
+		frequencies_old.push(old_word_data.frequency);
+		frequencies_new.push(word_data.frequency);
 		if (old_word_data.tag !== word_data.tag) {
 			if (!tag_convertion[old_word_data.tag])
 				tag_convertion[old_word_data.tag] = [];
@@ -86,10 +87,11 @@ function scan_dictionary_list(dictionary_list) {
 	}
 
 	dictionary_list.forEach(scan_line);
-	const statistics_old = CeL.statistics(weights_old);
-	const statistics_new = CeL.statistics(weights_new);
+	const statistics_old = CeL.statistics(frequencies_old);
+	const statistics_new = CeL.statistics(frequencies_new);
 	console.log(tag_convertion);
-	console.trace([statistics_old, statistics_new]);
+	if (statistics_new.count > 0)
+		console.trace([statistics_old, statistics_new]);
 	return {
 		delta: statistics_old.mean - statistics_new.mean,
 		ratio: statistics_old.SD / statistics_new.SD,
@@ -108,10 +110,10 @@ function add_word(record, status) {
 	}
 
 	dictionary_words[word_data.word] = word_data;
-	// 正規化 weight, https://en.wikipedia.org/wiki/Normalization_(statistics)
+	// 正規化 weight = frequency / sum, https://en.wikipedia.org/wiki/Normalization_(statistics)
 	// by standard score
 	if (status.ratio > 0)
-		word_data.weight = Math.round((word_data.weight + status.delta) * status.ratio);
+		word_data.frequency = Math.round((word_data.frequency + status.delta) * status.ratio);
 }
 
 async function main_process() {
@@ -121,12 +123,13 @@ async function main_process() {
 	}
 
 	for (const url of [
+		// 以結巴整套語境為基礎，切分簡體比較正確。
 		// 支持繁體分詞更好的詞典文件
 		'https://github.com/fxsjy/jieba/raw/master/extra_dict/dict.txt.big',
 		// 結巴(jieba)斷詞台灣繁體版本 切分"「台中」正確應該不會被切開"不正確
 		'https://raw.githubusercontent.com/ldkrsi/jieba-zh_TW/master/jieba/dict.txt',
 	]) {
-		const dictionary_list = (await get_URL_cache(url)).split('\n');
+		const dictionary_list = (await get_URL_cache_async(url)).split('\n');
 		const status = scan_dictionary_list(dictionary_list);
 		if (status.ratio > 0)
 			console.trace(status);
@@ -136,7 +139,7 @@ async function main_process() {
 	//dict_hybrid.txt
 	CeL.write_file('../dictionaries/commons.txt',
 		Object.values(dictionary_words)
-			.map(word_data => `${word_data.word} ${word_data.weight} ${word_data.tag}`)
+			.map(word_data => `${word_data.word} ${word_data.frequency} ${word_data.tag}`)
 			.join('\n')
 	);
 

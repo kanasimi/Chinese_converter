@@ -40,23 +40,61 @@ CeL.run(['application.debug',
 	'application.storage']);
 
 const nodejieba_CN = require("nodejieba");
-nodejieba_CN.load('dictionaries/commons.txt');
+nodejieba_CN.load({ dict: module.path + '/dictionaries/commons.txt' });
 
 // --------------------------------------------------------
 
-function Chinese_converter(options) {
-	this.convertion_pairs = new Map;
+class Chinese_converter {
+	constructor(options) {
+		this.convertion_pairs = Object.create(null);
+		load_dictionary.call(this, '/dictionaries/CN_to_TW.PoS.txt', { language: 'TW' });
+		load_dictionary.call(this, '/dictionaries/TW_to_CN.PoS.txt', { language: 'CN' });
+	}
+
+	/**
+	 * convert to TW
+	 * @param {Array}paragraphs [{String}, {String}, ...]
+	 * @param {Object}[options]
+	 */
+	to_TW(paragraphs, options) {
+		options = Object.assign({ convert_to_language: 'TW' }, options);
+		return convert_Chiinese.call(this, paragraphs, options);
+	}
+
+	/**
+	 * convert to CN
+	 * @param {Array}paragraphs [{String}, {String}, ...]
+	 * @param {Object}[options]
+	 */
+	to_CN(paragraphs, options) {
+		options = Object.assign({ convert_to_language: 'CN' }, options);
+		return convert_Chiinese.call(this, paragraphs, options);
+	}
+
+	// 自動判斷句子、段落的語境（配合維基百科專有名詞轉換）
+	detect_domain(paragraphs, options) {
+		// TODO
+	}
 }
 
 
-function load_dictionary(file_path) {
-	;
+function load_dictionary(file_path, options) {
+	const word_list = CeL.read_file(module.path + file_path).toString().split('\n');
+	const convertion_pairs = this.convertion_pairs[options.language] = new Map;
+	for (let record of word_list) {
+		if (record.startsWith('#') || record.startsWith('//'))
+			continue;
+		record = record.trim().split('\t');
+		if (!convertion_pairs.has(record[0]))
+			convertion_pairs.set(record[0], []);
+		const PoS_data = convertion_pairs.get(record[0]);
+		for (let index = 1; index < record.length; index++) {
+			const data = record[index].match(/^([^:]+):(.+)$/);
+			PoS_data.push(data ? { word: data[2], tag: data[1] } : { word: record[index] });
+		}
+	};
 }
 
-// 自動判斷句子、段落的語境（配合維基百科專有名詞轉換）
-function detect_domain(paragraphs, options) {
-	;
-}
 
 // --------------------------------------------------------
 
@@ -82,15 +120,18 @@ function forced_convert_to_CN(paragraph, index, parent, options) {
  */
 function convert_paragraph(paragraph, options) {
 	const word_list = tag_paragraph.call(this, paragraph, options);
-	console.trace(word_list);
+	if (CeL.is_debug()) {
+		console.trace(word_list);
+	}
+	const convertion_pairs = this.convertion_pairs[options.convert_to_language];
 
 	return word_list.map((word, index, parent) => {
-		if (!this.convertion_pairs.has(word.word)) {
+		if (!convertion_pairs.has(word.word)) {
 			const forced_convert = options.convert_to_language === 'TW' ? forced_convert_to_TW : forced_convert_to_CN;
 			return forced_convert.call(this, word.word, index, parent, options);
 		}
 
-		const convert_to = this.convertion_pairs.get(word.word);
+		const convert_to = convertion_pairs.get(word.word);
 		if (typeof convert_to === 'string')
 			return convert_to;
 
@@ -98,7 +139,7 @@ function convert_paragraph(paragraph, options) {
 		for (let index = 0; index < convert_to.length; index++) {
 			const to_word = convert_to[index];
 			// 依照最佳詞性轉換。
-			// ICTPOS3.0词性标记集 https://gist.github.com/luw2007/6016931
+			// ICTPOS3.0词性标记集 https://gist.github.com/luw2007/6016931 http://ictclas.nlpir.org/
 			// CKIP中文斷詞系統 詞類標記列表 http://ckipsvr.iis.sinica.edu.tw/cat.htm https://github.com/ckiplab/ckiptagger/wiki/POS-Tags
 			if (word.tag === to_word.tag)
 				return to_word.word;
@@ -124,29 +165,7 @@ function convert_Chiinese(paragraphs, options) {
 	return converted_paragraphs;
 }
 
-/**
- * 
- * @param {Array}paragraphs [{String}, {String}, ...]
- * @param {Object}[options]
- */
-function convert_to_TW(paragraphs, options) {
-	options = Object.assign({ convert_to_language: 'TW' }, options);
-	return convert_Chiinese.call(this, paragraphs, options);
-}
-
-function convert_to_CN(paragraphs, options) {
-	options = Object.assign({ convert_to_language: 'CN' }, options);
-	return convert_Chiinese.call(this, paragraphs, options);
-}
-
 // --------------------------------------------------------
-
-Object.assign(Chinese_converter.prototype, {
-	to_TW: convert_to_TW,
-	to_CN: convert_to_CN,
-
-	detect_domain,
-});
 
 module.exports = Chinese_converter;
 

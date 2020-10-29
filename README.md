@@ -5,9 +5,7 @@
 
 [![Known Vulnerabilities](https://snyk.io/test/github/kanasimi/Chinese_converter/badge.svg?targetFile=package.json)](https://snyk.io/test/github/kanasimi/Chinese_converter?targetFile=package.json)
 [![codebeat badge](https://codebeat.co/badges/e358b88e-dff0-465f-aa7b-b5f972dee085)](https://codebeat.co/projects/github-com-kanasimi-chinese_converter-master)
-<!--
-[![Codacy Badge](https://api.codacy.com/project/badge/Grade/02aa4b9cc9df4fa9b10389abbb139ebf)](https://app.codacy.com/app/kanasimi/Chinese_converter?utm_source=github.com&utm_medium=referral&utm_content=kanasimi/Chinese_converter&utm_campaign=Badge_Grade_Dashboard)
--->
+[![Codacy Badge](https://app.codacy.com/project/badge/Grade/fd590585ec734d3b90e701da95cca8b2)](https://www.codacy.com/gh/kanasimi/Chinese_converter/dashboard?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=kanasimi/Chinese_converter&amp;utm_campaign=Badge_Grade)
 [![DeepScan grade](https://deepscan.io/api/teams/4788/projects/14427/branches/268541/badge/grade.svg)](https://deepscan.io/dashboard#view=project&tid=4788&pid=14427&bid=268541)
 
 # CeCC - Colorless echo Chinese converter
@@ -52,7 +50,12 @@ chinese_converter.to_CN('繁體中文');
 ```
 
 ## See also
+中文分詞
 * https://noob.tw/js-nlp-jieba/
 * https://github.com/ldkrsi/jieba-zh_TW
-* https://github.com/ckiplab/ckiptagger
 * https://github.com/NLPchina/ansj_seg
+
+詞性標記
+* https://github.com/ckiplab/ckiptagger
+* https://github.com/NLPIR-team/NLPIR
+* https://github.com/GeoHey-Team/node-thulac

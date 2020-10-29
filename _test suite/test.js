@@ -62,13 +62,13 @@ function add_test(test_name, conditions) {
 // ============================================================================
 
 add_test('convert to TW', async (assert, setup_test, finish_test) => {
-	const articles_directory = '_test suite/articles/';
+	const articles_directory = module.path + '/articles/';
 	const file_list = CeL.storage.read_directory(articles_directory);
 	for (const file_name of file_list) {
 		setup_test('convert to TW: ' + file_name);
-		const contents = CeL.storage.read_file(articles_directory + file_name).toString('utf8');
+		const contents = CeL.read_file(articles_directory + file_name).toString();
 		// 正確率檢核：繁→簡→繁
-		//assert(['簡', chinese_converter.to_CN(contents)], file_name+' #1');
+		assert([chinese_converter.to_TW(chinese_converter.to_CN(contents)), contents], file_name + ' #1');
 		finish_test('convert to TW: ' + file_name);
 	}
 });
