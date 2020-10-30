@@ -1,0 +1,68 @@
+/*
+
+// 注釋/例句
+from	default
+from	PoS:default
+from	condition1	condition2
+from	PoS:default condition1	condition2
+
+PATTERN_condition = /^(~)?(!)?(?:([^:]+):)?(.*?)(\?)?$/
+[ condition, is target, not match, tag (PoS), word / pattern, optional ]
+
+jieba tag (PoS) 詞性標記: http://103.242.175.216:197/nlpir/html/readme.htm
+
+
+-------------------------------------------------
+
+jieba 無法辨識不同語境下 判斷相同詞彙的不同詞性。e.g., 只/q (量词) 。
+https://github.com/yanyiwu/nodejieba/issues/171
+
+> 养一只小猫
+> 从此连只苍蝇都进不来，
+> 这还是只开始
+
+前兩個”只”應該都是量詞q
+但是卻都判斷成為副詞d
+
+不曉得有沒有辦法支援相同詞彙多詞性的功能?
+
+related: https://github.com/fxsjy/jieba/issues/832
+
+http://blog.pulipuli.info/2017/11/fasttag-identify-part-of-speech-in.html
+> Jieba在詞性上最大的問題在於一個詞僅能有個詞性，且這個詞性是字典給什麼就是什麼，
+
+理想的方法是依句型分析、句子的結構樹判斷所有可能的詞性，挑出可能性最大的。
+related: 中文句結構樹資料庫 http://treebank.sinica.edu.tw/
+補救的方法是創建辭典，依前後文的詞性修改詞彙的詞性。例如後面接名詞，尤其是動物，那使用”隻”的機會就比較高。這邊正嘗試使用補救方法。
+
+*/
+
+// 你要养32只兔子。 从此连只苍蝇都进不来，
+只	~只+表	~隻+n:
+// 瞧那只被揍了之后就没骨头的狗子就知道了
+//~隻+!n,標點符號:*+n:!表
+
+// 用三只錶。
+表	m:+~錶
+// 用同一只表。
+只表	只錶
+
+
+// 嘴巴都干了。
+干	n:/嘴/+d:?+~v:乾
+
+// 大长老有云， 远古记载有云：
+有云	nr:+~有云	v:+~有云
+
+// 本王必立公主為后。
+后	为+~后
+
+“	「
+”	」
+
+// “你們別吱聲哈，我看看這是鬧哪出。”
+哪出	/[闹演]/+~哪齣
+
+// ----------------------------------------------------------------------------
+
+m:/只/	~只+表	~/只/隻/

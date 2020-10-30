@@ -55,7 +55,9 @@ chinese_converter.to_CN('繁體中文');
 * https://github.com/ldkrsi/jieba-zh_TW
 * https://github.com/NLPchina/ansj_seg
 
-詞性標記
+詞性標記 词性标注
+* [中科院计算所 词性类别](http://103.242.175.216:197/nlpir/)
+* [中央研究院語言所 中文斷詞系統](http://ckipsvr.iis.sinica.edu.tw/) [線上展示](http://sunlight.iis.sinica.edu.tw/uwextract/demo.htm)
 * https://github.com/ckiplab/ckiptagger
 * https://github.com/NLPIR-team/NLPIR
 * https://github.com/GeoHey-Team/node-thulac

@@ -1,7 +1,7 @@
 {
 	"name": "cecc",
 	"title": "Convert between Traditional Chinese and Simplified Chinese. 繁體中文↔簡體中文轉換",
-	"version": "0.1.0",
+	"version": "0.2.0",
 	"description": "Chinese converter between Traditional Chinese and Simplified Chinese. 繁體中文↔簡體中文轉換",
 	"keywords": [
 		"Chinese",
@@ -27,8 +27,7 @@
 
 	"main": "Chinese_converter.js",
 	"scripts": {
-		"test": "nyc node \"_test suite/test.js\"",
-		"report-coverage": "nyc report --reporter=text-lcov > coverage.lcov && codecov"
+		"test": "node \"_test suite/test.js\""
 	},
 	"nyc": {
 		"exclude": [
@@ -41,8 +40,6 @@
 	},
 
 	"devDependencies": {
-		"nyc": "latest",
-		"codecov": "latest"
 	},
 	"dependencies": {
 		"nodejieba": "^2.4.1",
