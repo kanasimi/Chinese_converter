@@ -1,8 +1,8 @@
 ﻿'use strict';
 
 // load module
-const Chinese_converter = require('../Chinese_converter.js');
-const chinese_converter = new Chinese_converter;
+const CeCC = require('../Chinese_converter.js');
+const cecc = new CeCC;
 
 const CeL = global.CeL;
 CeL.info('Using CeJS version: ' + CeL.version);
@@ -61,17 +61,25 @@ function add_test(test_name, conditions) {
 
 // ============================================================================
 
-add_test('正確率檢核：繁→簡→繁', async (assert, setup_test, finish_test, options) => {
+add_test('正確率檢核', async (assert, setup_test, finish_test, options) => {
 	const articles_directory = module.path + '/articles/';
 	const file_list = CeL.storage.read_directory(articles_directory);
 	for (const file_name of file_list) {
-		const test_name = options.test_name + file_name;
+		const file_is_CN = /\.CN\./i.test(file_name);
+		const test_name = `${file_is_CN ? '簡→' : ''}繁→簡→繁：${file_name}`;
 		setup_test(test_name);
-		const contents = CeL.read_file(articles_directory + file_name).toString().replace(/<!--[\s\S]*?-->/g, '');
-		contents.split('\n').forEach((line, index) => {
-			line = line.trim();
-			assert([chinese_converter.to_TW(chinese_converter.to_CN(line)), line], file_name + ` #${index + 1}`);
-		});
+		const content_lines = CeL.read_file(articles_directory + file_name).toString().replace(/<!--[\s\S]*?-->/g, '').replace(/。[\r\n]+/g, '。\n').split('\n');
+		for (let index = 0; index < content_lines.length; index++) {
+			const line = content_lines[index].trim();
+			let TW_text
+			if (file_is_CN) {
+				TW_text = await cecc.to_TW(line);
+				assert([await cecc.to_CN(TW_text), line], file_name + ` #${index + 1}-CN`);
+			} else {
+				TW_text = line;
+			}
+			assert([await cecc.to_TW(await cecc.to_CN(TW_text)), TW_text], file_name + ` #${index + 1}`);
+		};
 		finish_test(test_name);
 	}
 });

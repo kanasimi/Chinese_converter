@@ -1,7 +1,7 @@
 {
 	"name": "cecc",
 	"title": "Convert between Traditional Chinese and Simplified Chinese. 繁體中文↔簡體中文轉換",
-	"version": "0.2.0",
+	"version": "0.2.1",
 	"description": "Chinese converter between Traditional Chinese and Simplified Chinese. 繁體中文↔簡體中文轉換",
 	"keywords": [
 		"Chinese",
