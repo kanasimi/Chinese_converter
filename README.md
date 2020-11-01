@@ -1,7 +1,9 @@
 ﻿[![npm version](https://badge.fury.io/js/cecc.svg)](https://www.npmjs.com/package/cecc)
 [![npm downloads](https://img.shields.io/npm/dm/cecc.svg)](https://www.npmjs.com/package/cecc)
+<!--
 [![Build Status](https://travis-ci.org/kanasimi/Chinese_converter.svg?branch=master)](https://travis-ci.org/kanasimi/Chinese_converter)
 [![codecov](https://codecov.io/gh/kanasimi/Chinese_converter/branch/master/graph/badge.svg)](https://codecov.io/gh/kanasimi/Chinese_converter)
+-->
 
 [![Known Vulnerabilities](https://snyk.io/test/github/kanasimi/Chinese_converter/badge.svg?targetFile=package.json)](https://snyk.io/test/github/kanasimi/Chinese_converter?targetFile=package.json)
 [![codebeat badge](https://codebeat.co/badges/e358b88e-dff0-465f-aa7b-b5f972dee085)](https://codebeat.co/projects/github-com-kanasimi-chinese_converter-master)
@@ -57,8 +59,12 @@ cecc.to_CN('繁體中文');
 
 詞性標記 词性标注
 * https://corenlp.run/
+
 * [中科院计算所 词性类别](http://103.242.175.216:197/nlpir/)
+
+* https://ckip.iis.sinica.edu.tw/service/corenlp/
 * [中央研究院語言所 中文斷詞系統](http://ckipsvr.iis.sinica.edu.tw/) [線上展示](http://sunlight.iis.sinica.edu.tw/uwextract/demo.htm)
+
 * https://github.com/ckiplab/ckiptagger
 * https://github.com/NLPIR-team/NLPIR
 * https://github.com/GeoHey-Team/node-thulac

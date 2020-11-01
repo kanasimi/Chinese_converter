@@ -2,7 +2,11 @@
 
 // load module
 const CeCC = require('../Chinese_converter.js');
-const cecc = new CeCC;
+const cecc = new CeCC({
+	// using Stanford CoreNLP
+	//CoreNLP_URL: 'http://localhost:9000/',
+	//CoreNLP_URL: 'https://corenlp.run/',
+});
 
 const CeL = global.CeL;
 CeL.info('Using CeJS version: ' + CeL.version);
@@ -68,17 +72,26 @@ add_test('正確率檢核', async (assert, setup_test, finish_test, options) => 
 		const file_is_CN = /\.CN\./i.test(file_name);
 		const test_name = `${file_is_CN ? '簡→' : ''}繁→簡→繁：${file_name}`;
 		setup_test(test_name);
-		const content_lines = CeL.read_file(articles_directory + file_name).toString().replace(/<!--[\s\S]*?-->/g, '').replace(/。[\r\n]+/g, '。\n').split('\n');
+		const content_lines = CeL.read_file(articles_directory + file_name).toString().replace(/<!--[\s\S]*?-->/g, '').replace(/([。？！])[\r\n]+/g, '$1\n').split('\n');
 		for (let index = 0; index < content_lines.length; index++) {
 			const line = content_lines[index].trim();
-			let TW_text
+			let TW_text, converted_CN;
 			if (file_is_CN) {
 				TW_text = await cecc.to_TW(line);
-				assert([await cecc.to_CN(TW_text), line], file_name + ` #${index + 1}-CN`);
+				converted_CN = await cecc.to_CN(TW_text);
+				if (!assert([converted_CN, line], file_name + ` #${index + 1}-CN`)) {
+					CeL.info(`　 簡\t${JSON.stringify(line)}\n→ 繁\t${JSON.stringify(TW_text)}\n→ 簡\t${JSON.stringify(converted_CN)}`);
+				}
 			} else {
 				TW_text = line;
+				converted_CN = await cecc.to_CN(TW_text);
 			}
-			assert([await cecc.to_TW(await cecc.to_CN(TW_text)), TW_text], file_name + ` #${index + 1}`);
+
+			const converted_TW = await cecc.to_TW(converted_CN);
+			if (!assert([converted_TW, TW_text], file_name + ` #${index + 1}`)) {
+				CeL.info(`　 繁\t${JSON.stringify(TW_text)}\n→ 簡\t${JSON.stringify(converted_CN)}\n→ 繁\t${JSON.stringify(converted_TW)}`);
+				console.log(cecc.CoreNLP_URL ? await cecc.tag_paragraph_via_CoreNLP(converted_CN) : await cecc.tag_paragraph(converted_CN));
+			}
 		};
 		finish_test(test_name);
 	}
