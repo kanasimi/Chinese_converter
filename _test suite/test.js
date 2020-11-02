@@ -80,7 +80,7 @@ add_test('正確率檢核', async (assert, setup_test, finish_test, options) => 
 			.replace(/([。？！])[\r\n]+/g, '$1\n')
 			.split('\n')
 			.map(line => line.trim()).filter(line => !!line);
-		let TW_paragraphs, converted_CN;
+		let TW_paragraphs, converted_CN, tagged_word_list_of_paragraphs;
 		if (file_is_CN) {
 			TW_paragraphs = await cecc.to_TW(content_paragraphs);
 			converted_CN = await cecc.to_CN(TW_paragraphs);
@@ -94,12 +94,17 @@ add_test('正確率檢核', async (assert, setup_test, finish_test, options) => 
 			converted_CN = await cecc.to_CN(TW_paragraphs);
 		}
 
-		const converted_TW = await cecc.to_TW(converted_CN);
+		let converted_TW = await cecc.to_TW(converted_CN, { get_full_data: true });
+		tagged_word_list_of_paragraphs = converted_TW.tagged_word_list_of_paragraphs;
+		converted_TW = converted_TW.converted_paragraphs;
 		for (let index = 0; index < TW_paragraphs.length; index++) {
 			if (!assert([converted_TW[index], TW_paragraphs[index]], file_name + ` #${index + 1}`)) {
-				const tags = await cecc.tag_paragraph(converted_CN);
 				CeL.info(`　 繁\t${JSON.stringify(TW_paragraphs[index])}\n→ 簡\t${JSON.stringify(converted_CN[index])}\n→ 繁\t${JSON.stringify(converted_TW[index])}`);
-				console.log(tags);
+				if (tagged_word_list_of_paragraphs) {
+					console.log(tagged_word_list_of_paragraphs[index]);
+				} else {
+					console.log(await cecc.tag_paragraph(converted_CN[index]));
+				}
 			}
 		}
 

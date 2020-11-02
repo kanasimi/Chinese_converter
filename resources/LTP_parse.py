@@ -41,10 +41,10 @@ if not paragraphs:
 from ltp import LTP
 ltp = LTP()
 
-print("Parse paragraph " + json.dumps(paragraphs) + " using LTP...")
+print("Parse paragraph " + json.dumps(paragraphs, separators = (',', ':')) + " using LTP...")
 
 def parse_paragraph(paragraph):
-	seg, hidden = ltp.seg(paragraphs)
+	seg, hidden = ltp.seg([paragraph])
 	# 词性标注
 	pos = ltp.pos(hidden)
 	#print(pos)
@@ -71,7 +71,8 @@ def parse_paragraph(paragraph):
 
 	return parsed
 
-parsed_data = map(parse_paragraph, paragraphs)
+# 一次處理太多文字會造成記憶體不足。
+parsed_data = list(map(parse_paragraph, paragraphs))
 
 print('-' * 60)
 # result

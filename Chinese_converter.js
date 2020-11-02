@@ -332,14 +332,15 @@ function tag_paragraph_LTP(paragraphs, options) {
 	parsed = JSON.parse(parsed);
 	//console.trace(parsed);
 
-	const result = [], keys_to_copy = Object.keys(parsed).filter(key => key !== 'seg' && key !== 'pos');
-	for (let paragraph_index = 0; paragraph_index < parsed.seg.length; paragraph_index++) {
-		const paragraph_result = parsed.seg[paragraph_index].map((word, index) => ({ word, tag: parsed.pos[paragraph_index][index] }));
-		for (const key of keys_to_copy)
-			paragraph_result[key] = parsed[key][paragraph_index];
-		result.push(paragraph_result);
-	}
-	//console.trace(result);
+	const result = parsed.map(parsed_paragraph => {
+		const paragraph_result = parsed_paragraph.seg.map((word, index) => ({ word, tag: parsed_paragraph.pos[index] }));
+		// free
+		delete parsed_paragraph.seg;
+		delete parsed_paragraph.pos;
+		paragraph_result.result = parsed_paragraph;
+		return paragraph_result;
+	});
+	console.trace(JSON.stringify(result));
 	if (!is_Array) {
 		// assert: result.length === 1
 		return result[0];
@@ -353,10 +354,19 @@ tag_paragraph_LTP.paragraphs_mode = true;
 function convert_CoreNLP_result(result) {
 	result = JSON.parse(result).sentences;
 	const tokens = result[0].tokens;
+	// free
+	delete  result[0].tokens;
 	tokens.result = result;
 	for (let index = 1; index < result.length; index++) {
 		tokens.append(result[index].tokens);
+		// free
+		delete result[index].tokens;
 	}
+
+	//console.log(tokens.map(word_data => word_data.word).join(' '));
+	//"basicDependencies":[...,{"dep":"nummod","governor":8,"governorGloss":"小猫","dependent":4,"dependentGloss":"三"},...]
+	//console.trace(JSON.stringify(tokens.result[0]));
+
 	return tokens;
 }
 
@@ -368,10 +378,12 @@ function tag_paragraph_via_CoreNLP(paragraph, options) {
 		this.CoreNLP_URL.searchParams.set('properties', JSON.stringify(this.CoreNLP_URL_properties));
 		//console.trace(this.CoreNLP_URL.toString());
 		CeL.get_URL(this.CoreNLP_URL, (XMLHttp, error) => {
-			if (error)
+			if (error) {
 				reject(error);
-			else
+			} else {
+				//console.log(paragraph);
 				resolve(convert_CoreNLP_result(XMLHttp.responseText));
+			}
 		}, null, paragraph)
 	});
 }
@@ -400,7 +412,9 @@ function convert_paragraph(paragraph, options) {
 	const tagged_word_list = options.tagged_word_list || this.tag_paragraph(paragraph, options);
 	//console.trace(tagged_word_list);
 	if (CeL.is_thenable(tagged_word_list)) {
-		return tagged_word_list.then(tagged_word_list => convert_paragraph.bind(this, paragraph, { ...options, tagged_word_list }));
+		return tagged_word_list.then(
+			tagged_word_list => convert_paragraph.call(this, paragraph, { ...options, tagged_word_list })
+		);
 	}
 
 	const convertion_pairs = this.convertion_pairs[options.convert_to_language];
@@ -479,6 +493,7 @@ function convert_Chinese(paragraphs, options) {
 function execute_convert_Chinese(paragraphs, options) {
 	let converted_paragraphs = [];
 	const tagged_word_list_of_paragraphs = options.tagged_word_list_of_paragraphs;
+	let some_async;
 	for (let index = 0; index < paragraphs.length; index++) {
 		const paragraph = paragraphs[index];
 		let _options = options;
@@ -486,27 +501,28 @@ function execute_convert_Chinese(paragraphs, options) {
 			_options = { ...options, tagged_word_list: tagged_word_list_of_paragraphs[index] };
 		const converted_paragraph = convert_paragraph.call(this, paragraph, _options);
 		converted_paragraphs.push(converted_paragraph);
-
-		if (CeL.is_thenable(converted_paragraph)) {
-			//console.trace(`Using Promise to wait for ${converted_paragraphs.length} / ${paragraphs.length}: ${paragraph}`);
-			for (let index = converted_paragraphs.length; index < paragraphs.length; index++) {
-				const paragraph = paragraphs[index];
-				converted_paragraphs.push(paragraph => convert_paragraph.call(this, paragraph, options));
-			}
-			return Promise.all(paragraphs).then(return_converted_paragraphs.bind(this, options));
-		}
+		some_async = some_async || CeL.is_thenable(converted_paragraph);
 	}
 
-	return return_converted_paragraphs(options, converted_paragraphs);
+	if (!some_async)
+		return return_converted_paragraphs(options, converted_paragraphs);
+
+	//console.trace(`Using Promise to wait for ${converted_paragraphs.length} / ${paragraphs.length}: ${paragraph}`);
+	return Promise.all(converted_paragraphs).then(
+		converted_paragraphs => return_converted_paragraphs(options, converted_paragraphs)
+	);
 }
 
 function return_converted_paragraphs(options, converted_paragraphs) {
-	// free
-	delete options.tagged_word_list_of_paragraphs;
-
 	//console.trace(converted_paragraphs);
 	if (options.input_string && Array.isArray(converted_paragraphs) && converted_paragraphs.length === 1)
 		converted_paragraphs = converted_paragraphs[0];
+
+	if (options.get_full_data)
+		return { converted_paragraphs, tagged_word_list_of_paragraphs: options.tagged_word_list_of_paragraphs };
+
+	// free
+	//delete options.tagged_word_list_of_paragraphs;
 
 	return converted_paragraphs;
 }
