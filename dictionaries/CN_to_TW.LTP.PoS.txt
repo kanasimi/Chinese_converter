@@ -1,0 +1,71 @@
+/*
+
+// 注釋/例句
+from	default
+from	PoS:default
+from	condition1	condition2
+from	PoS:default condition1	condition2
+
+// [ condition, is target, not match, tag (PoS), word / pattern, optional ]
+const PATTERN_condition = /^(?<target>~)?(?<not_match>!)?(?:(?<tag>[^:]+):)?(?<word>[\s\S]*?)(?<optional>\?)?$/;
+
+LTP tag (PoS) 詞性標記: LTP中採用863詞性標註集
+https://www.twblogs.net/a/5d4d0684bd9eee541c30e4f8
+https://www.cnblogs.com/CheeseZH/p/4682353.html
+
+*/
+
+// 你要养32只兔子。 从此连只苍蝇都进不来，
+只	~只+表	~隻+n:	那+~隻
+// TODO: 瞧那只被揍了之后就没骨头的狗子就知道了
+//~隻+!n,標點符號:*+n:!表
+
+// 用三只錶。
+表	m:+~錶
+// 用同一只表。
+只表	只錶
+
+
+// 嘴巴都干了。
+干	n:/嘴/+d:?+~v:乾
+// 所以得撇清干系再说。
+干系	干係
+
+// 古人有云， 大长老有云， 远古记载有云：
+有云	n:+~有云	nr:+~有云	v:+~有云
+
+// 本王必立公主為后。
+后	为+~后
+
+// 標點符號修正。
+“	「
+”	」
+
+// “你们别吱声哈，我看看这是闹哪出。”
+哪出	/[闹演]/+~哪齣
+
+// 幽日族松一口气。
+松	v:鬆
+// 看完就走，幽日族会松一口气才对。
+x:会松	~會鬆+一口气
+
+// 悲愿也不是干看着，
+干	~乾+v:
+干云	豪气+~干雲
+
+m:一出	一齣
+
+// 来「制珠」的说辞。
+制	~製+n:	~製+ng:
+
+// 星移斗換
+i:斗换星移	斗換星移
+
+// ----------------------------------------------------------------------------
+// {RegExp}pattern fliters
+
+// fix for "m:/只/"
+几只	幾隻
+数只	數隻
+// 用三只錶。
+m:/只/	~/只/+/表/	~/只/隻/

@@ -52,12 +52,13 @@ cecc.to_CN('繁體中文');
 ```
 
 ## See also
-中文分詞
+### 中文分詞
 * https://noob.tw/js-nlp-jieba/
 * https://github.com/ldkrsi/jieba-zh_TW
 * https://github.com/NLPchina/ansj_seg
 
-詞性標記 词性标注
+### 詞性標記 词性标注
+* https://github.com/HIT-SCIR/ltp
 * https://corenlp.run/
 
 * [中科院计算所 词性类别](http://103.242.175.216:197/nlpir/)
@@ -71,3 +72,8 @@ cecc.to_CN('繁體中文');
 * https://www.zzjw.cc/2019/11/23/pos-review/
 
 * https://blog.csdn.net/zzzzlei123123123/article/details/104227223
+
+### 簡繁轉換
+* [OpenCC](https://github.com/BYVoid/OpenCC)
+* [新同文堂](https://github.com/tongwentang/tongwen-core)
+* [ConvertZZ](https://github.com/flier268/ConvertZZ)

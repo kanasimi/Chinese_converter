@@ -49,8 +49,10 @@ CeL.run(['application.debug',
 	// CeL.fs_mkdir(), CeL.wiki.read_dump()
 	'application.storage']);
 
+const module_base_path = module.path + '/';
+
 const nodejieba_CN = require("nodejieba");
-nodejieba_CN.load({ dict: module.path + '/dictionaries/commons.txt' });
+nodejieba_CN.load({ dict: module_base_path + 'dictionaries/commons.txt' });
 
 // Cache default convertors without CeCC.
 const CeL_CN_to_TW = CeL.zh_conversion.CN_to_TW, CeL_TW_to_CN = CeL.zh_conversion.TW_to_CN;
@@ -72,12 +74,22 @@ class Chinese_converter {
 			this.CoreNLP_URL_properties = {
 				annotators: 'tokenize,ssplit,pos,depparse',
 			};
-			load_dictionary.call(this, '/dictionaries/CN_to_TW.CoreNLP.PoS.txt', { language: 'TW' });
-			load_dictionary.call(this, '/dictionaries/TW_to_CN.CoreNLP.PoS.txt', { language: 'CN' });
-		} else {
+			load_dictionary.call(this, 'dictionaries/CN_to_TW.CoreNLP.PoS.txt', { language: 'TW' });
+			load_dictionary.call(this, 'dictionaries/TW_to_CN.CoreNLP.PoS.txt', { language: 'CN' });
+			this.tag_paragraph = tag_paragraph_via_CoreNLP;
+
+		} else if (options?.using_LTP) {
 			this.KEY_PoS_tag = KEY_PoS_tag;
-			load_dictionary.call(this, '/dictionaries/CN_to_TW.PoS.txt', { language: 'TW' });
-			load_dictionary.call(this, '/dictionaries/TW_to_CN.PoS.txt', { language: 'CN' });
+			load_dictionary.call(this, 'dictionaries/CN_to_TW.LTP.PoS.txt', { language: 'TW' });
+			load_dictionary.call(this, 'dictionaries/TW_to_CN.LTP.PoS.txt', { language: 'CN' });
+			this.tag_paragraph = tag_paragraph_LTP;
+
+		} else {
+			// default
+			this.KEY_PoS_tag = KEY_PoS_tag;
+			load_dictionary.call(this, 'dictionaries/CN_to_TW.jieba.PoS.txt', { language: 'TW' });
+			load_dictionary.call(this, 'dictionaries/TW_to_CN.jieba.PoS.txt', { language: 'CN' });
+			this.tag_paragraph = tag_paragraph_jieba;
 		}
 	}
 
@@ -115,8 +127,8 @@ class Chinese_converter {
 
 // ----------------------------------------------------------------------------
 
-// [ condition, is target, not match, tag (PoS), word / pattern, optional ]
-const PATTERN_condition = /^(?<target>~)?(?<not_match>!)?(?:(?<tag>[^:]+):)?(?<word>[\s\S]*?)(?<optional>\?)?$/;
+// [ condition, is target, not match, tag (PoS), word / pattern, is optional / repeat range ]
+const PATTERN_condition = /^(?<is_target>~)?(?<not_match>!)?(?:(?<tag>[^:]+):)?(?<word>[\s\S]*?)(?<is_optional>\?)?$/;
 
 function parse_condition(condition) {
 	condition = condition.split('+');
@@ -124,8 +136,8 @@ function parse_condition(condition) {
 	condition = condition.map((token, index) => {
 		const matched = token.match(PATTERN_condition).groups;
 		const condition_data = Object.create(null);
-		if (matched.target) {
-			condition_data.target = true;
+		if (matched.is_target) {
+			condition_data.is_target = true;
 			if (target_index >= 0)
 				CeL.warn(`${parse_condition.name}: Multiple target: ${condition.join('+')}`);
 			else
@@ -139,8 +151,8 @@ function parse_condition(condition) {
 			condition_data.not_match = matched.not_match;
 		if (matched.tag)
 			condition_data[this.KEY_PoS_tag] = matched.tag;
-		if (matched.optional)
-			condition_data.optional = true;
+		if (matched.is_optional)
+			condition_data.is_optional = true;
 		return condition_data;
 	});
 
@@ -217,7 +229,7 @@ function get_convert_to_conditions(work_data, convertion_pairs, options) {
 }
 
 function load_dictionary(file_path, options) {
-	const word_list = CeL.data.pair.remove_comments(CeL.read_file(module.path + file_path)).split('\n');
+	const word_list = CeL.data.pair.remove_comments(CeL.read_file(module_base_path + file_path)).split('\n');
 	// 初始化 initialization: convertion_pairs
 	const convertion_pairs = this.convertion_pairs[options.language] = new Map;
 	convertion_pairs.set(KEY_tag_filter, Object.create(null));
@@ -255,7 +267,7 @@ function not_match_single_condition(single_condition, word_data) {
 	// NLPIR 词性类别: 计算所汉语词性标记集 http://103.242.175.216:197/nlpir/html/readme.htm
 	if (single_condition[this.KEY_PoS_tag] && single_condition.not_match ^ !CeL.fit_filter(single_condition[this.KEY_PoS_tag], word_data[this.KEY_PoS_tag]))
 		return true;
-	if ((!single_condition.target || CeL.is_RegExp(single_condition))
+	if ((!single_condition.is_target || CeL.is_RegExp(single_condition))
 		&& single_condition[this.KEY_word] && single_condition.not_match ^ !CeL.fit_filter(single_condition[this.KEY_word], word_data[this.KEY_word]))
 		return true;
 }
@@ -277,7 +289,7 @@ function match_condition(conditions, word_data, index, parent) {
 			return;
 		const condition = conditions[index_of_condition];
 		if (not_match_single_condition.call(this, condition, parent[index_of_target])) {
-			if (!condition.optional)
+			if (!condition.is_optional)
 				return;
 			// Skip the target part.
 		} else
@@ -290,7 +302,7 @@ function match_condition(conditions, word_data, index, parent) {
 			return;
 		const condition = conditions[index_of_condition];
 		if (not_match_single_condition.call(this, condition, parent[index_of_target])) {
-			if (!condition.optional)
+			if (!condition.is_optional)
 				return;
 			// Skip the target part.
 		} else
@@ -303,9 +315,40 @@ function match_condition(conditions, word_data, index, parent) {
 // ----------------------------------------------------------------------------
 
 // POS tagging 词性标注 詞性標注
-function tag_paragraph(paragraph, options) {
+function tag_paragraph_jieba(paragraph, options) {
 	return nodejieba_CN.tag(paragraph);
 }
+
+// @see ltp_parse.py
+const MARK_result_starts = 'Parsed JSON:';
+
+function tag_paragraph_LTP(paragraphs, options) {
+	const is_Array = Array.isArray(paragraphs);
+	if (!is_Array)
+		paragraphs = [paragraphs];
+	let parsed = require('child_process').execFileSync('python', [module_base_path + 'resources/ltp_parse.py', '-j', JSON.stringify(paragraphs)]);
+	//console.trace(parsed.toString());
+	parsed = parsed.toString().between(MARK_result_starts);
+	parsed = JSON.parse(parsed);
+	//console.trace(parsed);
+
+	const result = [], keys_to_copy = Object.keys(parsed).filter(key => key !== 'seg' && key !== 'pos');
+	for (let paragraph_index = 0; paragraph_index < parsed.seg.length; paragraph_index++) {
+		const paragraph_result = parsed.seg[paragraph_index].map((word, index) => ({ word, tag: parsed.pos[paragraph_index][index] }));
+		for (const key of keys_to_copy)
+			paragraph_result[key] = parsed[key][paragraph_index];
+		result.push(paragraph_result);
+	}
+	//console.trace(result);
+	if (!is_Array) {
+		// assert: result.length === 1
+		return result[0];
+	}
+
+	return result;
+}
+
+tag_paragraph_LTP.paragraphs_mode = true;
 
 function convert_CoreNLP_result(result) {
 	result = JSON.parse(result).sentences;
@@ -333,6 +376,8 @@ function tag_paragraph_via_CoreNLP(paragraph, options) {
 	});
 }
 
+// --------------------------
+
 // 強制轉換段落/sentence。
 function forced_convert_to_TW(paragraph, index, parent, options) {
 	//CeL.log(`${paragraph}→${CeL_CN_to_TW(paragraph)}`);
@@ -352,10 +397,10 @@ function forced_convert_to_CN(paragraph, index, parent, options) {
  * @param {Object}[options]
  */
 function convert_paragraph(paragraph, options) {
-	const tagged_word_list = options.tagged_word_list || (this.CoreNLP_URL ? tag_paragraph_via_CoreNLP : tag_paragraph).call(this, paragraph, options);
+	const tagged_word_list = options.tagged_word_list || this.tag_paragraph(paragraph, options);
 	//console.trace(tagged_word_list);
 	if (CeL.is_thenable(tagged_word_list)) {
-		return tagged_word_list.then(tagged_word_list => convert_paragraph.bind(this, paragraph, { tagged_word_list, ...options }));
+		return tagged_word_list.then(tagged_word_list => convert_paragraph.bind(this, paragraph, { ...options, tagged_word_list }));
 	}
 
 	const convertion_pairs = this.convertion_pairs[options.convert_to_language];
@@ -406,7 +451,6 @@ function convert_Chinese(paragraphs, options) {
 	if (!paragraphs)
 		return paragraphs === 0 ? String(paragraphs) : '';
 
-	let converted_paragraphs;
 	if (Array.isArray(options.converted_paragraphs)) {
 		return return_converted_paragraphs(options, options.converted_paragraphs);
 	}
@@ -418,9 +462,29 @@ function convert_Chinese(paragraphs, options) {
 
 	const domain = this.detect_domain(paragraphs, options);
 
-	converted_paragraphs = [];
-	for (const paragraph of paragraphs) {
-		const converted_paragraph = convert_paragraph.call(this, paragraph, options);
+	if (this.tag_paragraph.paragraphs_mode && !Array.isArray(options.tagged_word_list_of_paragraphs)) {
+		const tagged_word_list_of_paragraphs = this.tag_paragraph(paragraphs, options);
+		if (CeL.is_thenable(tagged_word_list_of_paragraphs)) {
+			return options.tagged_word_list_of_paragraphs.then(tagged_word_list_of_paragraphs => {
+				options.tagged_word_list_of_paragraphs = tagged_word_list_of_paragraphs;
+				return execute_convert_Chinese.call(this, paragraphs, options);
+			});
+		}
+		options.tagged_word_list_of_paragraphs = tagged_word_list_of_paragraphs;
+	}
+
+	return execute_convert_Chinese.call(this, paragraphs, options);
+}
+
+function execute_convert_Chinese(paragraphs, options) {
+	let converted_paragraphs = [];
+	const tagged_word_list_of_paragraphs = options.tagged_word_list_of_paragraphs;
+	for (let index = 0; index < paragraphs.length; index++) {
+		const paragraph = paragraphs[index];
+		let _options = options;
+		if (Array.isArray(tagged_word_list_of_paragraphs))
+			_options = { ...options, tagged_word_list: tagged_word_list_of_paragraphs[index] };
+		const converted_paragraph = convert_paragraph.call(this, paragraph, _options);
 		converted_paragraphs.push(converted_paragraph);
 
 		if (CeL.is_thenable(converted_paragraph)) {
@@ -437,6 +501,9 @@ function convert_Chinese(paragraphs, options) {
 }
 
 function return_converted_paragraphs(options, converted_paragraphs) {
+	// free
+	delete options.tagged_word_list_of_paragraphs;
+
 	//console.trace(converted_paragraphs);
 	if (options.input_string && Array.isArray(converted_paragraphs) && converted_paragraphs.length === 1)
 		converted_paragraphs = converted_paragraphs[0];
@@ -446,7 +513,7 @@ function return_converted_paragraphs(options, converted_paragraphs) {
 
 // ----------------------------------------------------------------------------
 
-Object.assign(Chinese_converter.prototype, { tag_paragraph, tag_paragraph_via_CoreNLP });
+Object.assign(Chinese_converter.prototype, { tag_paragraph_jieba, tag_paragraph_via_CoreNLP });
 
 module.exports = Chinese_converter;
 
