@@ -6,8 +6,7 @@ from	PoS:default
 from	condition1	condition2
 from	PoS:default condition1	condition2
 
-// [ condition, is target, not match, tag (PoS), word / pattern, optional ]
-const PATTERN_condition = /^(?<target>~)?(?<not_match>!)?(?:(?<tag>[^:]+):)?(?<word>[\s\S]*?)(?<optional>\?)?$/;
+format of condition: @see parse_condition() @ Chinese_converter.js
 
 Stanford CoreNLP µü©Ê¼Ð°O: https://www.itread01.com/content/1541845623.html
 

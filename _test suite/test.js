@@ -5,6 +5,7 @@ const CeCC = require('../Chinese_converter.js');
 const cecc = new CeCC({
 	// using LTP
 	using_LTP: true,
+	//LTP_URL : 'http://localhost:5000/',
 
 	// using Stanford CoreNLP
 	//CoreNLP_URL: 'http://localhost:9000/',

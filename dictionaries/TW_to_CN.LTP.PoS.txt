@@ -6,8 +6,7 @@ from	PoS:default
 from	condition1	condition2
 from	PoS:default condition1	condition2
 
-// [ condition, is target, not match, tag (PoS), word / pattern, optional ]
-const PATTERN_condition = /^(?<target>~)?(?<not_match>!)?(?:(?<tag>[^:]+):)?(?<word>[\s\S]*?)(?<optional>\?)?$/;
+format of condition: @see parse_condition() @ Chinese_converter.js
 
 LTP tag (PoS) 詞性標記: LTP中採用863詞性標註集
 https://www.twblogs.net/a/5d4d0684bd9eee541c30e4f8

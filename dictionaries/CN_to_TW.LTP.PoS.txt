@@ -6,8 +6,7 @@ from	PoS:default
 from	condition1	condition2
 from	PoS:default condition1	condition2
 
-// [ condition, is target, not match, tag (PoS), word / pattern, optional ]
-const PATTERN_condition = /^(?<target>~)?(?<not_match>!)?(?:(?<tag>[^:]+):)?(?<word>[\s\S]*?)(?<optional>\?)?$/;
+format of condition: @see parse_condition() @ Chinese_converter.js
 
 LTP tag (PoS) 詞性標記: LTP中採用863詞性標註集
 https://www.twblogs.net/a/5d4d0684bd9eee541c30e4f8
@@ -16,7 +15,39 @@ https://www.cnblogs.com/CheeseZH/p/4682353.html
 */
 
 
-q:只	~只<MEAS>n:表	隻
+// 用三只表。	用三只金表。	用三只名表。
+q:只	~只<ATT>n:/表|戒/	~只<ATT>b:/表/	~隻
+
+// 用三只表。
+n:表	錶
+
+// 解析錯誤: 古人有云。	古书有云。
+n:云	!/天|空/+有+~云
+
+// 解析錯誤: 大长老有云。 "~~":先繁簡轉換再執行此處的替代。
+i:/有云/	~~/雲/云/
+
+// 解析錯誤: 豪气干云。
+a:干	~干+云
+
+// 撇清干系
+n:干系	干係
+
+// 制珠
+v:制	製
+
+// 这一手莫非是斗换星移？
+i:斗换星移	斗換星移
+// 解析錯誤: 天枢神阙有一秘术斗换星移，也可以。
+v:斗换	斗換
+
+// 解析錯誤: 本王必立公主为后。
+后	为+~后
+
+// 解析錯誤: 这是在演哪出。
+出	r:哪+~齣
+
+v:干	乾
 
 // 松一口气
 v:松	鬆

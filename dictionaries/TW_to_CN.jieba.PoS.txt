@@ -6,8 +6,7 @@ from	PoS:default
 from	condition1	condition2
 from	PoS:default condition1	condition2
 
-// [ condition, is target, not match, tag (PoS), word / pattern, optional ]
-const PATTERN_condition = /^(?<target>~)?(?<not_match>!)?(?:(?<tag>[^:]+):)?(?<word>[\s\S]*?)(?<optional>\?)?$/;
+format of condition: @see parse_condition() @ Chinese_converter.js
 
 jieba tag (PoS) µü©Ê¼Ð°O: https://gist.github.com/luw2007/6016931
 
