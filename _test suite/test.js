@@ -5,7 +5,7 @@ const CeCC = require('../Chinese_converter.js');
 const cecc = new CeCC({
 	// using LTP
 	using_LTP: true,
-	//LTP_URL : 'http://localhost:5000/',
+	LTP_URL : 'http://localhost:5000/',
 
 	// using Stanford CoreNLP
 	//CoreNLP_URL: 'http://localhost:9000/',
@@ -78,8 +78,7 @@ add_test('正確率檢核', async (assert, setup_test, finish_test, options) => 
 		setup_test(test_name);
 		const content_paragraphs = CeL.read_file(articles_directory + file_name).toString()
 			.replace(/<!--[\s\S]*?-->/g, '')
-			.replace(/([。？！])[\r\n]+/g, '$1\n')
-			.split('\n')
+			.split(/[\r\n]+/)
 			.map(line => line.trim()).filter(line => !!line);
 		let TW_paragraphs, converted_CN, tagged_word_list_of_paragraphs;
 		if (file_is_CN) {

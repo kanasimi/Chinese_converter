@@ -45,11 +45,11 @@ if not paragraphs:
 # 载入模型
 from ltp import LTP
 #ltp = LTP()
-print("Parse paragraph " + json.dumps(paragraphs, separators = (',', ':')) + " using LTP...")
 
 # -----------------------------------------------------------------------------
 # 2020/11/3 12:7:45 Copy from
 # https://github.com/HIT-SCIR/ltp/blob/master/utils/server.py
+# 維持與伺服器相同輸出格式。
 from typing import List
 
 class Server(object):
@@ -127,6 +127,7 @@ class Server(object):
 
 # -----------------------------------------------------------------------------
 new_Server = Server()
+print("Parse paragraph " + json.dumps(paragraphs, separators = (',', ':')) + " using LTP...")
 
 def parse_paragraph(paragraph):
     return new_Server._predict([paragraph])[0]

@@ -131,6 +131,17 @@ class Chinese_converter {
 		// TODO
 	}
 
+	static async has_LTP_server(options) {
+		if (typeof options === 'string')
+			options = { LTP_URL: options };
+		else
+			options = { LTP_URL: 'http://localhost:5000/', ...options };
+
+		try {
+			const result = await get_LTP_data.call(options, '测试');
+			return Array.isArray(result) && options.LTP_URL;
+		} catch{ }
+	}
 	//#parse_condition = parse_condition
 }
 
@@ -315,6 +326,7 @@ function load_dictionary(file_path, options) {
 		const convert_to_conditions = get_convert_to_conditions.call(this, filter, convertion_pairs, { create: true, try_tag: true });
 		for (let index = 1; index < conditions.length; index++) {
 			const condition = parse_condition.call(this, conditions[index]);
+			// TODO: 將 {Array} 之 pattern 轉成 {Regexp} 之 pattern，採用 .replace(pattern, token => match_condition(token))。
 			convert_to_conditions.push(condition);
 		}
 		//console.trace(convert_to_conditions);
@@ -405,24 +417,133 @@ function match_condition(conditions, word_data, index, tagged_word_list) {
 	return conditions[target_index];
 }
 
+function get_matched_condition(word_data, convertion_pairs, index, tagged_word_list, options) {
+	let convert_to_conditions = get_convert_to_conditions.call(this, word_data, convertion_pairs, options);
+	//console.trace([word_data, convert_to_conditions]);
+	//console.trace(convert_to_conditions);
+	if (!convert_to_conditions) {
+		return;
+	}
+
+	// assert: convert_to_conditions = [{ [this.KEY_word]: '詞', [this.KEY_PoS_tag]: '詞性' }, { [this.KEY_word]: '詞', [this.KEY_PoS_tag]: '詞性' }, ...]
+	for (let index_of_conditions = 0; index_of_conditions < convert_to_conditions.length; index_of_conditions++) {
+		const conditions = convert_to_conditions[index_of_conditions];
+		const matched_condition = match_condition.call(this, conditions, word_data, index, tagged_word_list);
+		if (matched_condition) {
+			return { matched_condition, convert_to_conditions };
+		}
+	}
+
+	return { convert_to_conditions };
+}
+
+const get_all_possible_matched_condition_options = [{ try_tag: true }, , { try_tag: true, search_pattern: true }, { search_pattern: true }];
+function get_all_possible_matched_condition(word_data, convertion_pairs, index, tagged_word_list) {
+	let best_matched_data;
+	for (const options of get_all_possible_matched_condition_options) {
+		const matched_data = get_matched_condition.call(this, word_data, convertion_pairs, index, tagged_word_list, options);
+		if (matched_data) {
+			if (matched_data.matched_condition)
+				return matched_data;
+			best_matched_data = best_matched_data || matched_data;
+		}
+	}
+
+	return best_matched_data;
+}
+
 // ----------------------------------------------------------------------------
+
+//const web_request_queues_count = new Map;
+const web_request_queues = new Map;
+// 控制流量，依照順序傳輸，別一次全部衝上去。
+function add_new_web_request(host, promise) {
+	if (web_request_queues.has(host)) {
+		//console.log([web_request_queues_count, web_request_queues, promise]);
+		//web_request_queues_count.set(host, web_request_queues_count.get(host) + 1);
+		//console.log(`Set ${web_request_queues_count.get(host)} ${host}`);
+		const _promise = promise;
+		promise = web_request_queues.get(host).catch(() => null)
+			//.then(() => { web_request_queues_count.set(host, web_request_queues_count.get(host) - 1); console.log(`Requesting ${web_request_queues_count.get(host)} ${host}`) })
+			.then(() => _promise);
+		//web_request_queues_count.set(host, 0);
+	}
+	web_request_queues.set(host, promise);
+	return promise;
+}
+
+// ----------------------------------------------
 
 // POS tagging 词性标注 詞性標注
 function tag_paragraph_jieba(paragraph, options) {
 	return nodejieba_CN.tag(paragraph);
 }
 
-function parse_LTP_result(parsed) {
+const KEY_prefix_spaces = Symbol('prefix spaces');
+function recover_spaces(parsed, paragraph) {
+	const KEY_word = this.KEY_word;
+	let offset = 0;
+	for (let parsed_index = 0; parsed_index < parsed.length; parsed_index++) {
+		const word_data = parsed[parsed_index];
+		const word = word_data[KEY_word];
+		const index = paragraph.indexOf(word, offset);
+		if (index === offset) {
+			offset += word.length;
+			continue;
+		}
+
+		if (index > offset) {
+			word_data[KEY_prefix_spaces] = paragraph.substring(offset, index);
+			offset = index + word.length;
+			continue;
+		}
+
+		throw new Error(`Not found: ${JSON.stringify(word)} in ${paragraph}`);
+	}
+
+	if (offset < paragraph.length)
+		parsed.push({ [KEY_word]: paragraph.slice(offset) });
+	//console.trace(parsed);
+}
+
+function parse_LTP_result(parsed, options) {
 	parsed = JSON.parse(parsed);
 	//console.trace(parsed);
 	if (!Array.isArray(parsed))
 		parsed = [parsed];
 
-	const result = parsed.map(parsed_paragraph => {
-		return parsed_paragraph.words;
+	const result = parsed.map((parsed_paragraph, index) => {
+		const words = parsed_paragraph.words;
+		if (!options.ignore_spaces && words[words.length - 1].offset + words[words.length - 1].length !== options.original_paragraphs[index].length) {
+			//https://github.com/HIT-SCIR/ltp/issues/201
+			//https://github.com/HIT-SCIR/ltp/issues/204
+			//https://github.com/HIT-SCIR/ltp/issues/408#issuecomment-686915450
+			//console.trace(`Need recover spaces: ${options.original_paragraphs[index]}→${words.map(word_data => word_data[this.KEY_word]).join('')}`);
+			recover_spaces.call(this, words, options.original_paragraphs[index]);
+		}
+		return words;
 	});
 	//console.trace(JSON.stringify(result));
 	return result;
+}
+
+// http://ltp.ai/docs/quickstart.html#ltp-server
+function get_LTP_data(paragraphs, options) {
+	return add_new_web_request(this.LTP_URL, new Promise((resolve, reject) => {
+		CeL.get_URL(this.LTP_URL, (XMLHttp, error) => {
+			if (error) {
+				reject(error);
+			} else {
+				//console.log(paragraph);
+				options = { ...options, original_paragraphs: [paragraphs] };
+				resolve(parse_LTP_result.call(this, XMLHttp.responseText, options)[0]);
+			}
+		}, null, { text: paragraphs }, {
+			headers: {
+				'Content-Type': 'Content-type: application/json; charset=utf-8'
+			}
+		})
+	}));
 }
 
 // @see ltp_parse.py
@@ -439,7 +560,8 @@ function tag_paragraph_LTP(paragraphs, options) {
 		parsed = parsed.toString();
 		//console.trace(parsed);
 		parsed = parsed.between(MARK_result_starts);
-		const result = parse_LTP_result.call(this, parsed);
+		options = { ...options, original_paragraphs: paragraphs };
+		const result = parse_LTP_result.call(this, parsed, options);
 		if (!is_Array) {
 			// assert: result.length === 1
 			return result[0];
@@ -448,21 +570,7 @@ function tag_paragraph_LTP(paragraphs, options) {
 		return result;
 	}
 
-	// http://ltp.ai/docs/quickstart.html#ltp-server
-	return new Promise((resolve, reject) => {
-		CeL.get_URL(this.LTP_URL, (XMLHttp, error) => {
-			if (error) {
-				reject(error);
-			} else {
-				//console.log(paragraph);
-				resolve(parse_LTP_result.call(this, XMLHttp.responseText)[0]);
-			}
-		}, null, { text: paragraphs }, {
-			headers: {
-				'Content-Type': 'Content-type: application/json; charset=utf-8'
-			}
-		})
-	});
+	return get_LTP_data.call(this, paragraphs, options);
 }
 
 function convert_CoreNLP_result(result) {
@@ -487,7 +595,7 @@ function convert_CoreNLP_result(result) {
 // using Stanford CoreNLP
 function tag_paragraph_via_CoreNLP(paragraph, options) {
 	//paragraph = encodeURIComponent(paragraph);
-	return new Promise((resolve, reject) => {
+	return add_new_web_request(this.CoreNLP_URL, new Promise((resolve, reject) => {
 		this.CoreNLP_URL_properties.date = new Date;
 		this.CoreNLP_URL.searchParams.set('properties', JSON.stringify(this.CoreNLP_URL_properties));
 		this.CoreNLP_URL.searchParams.set('pipelineLanguage', 'zh');
@@ -500,7 +608,7 @@ function tag_paragraph_via_CoreNLP(paragraph, options) {
 				resolve(convert_CoreNLP_result(XMLHttp.responseText));
 			}
 		}, null, paragraph)
-	});
+	}));
 }
 
 // --------------------------
@@ -538,49 +646,45 @@ function convert_paragraph(paragraph, options) {
 	const word_mode_options = { mode: 'word_first', ...options };
 
 	let converted_text = tagged_word_list.map((word_data, index) => {
-		let convert_to_conditions = get_convert_to_conditions.call(this, word_data, convertion_pairs, { try_tag: true })
-			|| get_convert_to_conditions.call(this, word_data, convertion_pairs)
-			// TODO: 將 {Array} 之 pattern 轉成 {Regexp} 之 pattern，採用 .replace(pattern, token => match_condition(token))。
-			|| get_convert_to_conditions.call(this, word_data, convertion_pairs, { try_tag: true, search_pattern: true })
-			|| get_convert_to_conditions.call(this, word_data, convertion_pairs, { search_pattern: true });
-		//console.trace([word_data, convert_to_conditions]);
-		//console.trace(convert_to_conditions);
-		if (!convert_to_conditions) {
+		const best_matched_data = get_all_possible_matched_condition.call(this, word_data, convertion_pairs, index, tagged_word_list);
+		if (!best_matched_data) {
 			return word_convert_mode ? forced_convert(word_data[this.KEY_word], index, tagged_word_list, word_mode_options) : word_data[this.KEY_word];
 		}
 
-		// assert: convert_to_conditions = [{ [this.KEY_word]: '詞', [this.KEY_PoS_tag]: '詞性' }, { [this.KEY_word]: '詞', [this.KEY_PoS_tag]: '詞性' }, ...]
-		for (let index_of_conditions = 0; index_of_conditions < convert_to_conditions.length; index_of_conditions++) {
-			const conditions = convert_to_conditions[index_of_conditions];
-			const to_word_data = match_condition.call(this, conditions, word_data, index, tagged_word_list);
-			if (to_word_data) {
-				let word = word_data[this.KEY_word], to_word = to_word_data[this.KEY_word];
-				if (to_word) {
-					if (to_word.replace_to) {
-						// {RegExp}to_word
-						word = word.replace(to_word, to_word.replace_to);
-					} else if (typeof to_word === 'string') {
-						word = to_word;
-					} else {
-						throw new Error('Invalid KEY_word: ' + to_word);
-					}
+		//const { convert_to_conditions, matched_condition } = best_matched_data;
+		const to_word_data = best_matched_data.matched_condition;
+		if (to_word_data) {
+			let word = word_data[this.KEY_word], to_word = to_word_data[this.KEY_word];
+			if (to_word) {
+				if (to_word.replace_to) {
+					// {RegExp}to_word
+					word = word.replace(to_word, to_word.replace_to);
+				} else if (typeof to_word === 'string') {
+					word = to_word;
+				} else {
+					throw new Error('Invalid KEY_word: ' + to_word);
 				}
-				const do_after_converting = to_word_data.do_after_converting;
-				if (do_after_converting) {
-					word = forced_convert(word, index, tagged_word_list, word_mode_options);
-					word = word.replace(do_after_converting, do_after_converting.replace_to);
-				}
-				return word;
 			}
+			const do_after_converting = to_word_data.do_after_converting;
+			if (do_after_converting) {
+				word = forced_convert(word, index, tagged_word_list, word_mode_options);
+				word = word.replace(do_after_converting, do_after_converting.replace_to);
+			}
+			return word;
 		}
 
 		// return the best guess.
-		const best_guess_word = convert_to_conditions[0][this.KEY_word];
+		const best_guess_word = best_matched_data.convert_to_conditions[0][this.KEY_word];
 		if (best_guess_word && typeof best_guess_word === 'string')
 			return best_guess_word;
 
 		return word_convert_mode ? forced_convert(word_data[this.KEY_word], index, tagged_word_list, word_mode_options) : word_data[this.KEY_word];
-	}).join('');
+	});
+	tagged_word_list.forEach((word_data, index) => {
+		if (word_data[KEY_prefix_spaces])
+			converted_text[index] = word_data[KEY_prefix_spaces] + converted_text[index];
+	});
+	converted_text = converted_text.join('');
 
 	if (!word_convert_mode) {
 		converted_text = forced_convert(converted_text);
