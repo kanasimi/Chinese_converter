@@ -127,7 +127,7 @@ class Server(object):
 
 # -----------------------------------------------------------------------------
 new_Server = Server()
-print("Parse paragraph " + json.dumps(paragraphs, separators = (',', ':')) + " using LTP...")
+#print("Parse paragraph " + json.dumps(paragraphs, separators = (',', ':')) + " using LTP...")
 
 def parse_paragraph(paragraph):
     return new_Server._predict([paragraph])[0]

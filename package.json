@@ -2,10 +2,14 @@
 	"name": "cecc",
 	"title": "Convert between Traditional Chinese and Simplified Chinese. 繁體中文↔簡體中文轉換",
 	"version": "0.4.0",
-	"description": "Chinese converter between Traditional Chinese and Simplified Chinese. 繁體中文↔簡體中文轉換",
+	"description": "追求正確率 先分詞再繁簡轉換 繁體中文↔簡體中文轉換 Chinese converter between Traditional Chinese and Simplified Chinese.",
 	"keywords": [
-		"Chinese",
-		"conversion"
+		"chinese-converter",
+		"chinese-simplified",
+		"chinese-traditional",
+		"simplified-chinese",
+		"traditional-chinese",
+		"traditional-chinese-conversion"
 	],
 	"author": {
 		"name": "vimunci",
@@ -42,7 +46,6 @@
 	"devDependencies": {
 	},
 	"dependencies": {
-		"nodejieba": "latest",
 		"cejs": "latest"
 	}
 }

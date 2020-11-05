@@ -140,7 +140,7 @@ class Chinese_converter {
 		try {
 			const result = await get_LTP_data.call(options, '测试');
 			return Array.isArray(result) && options.LTP_URL;
-		} catch{ }
+		} catch { }
 	}
 	//#parse_condition = parse_condition
 }
@@ -313,7 +313,14 @@ function load_dictionary(file_path, options) {
 	convertion_pairs.set(KEY_general_pattern_filter, new Map);
 
 	for (let conditions of word_list) {
-		conditions = conditions.trim().split('\t');
+		conditions = conditions.trim();
+		if (!conditions)
+			continue;
+		conditions = conditions.split('\t');
+		if (conditions.length < 2) {
+			CeL.error(`${load_dictionary.name}: 未設定轉換條件: ${conditions.join('\t')}`);
+			continue;
+		}
 		const filter = parse_condition.call(this, conditions[0]);
 		if (!filter[this.KEY_word] && !filter[this.KEY_PoS_tag]) {
 			if (conditions[0].trim())
@@ -339,7 +346,17 @@ function condition_filter_LTP(single_condition, word_data, options) {
 	//console.trace([single_condition, word_data, options]);
 	if (single_condition.filter_name === word_data.relation) {
 		//console.trace([single_condition.filter_target, options.tagged_word_list[word_data.parent]]);
+		// e.g., ~只<ATT>b:/表/
 		return match_single_condition.call(this, single_condition.filter_target, options.tagged_word_list[word_data.parent], options);
+	}
+
+	let matched = single_condition.filter_name.match(/role(?:\.(type))?/);
+	if (matched) {
+		const test_type = matched[1], filter_target = single_condition.filter_target;
+		//console.trace([single_condition, word_data.roles]);
+		return word_data.roles.some(role => test_type ? role[test_type] === filter_target[this.KEY_word]
+			: match_single_condition.call(this, filter_target, role, options)
+		);
 	}
 }
 
@@ -463,7 +480,9 @@ function add_new_web_request(host, promise) {
 		//web_request_queues_count.set(host, web_request_queues_count.get(host) + 1);
 		//console.log(`Set ${web_request_queues_count.get(host)} ${host}`);
 		const _promise = promise;
-		promise = web_request_queues.get(host).catch(() => null)
+		promise = web_request_queues.get(host)
+			// clean error
+			.catch(() => null)
 			//.then(() => { web_request_queues_count.set(host, web_request_queues_count.get(host) - 1); console.log(`Requesting ${web_request_queues_count.get(host)} ${host}`) })
 			.then(() => _promise);
 		//web_request_queues_count.set(host, 0);
@@ -641,7 +660,10 @@ function convert_paragraph(paragraph, options) {
 	}
 
 	const convertion_pairs = this.convertion_pairs[options.convert_to_language];
-	const forced_convert = (options.convert_to_language === 'TW' ? forced_convert_to_TW : forced_convert_to_CN).bind(this);
+	const forced_convert = (options.convert_to_language === 'TW'
+		? this.CN_to_TW || forced_convert_to_TW
+		: this.TW_to_CN || forced_convert_to_CN
+	).bind(this);
 	const word_convert_mode = !options.forced_convert_mode || options.forced_convert_mode === 'word';
 	const word_mode_options = { mode: 'word_first', ...options };
 
@@ -673,6 +695,8 @@ function convert_paragraph(paragraph, options) {
 			return word;
 		}
 
+		if (!best_matched_data.convert_to_conditions[0])
+			console.trace(best_matched_data)
 		// return the best guess.
 		const best_guess_word = best_matched_data.convert_to_conditions[0][this.KEY_word];
 		if (best_guess_word && typeof best_guess_word === 'string')
@@ -680,6 +704,7 @@ function convert_paragraph(paragraph, options) {
 
 		return word_convert_mode ? forced_convert(word_data[this.KEY_word], index, tagged_word_list, word_mode_options) : word_data[this.KEY_word];
 	});
+	// 維持與輸入相同格式。
 	tagged_word_list.forEach((word_data, index) => {
 		if (word_data[KEY_prefix_spaces])
 			converted_text[index] = word_data[KEY_prefix_spaces] + converted_text[index];
