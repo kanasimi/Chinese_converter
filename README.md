@@ -14,20 +14,21 @@
 在人工智慧繁簡轉換前，中文分詞（中文斷詞）、判斷語境之後再做轉換，應比單純詞彙比對更準確。辭典應可如維基百科般由眾人編輯，且記錄改變原由，加進 test suit。
 
 ## Concepts
-1. 中文分詞（附帶詞性標註）+自動判斷句子、段落的語境（配合維基百科專有名詞轉換）
-2. 繁簡轉換（先輕量化繁簡轉換辭典負擔）
+1. 先中文分詞（附帶詞性標註）+自動判斷句子、段落的語境（配合[維基百科專有名詞轉換](https://zh.wikipedia.org/wiki/Wikipedia:%E5%AD%97%E8%A9%9E%E8%BD%89%E6%8F%9B%E8%99%95%E7%90%86/%E5%85%AC%E5%85%B1%E8%BD%89%E6%8F%9B%E7%B5%84)）
+2. 再繁簡轉換（輕量化繁簡轉換辭典負擔）
 
 ## Features
 
 ## Installation
 Install [LTP](https://github.com/HIT-SCIR/ltp) first.
 
-經實測，採用哈工大 [LTP](https://github.com/HIT-SCIR/ltp) 的[服務端版本](http://ltp.ai/docs/quickstart.html#ltp-server)，可正確 繁→簡→繁 轉換[測試檔](tree/master/_test%20suite/articles)中的文字。
+經實測，採用哈工大 [LTP](https://github.com/HIT-SCIR/ltp) 的[服務端版本](http://ltp.ai/docs/quickstart.html#ltp-server)，配合[相對應辭典](dictionaries/CN_to_TW.LTP.PoS.txt)，可正確 繁→簡→繁 轉換[測試檔](_test%20suite/articles)中的文字。
 
 ### Install 中文分詞: LTP
 On Windows, install LTP:
 1. [安裝 Pytorch](https://codertw.com/%E7%A8%8B%E5%BC%8F%E8%AA%9E%E8%A8%80/635797/)。如果 `pip install ltp` 不成功則
    至[Pytorch 官方網站](http://pytorch.org/)選擇合適版本離線安裝。
+
    CUDA version: `nvidia-smi`
 
    `pip install torch-*.whl`
@@ -74,7 +75,7 @@ cecc.to_CN('繁體中文');
 ## See also
 ### 中文分詞
 * [“结巴”中文分词](https://github.com/fxsjy/jieba) [繁體版本](https://github.com/ldkrsi/jieba-zh_TW)
-** [用 JS 做語意分析是不是搞錯了什麼(一)：斷詞篇](https://noob.tw/js-nlp-jieba/)
+   * [用 JS 做語意分析是不是搞錯了什麼(一)：斷詞篇](https://noob.tw/js-nlp-jieba/)
 * [Ansj中文分词](https://github.com/NLPchina/ansj_seg)
 
 ### 詞性標記 词性标注
@@ -93,3 +94,5 @@ cecc.to_CN('繁體中文');
 * [OpenCC](https://github.com/BYVoid/OpenCC)
 * [新同文堂](https://github.com/tongwentang/tongwen-core)
 * [ConvertZZ](https://github.com/flier268/ConvertZZ)
+* [繁化姬](https://zhconvert.org/)
+* 厦门大学 [汉字简繁文本智能转换系统](http://jf.xmu.edu.cn/)

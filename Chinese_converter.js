@@ -232,12 +232,17 @@ function parse_condition(condition) {
 		return condition_data;
 	});
 
+	if (!(target_index >= 0)) {
+		// 當僅僅只有單一 token 時，預設即為當前標的。
+		condition[0].is_target = true;
+	}
+
 	if (condition.length === 1) {
 		return condition[0];
 	}
 
-	if (target_index >= 0)
-		condition.target_index = target_index;
+	// default: set [0] as target.
+	condition.target_index = target_index || 0;
 
 	return condition;
 }
@@ -345,13 +350,27 @@ function load_dictionary(file_path, options) {
 function condition_filter_LTP(single_condition, word_data, options) {
 	//console.trace([single_condition, word_data, options]);
 	if (single_condition.filter_name === word_data.relation) {
+		// 指定關係。
 		//console.trace([single_condition.filter_target, options.tagged_word_list[word_data.parent]]);
 		// e.g., ~只<ATT>b:/表/
 		return match_single_condition.call(this, single_condition.filter_target, options.tagged_word_list[word_data.parent], options);
 	}
 
-	let matched = single_condition.filter_name.match(/role(?:\.(type))?/);
+	let matched;
+
+	matched = single_condition.filter_name.match(/^←(.+)$/);
 	if (matched) {
+		// 搜尋反向關係。
+		return options.tagged_word_list.some(word_data_to_test =>
+			word_data_to_test.parent === word_data.id
+			&& word_data_to_test.relation === matched[1]
+			&& match_single_condition.call(this, single_condition.filter_target, word_data_to_test, options)
+		);
+	}
+
+	matched = single_condition.filter_name.match(/role(?:\.(type))?/);
+	if (matched) {
+		// 搜尋 roles。
 		const test_type = matched[1], filter_target = single_condition.filter_target;
 		//console.trace([single_condition, word_data.roles]);
 		return word_data.roles.some(role => test_type ? role[test_type] === filter_target[this.KEY_word]
@@ -668,13 +687,13 @@ function convert_paragraph(paragraph, options) {
 	const word_mode_options = { mode: 'word_first', ...options };
 
 	let converted_text = tagged_word_list.map((word_data, index) => {
-		const best_matched_data = get_all_possible_matched_condition.call(this, word_data, convertion_pairs, index, tagged_word_list);
-		if (!best_matched_data) {
+		const matched_condition_data = get_all_possible_matched_condition.call(this, word_data, convertion_pairs, index, tagged_word_list);
+		if (!matched_condition_data) {
 			return word_convert_mode ? forced_convert(word_data[this.KEY_word], index, tagged_word_list, word_mode_options) : word_data[this.KEY_word];
 		}
 
-		//const { convert_to_conditions, matched_condition } = best_matched_data;
-		const to_word_data = best_matched_data.matched_condition;
+		//const { convert_to_conditions, matched_condition } = matched_condition_data;
+		const to_word_data = matched_condition_data.matched_condition;
 		if (to_word_data) {
 			let word = word_data[this.KEY_word], to_word = to_word_data[this.KEY_word];
 			if (to_word) {
@@ -695,12 +714,16 @@ function convert_paragraph(paragraph, options) {
 			return word;
 		}
 
-		if (!best_matched_data.convert_to_conditions[0])
-			console.trace(best_matched_data)
-		// return the best guess.
-		const best_guess_word = best_matched_data.convert_to_conditions[0][this.KEY_word];
-		if (best_guess_word && typeof best_guess_word === 'string')
-			return best_guess_word;
+		if (false) {
+			if (!matched_condition_data.convert_to_conditions[0])
+				console.trace(matched_condition_data);
+			// return the best guess.
+			const best_guess_word = matched_condition_data.convert_to_conditions[0][this.KEY_word];
+			if (best_guess_word && typeof best_guess_word === 'string') {
+				console.trace([word_data, matched_condition_data.convert_to_conditions]);
+				return best_guess_word;
+			}
+		}
 
 		return word_convert_mode ? forced_convert(word_data[this.KEY_word], index, tagged_word_list, word_mode_options) : word_data[this.KEY_word];
 	});

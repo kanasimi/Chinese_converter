@@ -5,7 +5,7 @@ const CeCC = require('../Chinese_converter.js');
 const cecc = new CeCC({
 	// using LTP
 	using_LTP: true,
-	LTP_URL : 'http://localhost:5000/',
+	LTP_URL: 'http://localhost:5000/',
 
 	// using Stanford CoreNLP
 	//CoreNLP_URL: 'http://localhost:9000/',
@@ -76,10 +76,11 @@ add_test('正確率檢核', async (assert, setup_test, finish_test, options) => 
 		const file_is_CN = /\.CN\./i.test(file_name);
 		const test_name = `${file_is_CN ? '簡→' : ''}繁→簡→繁：${file_name}`;
 		setup_test(test_name);
-		const content_paragraphs = CeL.read_file(articles_directory + file_name).toString()
-			.replace(/<!--[\s\S]*?-->/g, '')
+		const content_paragraphs = CeL.data.pair.remove_comments(CeL.read_file(articles_directory + file_name).toString())
+			// 注意：LTP 於末尾有無句號、數個句子是合併或拆分解析，會有不同解析結果。
+			// (?:[。!？]|……)[\r\n]*|
 			.split(/[\r\n]+/)
-			.map(line => line.trim()).filter(line => !!line);
+			.map(line => line.trim()).filter(line => !!line && !/^(\/\/)/.test(line));
 		let TW_paragraphs, converted_CN, tagged_word_list_of_paragraphs;
 		if (file_is_CN) {
 			TW_paragraphs = await cecc.to_TW(content_paragraphs);
