@@ -11,7 +11,7 @@
 [![DeepScan grade](https://deepscan.io/api/teams/4788/projects/14427/branches/268541/badge/grade.svg)](https://deepscan.io/dashboard#view=project&tid=4788&pid=14427&bid=268541)
 
 # CeCC - Colorless echo Chinese converter
-在人工智慧繁簡轉換前，中文分詞（中文斷詞）、判斷語境之後再做轉換，應比單純詞彙比對更準確。辭典應可如維基百科般由眾人編輯，且記錄改變原由，加進 test suit。
+在人工智慧讀通文義、繁簡轉換前，中文分詞（中文斷詞）、判斷語境之後再做轉換，應比單純詞彙比對更準確。辭典應可如維基百科般由眾人編輯，且記錄改變原由，加進 test suit。
 
 ## Concepts
 1. 先中文分詞（附帶詞性標註）+自動判斷句子、段落的語境（配合[維基百科專有名詞轉換](https://zh.wikipedia.org/wiki/Wikipedia:%E5%AD%97%E8%A9%9E%E8%BD%89%E6%8F%9B%E8%99%95%E7%90%86/%E5%85%AC%E5%85%B1%E8%BD%89%E6%8F%9B%E7%B5%84)）
@@ -22,7 +22,7 @@
 ## Installation
 Install [LTP](https://github.com/HIT-SCIR/ltp) first.
 
-經實測，採用哈工大 [LTP](https://github.com/HIT-SCIR/ltp) 的[服務端版本](http://ltp.ai/docs/quickstart.html#ltp-server)，配合[相對應辭典](dictionaries/CN_to_TW.LTP.PoS.txt)，可正確 繁→簡→繁 轉換[測試檔](_test%20suite/articles)中的文字。
+經實測，採用哈工大 [LTP](https://github.com/HIT-SCIR/ltp) 4、Small 模型的[服務端版本](http://ltp.ai/docs/quickstart.html#ltp-server)，配合[相對應辭典](dictionaries/CN_to_TW.LTP.PoS.txt)，可正確 繁→簡→繁 轉換[測試檔](_test%20suite/articles)中的文字。
 
 ### Install 中文分詞: LTP
 On Windows, install LTP:
@@ -83,9 +83,9 @@ cecc.to_CN('繁體中文');
 * [Stanford CoreNLP](https://stanfordnlp.github.io/CoreNLP/) [線上展示](https://corenlp.run/)
 * [中央研究院語言所 中文斷詞系統](http://ckipsvr.iis.sinica.edu.tw/) [線上展示](http://sunlight.iis.sinica.edu.tw/uwextract/demo.htm)
 * [CKIP Lab](https://ckip.iis.sinica.edu.tw/) [CkipTagger開源中文處理工具](https://github.com/ckiplab/ckiptagger) [線上展示](https://ckip.iis.sinica.edu.tw/service/corenlp/)
+* 清华大学 [THULAC](http://thulac.thunlp.org/) [線上展示](http://thulac.thunlp.org/demo)
 
 * [NLPIR](https://github.com/NLPIR-team/NLPIR) [中科院计算所 词性类别](http://103.242.175.216:197/nlpir/)
-* 清华大学 [THULAC](http://thulac.thunlp.org/)
 
 * [中文分词工具比较](https://blog.csdn.net/zzzzlei123123123/article/details/104227223)
 * [词性标注的简单综述](https://www.zzjw.cc/2019/11/23/pos-review/)

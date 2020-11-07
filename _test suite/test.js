@@ -72,6 +72,7 @@ function add_test(test_name, conditions) {
 add_test('正確率檢核', async (assert, setup_test, finish_test, options) => {
 	const articles_directory = module.path + '/articles/';
 	const file_list = CeL.storage.read_directory(articles_directory);
+	let error_count = 0;
 	for (const file_name of file_list) {
 		const file_is_CN = /\.CN\./i.test(file_name);
 		const test_name = `${file_is_CN ? '簡→' : ''}繁→簡→繁：${file_name}`;
@@ -95,16 +96,25 @@ add_test('正確率檢核', async (assert, setup_test, finish_test, options) => 
 			converted_CN = await cecc.to_CN(TW_paragraphs);
 		}
 
-		let converted_TW = await cecc.to_TW(converted_CN, { get_full_data: true });
+		let converted_TW = await cecc.to_TW(converted_CN, { get_full_data: true, generate_condition: true, should_be: TW_paragraphs });
 		tagged_word_list_of_paragraphs = converted_TW.tagged_word_list_of_paragraphs;
 		converted_TW = converted_TW.converted_paragraphs;
 		for (let index = 0; index < TW_paragraphs.length; index++) {
 			if (!assert([converted_TW[index], TW_paragraphs[index]], file_name + ` #${index + 1}`)) {
 				CeL.info(`　 繁\t${JSON.stringify(TW_paragraphs[index])}\n→ 簡\t${JSON.stringify(converted_CN[index])}\n→ 繁\t${JSON.stringify(converted_TW[index])}`);
-				if (tagged_word_list_of_paragraphs) {
-					console.log(tagged_word_list_of_paragraphs[index]);
-				} else {
-					console.log(await cecc.tag_paragraph(converted_CN[index]));
+				TW_paragraphs.correction_conditions[index].forEach(correction => {
+					if (correction.parsed[CeCC.KEY_matched_condition]) {
+						CeL.log('Matched condition: ' + correction.parsed[CeCC.KEY_matched_condition].condition_text);
+					}
+					// 自動提供候選條件式。
+					CeL.log(`Candidate correction for ${correction.parsed.text}:\n${correction.join('\t')}`);
+				});
+				if (error_count++ < 40) {
+					if (tagged_word_list_of_paragraphs) {
+						console.log(tagged_word_list_of_paragraphs[index]);
+					} else {
+						console.log(await cecc.tag_paragraph(converted_CN[index]));
+					}
 				}
 			}
 		}

@@ -1,6 +1,6 @@
 /*
 
-// ª`ÄÀ/¨Ò¥y
+// æ³¨é‡‹/ä¾‹å¥
 from	default
 from	PoS:default
 from	condition1	condition2
@@ -8,8 +8,14 @@ from	PoS:default condition1	condition2
 
 format of condition: @see parse_condition() @ Chinese_converter.js
 
-LTP tag (PoS) µü©Ê¼Ğ°O: LTP¤¤±Ä¥Î863µü©Ê¼Ğµù¶°
+LTP tag (PoS) è©æ€§æ¨™è¨˜: LTPä¸­æ¡ç”¨863è©æ€§æ¨™è¨»é›†
 https://www.twblogs.net/a/5d4d0684bd9eee541c30e4f8
 https://www.cnblogs.com/CheeseZH/p/4682353.html
 
+demo:
+http://ltp.ai/demo.html
+
 */
+
+
+è‘—ä½œ	~

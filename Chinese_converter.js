@@ -145,6 +145,8 @@ class Chinese_converter {
 	//#parse_condition = parse_condition
 }
 
+Chinese_converter.KEY_matched_condition = 'matched condition';
+
 // ----------------------------------------------------------------------------
 
 /*
@@ -182,14 +184,20 @@ const PATTERN_condition = /^(?<is_target>~)?(?<not_match>!)?(?:(?<tag>[^:+<>]+):
 // [ all, word, do_after_converting ]
 const PATTERN_do_after_converting = new RegExp('^(?<word>.*?)~(?<do_after_converting>' + CeL.PATTERN_RegExp_replacement.source.slice(1, -1) + ')$');
 
+function word_data_to_condition(word_data, options) {
+	const tag = word_data[this.KEY_PoS_tag];
+	return (tag ? tag + ':' : '') + (word_data[this.KEY_word] || '');
+}
+
+// parse rule
 // convert {String}condition to {Object}word_data or {Object}condition
-function parse_condition(condition) {
+function parse_condition(condition, options) {
 	condition = condition.split('+');
 	let target_index;
 	condition = condition.map((token, index) => {
 		const matched = token.match(PATTERN_condition).groups;
-		const condition_data = Object.create(null);
-		if (matched.is_target) {
+		const condition_data = { condition_text: token };
+		if (matched.is_target && !options?.no_target) {
 			condition_data.is_target = true;
 			if (target_index >= 0)
 				CeL.warn(`${parse_condition.name}: Multiple target: ${condition.join('+')}`);
@@ -212,7 +220,7 @@ function parse_condition(condition) {
 				Object.assign(condition_data, {
 					[this.KEY_word]: filter.word,
 					[KEY_filter_name]: filter.filter_name,
-					filter_target: parse_condition.call(this, filter.filter_target)
+					filter_target: parse_condition.call(this, filter.filter_target, { no_target: true })
 				});
 				//console.trace(condition_data);
 			} else {
@@ -232,7 +240,7 @@ function parse_condition(condition) {
 		return condition_data;
 	});
 
-	if (!(target_index >= 0)) {
+	if (!(target_index >= 0) && !options?.no_target) {
 		// 當僅僅只有單一 token 時，預設即為當前標的。
 		condition[0].is_target = true;
 	}
@@ -241,8 +249,10 @@ function parse_condition(condition) {
 		return condition[0];
 	}
 
-	// default: set [0] as target.
-	condition.target_index = target_index || 0;
+	if (!options?.no_target) {
+		// default: set [0] as target.
+		condition.target_index = target_index || 0;
+	}
 
 	return condition;
 }
@@ -337,7 +347,12 @@ function load_dictionary(file_path, options) {
 
 		const convert_to_conditions = get_convert_to_conditions.call(this, filter, convertion_pairs, { create: true, try_tag: true });
 		for (let index = 1; index < conditions.length; index++) {
-			const condition = parse_condition.call(this, conditions[index]);
+			let condition = conditions[index];
+			if (!condition.trim()) {
+				CeL.error(`${load_dictionary.name}: Empty condition[${index}] in ${JSON.stringify(conditions)}`);
+				continue;
+			}
+			condition = parse_condition.call(this, condition);
 			// TODO: 將 {Array} 之 pattern 轉成 {Regexp} 之 pattern，採用 .replace(pattern, token => match_condition(token))。
 			convert_to_conditions.push(condition);
 		}
@@ -368,14 +383,20 @@ function condition_filter_LTP(single_condition, word_data, options) {
 		);
 	}
 
-	matched = single_condition.filter_name.match(/role(?:\.(type))?/);
+	matched = single_condition.filter_name.match(/(?<property_name>(?:role|parent))(?:\.(?<sub_property_name>[^:]+):(?<sub_property_value>.+))?/);
 	if (matched) {
-		// 搜尋 roles。
-		const test_type = matched[1], filter_target = single_condition.filter_target;
-		//console.trace([single_condition, word_data.roles]);
-		return word_data.roles.some(role => test_type ? role[test_type] === filter_target[this.KEY_word]
-			: match_single_condition.call(this, filter_target, role, options)
-		);
+		matched = matched.groups;
+		const filter_target = single_condition.filter_target;
+		//console.trace([single_condition, matched, word_data]);
+		// e.g., 沖<role.type:A1>/[水浴杯]/
+		// 搜尋 roles / parents。
+		return word_data[matched.property_name + 's'].some(token => {
+			if (token.parent in options.tagged_word_list) {
+				Object.assign(token, options.tagged_word_list[token.parent]);
+			}
+			return (!matched.sub_property_name || token[matched.sub_property_name] === matched.sub_property_value)
+				&& match_single_condition.call(this, filter_target, token, options);
+		});
 	}
 }
 
@@ -531,7 +552,7 @@ function recover_spaces(parsed, paragraph) {
 		}
 
 		if (index > offset) {
-			word_data[KEY_prefix_spaces] = paragraph.substring(offset, index);
+			word_data[KEY_prefix_spaces] = paragraph.slice(offset, index);
 			offset = index + word.length;
 			continue;
 		}
@@ -695,6 +716,8 @@ function convert_paragraph(paragraph, options) {
 		//const { convert_to_conditions, matched_condition } = matched_condition_data;
 		const to_word_data = matched_condition_data.matched_condition;
 		if (to_word_data) {
+			if (options.generate_condition)
+				word_data[Chinese_converter.KEY_matched_condition] = to_word_data;
 			let word = word_data[this.KEY_word], to_word = to_word_data[this.KEY_word];
 			if (to_word) {
 				if (to_word.replace_to) {
@@ -714,17 +737,6 @@ function convert_paragraph(paragraph, options) {
 			return word;
 		}
 
-		if (false) {
-			if (!matched_condition_data.convert_to_conditions[0])
-				console.trace(matched_condition_data);
-			// return the best guess.
-			const best_guess_word = matched_condition_data.convert_to_conditions[0][this.KEY_word];
-			if (best_guess_word && typeof best_guess_word === 'string') {
-				console.trace([word_data, matched_condition_data.convert_to_conditions]);
-				return best_guess_word;
-			}
-		}
-
 		return word_convert_mode ? forced_convert(word_data[this.KEY_word], index, tagged_word_list, word_mode_options) : word_data[this.KEY_word];
 	});
 	// 維持與輸入相同格式。
@@ -732,12 +744,64 @@ function convert_paragraph(paragraph, options) {
 		if (word_data[KEY_prefix_spaces])
 			converted_text[index] = word_data[KEY_prefix_spaces] + converted_text[index];
 	});
+
+	if (options.generate_condition && converted_text.join('') !== options.should_be[options.paragraph_index]) {
+		const condition_list = generate_condition_LTP.call(this, { tagged_word_list, converted_text }, options);
+		if (!options.should_be.correction_conditions)
+			options.should_be.correction_conditions = [];
+		options.should_be.correction_conditions[options.paragraph_index] = condition_list;
+	}
+
 	converted_text = converted_text.join('');
 
 	if (!word_convert_mode) {
 		converted_text = forced_convert(converted_text);
 	}
 	return converted_text;
+}
+
+// @inner 自動提供候選條件式。
+function generate_condition_LTP(config, options) {
+	let { tagged_word_list, converted_text } = config;
+	const should_be_text = options.should_be[options.paragraph_index];
+	//console.trace([should_be_text, converted_text, tagged_word_list, options.paragraph_index]);
+
+	let offset = 0;
+	const condition_list = [];
+	tagged_word_list.forEach((word_data, index) => {
+		const converted_to = converted_text[index];
+		const from_slice = should_be_text.substr(offset, converted_to.length);
+		offset += converted_to.length;
+		if (from_slice === converted_to) {
+			return;
+		}
+		//console.trace([from_slice, word_data]);
+
+		const condition = [word_data_to_condition.call(this, word_data)];
+		if (word_data.parent >= 0) {
+			condition.push(`~${from_slice.trim()}<${word_data.relation}>${word_data_to_condition.call(this, tagged_word_list[word_data.parent])}`);
+		}
+		word_data.roles.forEach(role => {
+			condition.push(`~${from_slice.trim()}<role.type:${role.type}>${word_data_to_condition.call(this, role)}`);
+		});
+		word_data.parents.forEach(parent => {
+			if (parent.parent >= 0) {
+				condition.push(`~${from_slice.trim()}<parent.relate:${parent.relate}>${word_data_to_condition.call(this, tagged_word_list[parent.parent])}`);
+			}
+		});
+		// 反向關係。
+		tagged_word_list.forEach((_word_data, _index) => {
+			if (_word_data.parent === /* word_data.id */ index) {
+				condition.push(`~${from_slice.trim()}<←${_word_data.relation}>${word_data_to_condition.call(this, _word_data)}`);
+			}
+		});
+		//CeL.info(`${generate_condition_LTP.name}: Condition for ${word_data[this.KEY_word]}→${from_slice.trim()}:`);
+		Object.assign(condition, { parsed: word_data, target: from_slice.trim() });
+		//CeL.log(condition.join('\t'));
+		condition_list.push(condition);
+	});
+
+	return condition_list;
 }
 
 function convert_Chinese(paragraphs, options) {
@@ -773,11 +837,14 @@ function execute_convert_Chinese(paragraphs, options) {
 	let converted_paragraphs = [];
 	const tagged_word_list_of_paragraphs = options.tagged_word_list_of_paragraphs;
 	let some_async;
-	for (let index = 0; index < paragraphs.length; index++) {
-		const paragraph = paragraphs[index];
+	for (let paragraph_index = 0; paragraph_index < paragraphs.length; paragraph_index++) {
+		const paragraph = paragraphs[paragraph_index];
 		let _options = options;
 		if (Array.isArray(tagged_word_list_of_paragraphs))
-			_options = { ...options, tagged_word_list: tagged_word_list_of_paragraphs[index] };
+			_options = { ...options, paragraph_index, tagged_word_list: tagged_word_list_of_paragraphs[paragraph_index] };
+		if (options.generate_condition) {
+			_options = { ..._options, paragraphs, paragraph_index };
+		}
 		const converted_paragraph = convert_paragraph.call(this, paragraph, _options);
 		converted_paragraphs.push(converted_paragraph);
 		some_async = some_async || CeL.is_thenable(converted_paragraph);
