@@ -11,13 +11,21 @@
 [![DeepScan grade](https://deepscan.io/api/teams/4788/projects/14427/branches/268541/badge/grade.svg)](https://deepscan.io/dashboard#view=project&tid=4788&pid=14427&bid=268541)
 
 # CeCC - Colorless echo Chinese converter
-在人工智慧讀通文義、繁簡轉換前，中文分詞（中文斷詞）、判斷語境之後再做轉換，應比單純詞彙比對更準確。辭典應可如維基百科般由眾人編輯，且記錄改變原由，加進 test suit。
+在人工智慧讀通文義、繁簡轉換前，中文分詞、判斷語境之後再做轉換，應比單純詞彙比對更準確。辭典應可如維基百科般由眾人編輯，且記錄改變原由，加進 test suit。
 
 ## Concepts
 1. 先中文分詞（附帶詞性標註）+自動判斷句子、段落的語境（配合[維基百科專有名詞轉換](https://zh.wikipedia.org/wiki/Wikipedia:%E5%AD%97%E8%A9%9E%E8%BD%89%E6%8F%9B%E8%99%95%E7%90%86/%E5%85%AC%E5%85%B1%E8%BD%89%E6%8F%9B%E7%B5%84)）
 2. 再繁簡轉換（輕量化繁簡轉換辭典負擔）
 
+## Process
+繁簡轉換流程： 
+1. 中文分詞（採用外包程式中文斷詞）
+2. TODO: 判別語境
+3. 依照相應詞典轉換各詞彙
+
 ## Features
+1. 經由判斷詞性，可簡單判斷如何轉換。例如動詞用<code>幹</code>，形容詞用<code>乾</code>。
+2. 自附條件式生成功能，可快速生成辭典用的候選條件式。
 
 ## Installation
 Install [LTP](https://github.com/HIT-SCIR/ltp) first.
@@ -27,7 +35,7 @@ Install [LTP](https://github.com/HIT-SCIR/ltp) first.
 ### Install 中文分詞: LTP
 On Windows, install LTP:
 1. [安裝 Pytorch](https://codertw.com/%E7%A8%8B%E5%BC%8F%E8%AA%9E%E8%A8%80/635797/)。如果 `pip install ltp` 不成功則
-   至[Pytorch 官方網站](http://pytorch.org/)選擇合適版本離線安裝。
+   至 [Pytorch 官方網站](http://pytorch.org/)選擇合適版本離線安裝。
 
    CUDA version: `nvidia-smi`
 
@@ -40,7 +48,7 @@ On Windows, install LTP:
 pip install ltp
 ```
 
-#### Alternative: Install 中文分詞: LTP
+#### Alternative: Install 中文分詞: nodejieba
 Alternative method: On Windows, install [nodejieba](https://github.com/yanyiwu/nodejieba):
 ```cmd
 REM run as Administrator
@@ -60,7 +68,7 @@ npm install cecc
 ```
 
 ## Usage
-1. 啟動 [LTP server](http://ltp.ai/docs/quickstart.html#ltp-server)
+1. 啟動 [LTP server](http://ltp.ai/docs/quickstart.html#ltp-server)，預設為 http://localhost:5000/ 。
 
 2. Try codes:
 ```javascript

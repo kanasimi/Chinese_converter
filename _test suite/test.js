@@ -79,7 +79,7 @@ add_test('正確率檢核', async (assert, setup_test, finish_test, options) => 
 		setup_test(test_name);
 		const content_paragraphs = CeL.data.pair.remove_comments(CeL.read_file(articles_directory + file_name).toString())
 			// 注意：LTP 於末尾有無句號、數個句子是合併或拆分解析，會有不同解析結果。
-			// (?:[。!？]|……)[\r\n]*|
+			// (?:[。？！]|……)[\r\n]*|
 			.split(/[\r\n]+/)
 			.map(line => line.trim()).filter(line => !!line && !/^(\/\/)/.test(line));
 		let TW_paragraphs, converted_CN, tagged_word_list_of_paragraphs;

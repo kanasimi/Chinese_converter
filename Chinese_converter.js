@@ -138,7 +138,7 @@ class Chinese_converter {
 			options = { LTP_URL: 'http://localhost:5000/', ...options };
 
 		try {
-			const result = await get_LTP_data.call(options, '测试');
+			const result = await tag_paragraph_LTP.call(options, '测试');
 			return Array.isArray(result) && options.LTP_URL;
 		} catch { }
 	}
@@ -565,71 +565,178 @@ function recover_spaces(parsed, paragraph) {
 	//console.trace(parsed);
 }
 
-function parse_LTP_result(parsed, options) {
-	parsed = JSON.parse(parsed);
-	//console.trace(parsed);
-	if (!Array.isArray(parsed))
-		parsed = [parsed];
+// @inner 自動生成辭典用的候選條件式。
+function generate_condition_LTP(config, options) {
+	let { tagged_word_list, converted_text } = config;
+	const should_be_text = options.should_be[options.paragraph_index];
+	//console.trace([should_be_text, converted_text, tagged_word_list, options.paragraph_index]);
 
-	const result = parsed.map((parsed_paragraph, index) => {
+	let offset = 0;
+	const condition_list = [];
+	tagged_word_list.forEach((word_data, index) => {
+		const converted_to = converted_text[index];
+		const from_slice = should_be_text.substr(offset, converted_to.length);
+		offset += converted_to.length;
+		if (from_slice === converted_to) {
+			return;
+		}
+		//console.trace([from_slice, word_data]);
+
+		const condition = [word_data_to_condition.call(this, word_data)];
+		if (word_data.parent >= 0) {
+			condition.push(`~${from_slice.trim()}<${word_data.relation}>${word_data_to_condition.call(this, tagged_word_list[word_data.parent])}`);
+		}
+		word_data.roles.forEach(role => {
+			condition.push(`~${from_slice.trim()}<role.type:${role.type}>${word_data_to_condition.call(this, role)}`);
+		});
+		word_data.parents.forEach(parent => {
+			if (parent.parent >= 0) {
+				condition.push(`~${from_slice.trim()}<parent.relate:${parent.relate}>${word_data_to_condition.call(this, tagged_word_list[parent.parent])}`);
+			}
+		});
+		// 反向關係。
+		tagged_word_list.forEach((_word_data, _index) => {
+			if (_word_data.parent === /* word_data.id */ index) {
+				condition.push(`~${from_slice.trim()}<←${_word_data.relation}>${word_data_to_condition.call(this, _word_data)}`);
+			}
+		});
+		//CeL.info(`${generate_condition_LTP.name}: Condition for ${word_data[this.KEY_word]}→${from_slice.trim()}:`);
+		Object.assign(condition, { parsed: word_data, target: from_slice.trim() });
+		//CeL.log(condition.join('\t'));
+		condition_list.push(condition);
+	});
+
+	return condition_list;
+}
+
+function recover_original_paragraphs(parsed, options) {
+	const token_count_array = options.token_count_array;
+	if (!token_count_array)
+		return parsed;
+
+	return token_count_array.map((length, index) => {
+		let parsed_index = index === 0 ? 0 : token_count_array[index - 1];
+		const result_token = parsed[parsed_index];
+		while (++parsed_index < length) {
+			result_token.append(parsed[parsed_index]);
+		}
+		return result_token;
+	});
+}
+
+function parse_LTP_result(parsed, options) {
+	if (typeof parsed === 'string')
+		parsed = JSON.parse(parsed);
+	//console.trace(parsed);
+
+	let result = parsed.map((parsed_paragraph, index) => {
 		const words = parsed_paragraph.words;
-		if (!options.ignore_spaces && words[words.length - 1].offset + words[words.length - 1].length !== options.original_paragraphs[index].length) {
+		if (!options.ignore_spaces && words[words.length - 1].offset + words[words.length - 1].length !== options.paragraphs_before_convert[index].length) {
 			//https://github.com/HIT-SCIR/ltp/issues/201
 			//https://github.com/HIT-SCIR/ltp/issues/204
 			//https://github.com/HIT-SCIR/ltp/issues/408#issuecomment-686915450
-			//console.trace(`Need recover spaces: ${options.original_paragraphs[index]}→${words.map(word_data => word_data[this.KEY_word]).join('')}`);
-			recover_spaces.call(this, words, options.original_paragraphs[index]);
+			//console.trace(`Need recover spaces: ${options.paragraphs_before_convert[index]}→${words.map(word_data => word_data[this.KEY_word]).join('')}`);
+			recover_spaces.call(this, words, options.paragraphs_before_convert[index]);
 		}
 		return words;
 	});
+
+	result = recover_original_paragraphs(result, options);
 	//console.trace(JSON.stringify(result));
+
+	if (!options.is_Array) {
+		// assert: result.length === 1
+		return result[0];
+	}
+
 	return result;
 }
 
 // http://ltp.ai/docs/quickstart.html#ltp-server
-function get_LTP_data(paragraphs, options) {
-	return add_new_web_request(this.LTP_URL, new Promise((resolve, reject) => {
-		CeL.get_URL(this.LTP_URL, (XMLHttp, error) => {
-			if (error) {
-				reject(error);
-			} else {
-				//console.log(paragraph);
-				options = { ...options, original_paragraphs: [paragraphs] };
-				resolve(parse_LTP_result.call(this, XMLHttp.responseText, options)[0]);
-			}
-		}, null, { text: paragraphs }, {
-			headers: {
-				'Content-Type': 'Content-type: application/json; charset=utf-8'
-			}
-		})
-	}));
+function get_LTP_data(options) {
+	//console.trace(options);
+	const parsed_array = [];
+	let promise;
+	options.paragraphs_before_convert.forEach((paragraph, paragraph_index) => {
+		promise = add_new_web_request(this.LTP_URL, new Promise((resolve, reject) => {
+			CeL.get_URL(this.LTP_URL, (XMLHttp, error) => {
+				if (error) {
+					reject(error);
+				} else {
+					//console.log(paragraph);
+					parsed_array[paragraph_index] = JSON.parse(XMLHttp.responseText);
+					resolve();
+				}
+			}, null, { text: paragraph }, {
+				headers: {
+					'Content-Type': 'Content-type: application/json; charset=utf-8'
+				}
+			})
+		}));
+	});
+
+	return promise && promise.then(parse_LTP_result.bind(this, parsed_array, options));
 }
 
-// @see ltp_parse.py
+// @see resources/ltp_parse.py
 const MARK_result_starts = 'Parsed JSON:';
+// assert: LTP_paragraph_MAX_LENGTH <= 510
+const LTP_paragraph_MAX_LENGTH = 500;
+
+function preserve_tail(tail) {
+	return tail.match(/^["'’”」：\s]*/)[0];
+}
 
 function tag_paragraph_LTP(paragraphs, options) {
-	const is_Array = Array.isArray(paragraphs);
-	//console.trace([is_Array, this.LTP_URL]);
-	if (is_Array || !this.LTP_URL) {
-		if (!is_Array)
-			paragraphs = [paragraphs];
+	// 避免污染，重新造一個 options。
+	options = { ...options, is_Array: Array.isArray(paragraphs) };
+	//console.trace([this.LTP_URL, options]);
 
-		let parsed = require('child_process').execFileSync('python3', [module_base_path + 'resources/ltp_parse.py', '-j', JSON.stringify(paragraphs)]);
-		parsed = parsed.toString();
-		//console.trace(parsed);
-		parsed = parsed.between(MARK_result_starts);
-		options = { ...options, original_paragraphs: paragraphs };
-		const result = parse_LTP_result.call(this, parsed, options);
-		if (!is_Array) {
-			// assert: result.length === 1
-			return result[0];
-		}
-
-		return result;
+	// LTP 一次只能處理大約500字左右，因此必須適度切分。
+	//https://github.com/HIT-SCIR/ltp/issues/407#issuecomment-686864300
+	//bert 类的transformers都有512个最大字符长度的限制，然后我们的web demo运行的是base模型
+	//https://github.com/HIT-SCIR/ltp/issues/388
+	//实际上也是510，但是在输入时进行tokenize时，对于数字和英文会产生子词，所以使用字符数估计长度并不准确，另外这段话可以先进行分句操作来避免报错。
+	if (!options.is_Array) {
+		paragraphs = [paragraphs];
 	}
 
-	return get_LTP_data.call(this, paragraphs, options);
+	// @see https://github.com/HIT-SCIR/ltp/blob/master/ltp/utils/sent_split.py
+	if (paragraphs.some(paragraph => paragraph.length > LTP_paragraph_MAX_LENGTH)) {
+		const paragraphs_before_convert = options.paragraphs_before_convert = [];
+		const token_count_array = options.token_count_array = [];
+		paragraphs.forEach(paragraph => {
+			while (paragraph.length > LTP_paragraph_MAX_LENGTH) {
+				const piece = paragraph.slice(0, LTP_paragraph_MAX_LENGTH);
+				let token = piece.replace(/[^。？！…]*$/, preserve_tail)
+					|| piece.replace(/[^.?!，]*$/, preserve_tail)
+					|| piece;
+				paragraph = paragraph.slice(token.length);
+				const matched = paragraph.match(/^\s+/);
+				if (matched) {
+					paragraph = paragraph.slice(matched[0].length);
+					token += matched[0];
+				}
+				paragraphs_before_convert.push(token);
+			}
+			if (paragraph) {
+				paragraphs_before_convert.push(paragraph);
+			}
+			token_count_array.push(paragraphs_before_convert.length);
+		});
+	} else {
+		options.paragraphs_before_convert = paragraphs;
+	}
+
+	if (this.LTP_URL) {
+		return get_LTP_data.call(this, options);
+	}
+
+	let parsed = require('child_process').execFileSync('python3', [module_base_path + 'resources/ltp_parse.py', '-j', JSON.stringify(options.paragraphs_before_convert)]);
+	parsed = parsed.toString();
+	//console.trace(parsed);
+	parsed = parsed.between(MARK_result_starts);
+	return parse_LTP_result.call(this, parsed, options);
 }
 
 function convert_CoreNLP_result(result) {
@@ -699,6 +806,13 @@ function convert_paragraph(paragraph, options) {
 		);
 	}
 
+	if (options.save_parsed_tag_to_file) {
+		//console.log(options);
+		//console.trace(`Write tag result to ${options.save_parsed_tag_to_file}`);
+		// 警告: 這只會寫入 {Array}paragraphs 最後一段的資料!
+		CeL.write_file(options.save_parsed_tag_to_file, JSON.stringify(tagged_word_list));
+	}
+
 	const convertion_pairs = this.convertion_pairs[options.convert_to_language];
 	const forced_convert = (options.convert_to_language === 'TW'
 		? this.CN_to_TW || forced_convert_to_TW
@@ -758,50 +872,6 @@ function convert_paragraph(paragraph, options) {
 		converted_text = forced_convert(converted_text);
 	}
 	return converted_text;
-}
-
-// @inner 自動提供候選條件式。
-function generate_condition_LTP(config, options) {
-	let { tagged_word_list, converted_text } = config;
-	const should_be_text = options.should_be[options.paragraph_index];
-	//console.trace([should_be_text, converted_text, tagged_word_list, options.paragraph_index]);
-
-	let offset = 0;
-	const condition_list = [];
-	tagged_word_list.forEach((word_data, index) => {
-		const converted_to = converted_text[index];
-		const from_slice = should_be_text.substr(offset, converted_to.length);
-		offset += converted_to.length;
-		if (from_slice === converted_to) {
-			return;
-		}
-		//console.trace([from_slice, word_data]);
-
-		const condition = [word_data_to_condition.call(this, word_data)];
-		if (word_data.parent >= 0) {
-			condition.push(`~${from_slice.trim()}<${word_data.relation}>${word_data_to_condition.call(this, tagged_word_list[word_data.parent])}`);
-		}
-		word_data.roles.forEach(role => {
-			condition.push(`~${from_slice.trim()}<role.type:${role.type}>${word_data_to_condition.call(this, role)}`);
-		});
-		word_data.parents.forEach(parent => {
-			if (parent.parent >= 0) {
-				condition.push(`~${from_slice.trim()}<parent.relate:${parent.relate}>${word_data_to_condition.call(this, tagged_word_list[parent.parent])}`);
-			}
-		});
-		// 反向關係。
-		tagged_word_list.forEach((_word_data, _index) => {
-			if (_word_data.parent === /* word_data.id */ index) {
-				condition.push(`~${from_slice.trim()}<←${_word_data.relation}>${word_data_to_condition.call(this, _word_data)}`);
-			}
-		});
-		//CeL.info(`${generate_condition_LTP.name}: Condition for ${word_data[this.KEY_word]}→${from_slice.trim()}:`);
-		Object.assign(condition, { parsed: word_data, target: from_slice.trim() });
-		//CeL.log(condition.join('\t'));
-		condition_list.push(condition);
-	});
-
-	return condition_list;
 }
 
 function convert_Chinese(paragraphs, options) {
@@ -871,6 +941,22 @@ function return_converted_paragraphs(options, converted_paragraphs) {
 	//delete options.tagged_word_list_of_paragraphs;
 
 	return converted_paragraphs;
+}
+
+// ----------------------------------------------------------------------------
+
+// 前期轉換函數: 將網頁原始碼轉成分詞用的文字。
+function normalize_HTML(html) {
+	html = CeL.HTML_to_Unicode(html)
+		//<br /> → "\n"
+		.replace(/<br(?:\s[^<>]*)?>/ig, '\n')
+		//.trim()
+		//去掉 "\r"，全部轉為 "\n"。
+		.replace(/\r\n?/g, '\n')
+		//最多允許兩個 "\n" 以為分段。
+		.replace(/\n{3,}/g, '\n\n');
+
+	return html;
 }
 
 // ----------------------------------------------------------------------------
