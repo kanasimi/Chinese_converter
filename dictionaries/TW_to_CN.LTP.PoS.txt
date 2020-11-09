@@ -1,5 +1,7 @@
 /*
 
+採用哈工大 [LTP](https://github.com/HIT-SCIR/ltp) 4、Small 模型
+
 // 注釋/例句
 from	default
 from	PoS:default
@@ -8,14 +10,24 @@ from	PoS:default condition1	condition2
 
 format of condition: @see parse_condition() @ Chinese_converter.js
 
-LTP tag (PoS) 詞性標記: LTP中採用863詞性標註集
-https://www.twblogs.net/a/5d4d0684bd9eee541c30e4f8
-https://www.cnblogs.com/CheeseZH/p/4682353.html
+盡可能使用痔瘡精確描述，避免正規表達式匹配，如此應可加快速度。
 
-demo:
-http://ltp.ai/demo.html
+LTP tag (PoS) 詞性標記:
+https://www.twblogs.net/a/5d4d0684bd9eee541c30e4f8
+https://www.ltp-cloud.com/intro
+https://www.cnblogs.com/CheeseZH/p/4682353.html
 
 */
 
 
 著作	~
+
+
+// ------------------------------------------------------------------------------------------------
+// 地区习惯用词转换
+
+// 标点符号修正。
+//wp:「	“
+//wp:」	”
+wp:/[「」]/	<修正引号>
+
