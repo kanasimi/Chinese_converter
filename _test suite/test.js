@@ -69,31 +69,66 @@ function add_test(test_name, conditions) {
 
 // ============================================================================
 
+const articles_directory = module.path + CeL.env.path_separator + 'articles' + CeL.env.path_separator;
+
+function get_paragraphs_of_file(file_name) {
+	//console.trace(`Read ${articles_directory + file_name}`);
+	const contents = CeL.read_file(articles_directory + file_name);
+	if (!contents)
+		return;
+
+	return CeL.data.pair.remove_comments(contents.toString())
+		// 注意：LTP 於末尾有無句號、數個句子是合併或拆分解析，會有不同解析結果。
+		// (?:[。？！]|……)[\r\n]*|
+		.split(/[\r\n]+/)
+		.map(line => line.trim()).filter(line => !!line && !/^(\/\/)/.test(line));
+}
+
 add_test('正確率檢核', async (assert, setup_test, finish_test, options) => {
-	const articles_directory = module.path + '/articles/';
 	const file_list = CeL.storage.read_directory(articles_directory);
+	//console.trace([articles_directory, file_list]);
 	let error_count = 0;
 	for (const file_name of file_list) {
-		const file_is_CN = /\.CN\./i.test(file_name);
+		let file_is_CN = file_name.match(/\.(CN|TW)\.\w+$/);
+		//console.trace([file_name, file_is_CN]);
+		if (!file_is_CN)
+			continue;
+		file_is_CN = file_is_CN[1] === 'CN';
+
 		const test_name = `${file_is_CN ? '簡→' : ''}繁→簡→繁：${file_name}`;
 		setup_test(test_name);
-		const content_paragraphs = CeL.data.pair.remove_comments(CeL.read_file(articles_directory + file_name).toString())
-			// 注意：LTP 於末尾有無句號、數個句子是合併或拆分解析，會有不同解析結果。
-			// (?:[。？！]|……)[\r\n]*|
-			.split(/[\r\n]+/)
-			.map(line => line.trim()).filter(line => !!line && !/^(\/\/)/.test(line));
+
+		const content_paragraphs = get_paragraphs_of_file(file_name);
+		const answer_paragraphs = get_paragraphs_of_file(file_name.replace(/(\.\w+)$/, '.answer$1'));
 		let TW_paragraphs, converted_CN, tagged_word_list_of_paragraphs;
 		if (file_is_CN) {
 			TW_paragraphs = await cecc.to_TW(content_paragraphs);
+			if (answer_paragraphs) {
+				for (let index = 0; index < answer_paragraphs.length; index++) {
+					if (!assert([TW_paragraphs[index], answer_paragraphs[index]], file_name + ` #${index + 1}-CN answer`)) {
+						CeL.info(`　 簡\t${JSON.stringify(content_paragraphs[index])}\n→ 繁\t${JSON.stringify(TW_paragraphs[index])}\n ans.\t${JSON.stringify(answer_paragraphs[index])}`);
+					}
+				}
+			}
+
 			converted_CN = await cecc.to_CN(TW_paragraphs);
 			for (let index = 0; index < content_paragraphs.length; index++) {
 				if (!assert([converted_CN[index], content_paragraphs[index]], file_name + ` #${index + 1}-CN`)) {
-					CeL.info(`　 簡\t${JSON.stringify(content_paragraphs[index])}\n→ 繁\t${JSON.stringify(TW_paragraphs[index])}\n→ 簡\t${JSON.stringify(converted_CN[index])}`);
+					CeL.info(`　 簡\t${JSON.stringify(content_paragraphs[index])}\n→ 繁\t${JSON.stringify(TW_paragraphs[index])}\n→ 簡\t${JSON.stringify(converted_CN[index])}\n 原簡\t${JSON.stringify(content_paragraphs[index])}`);
 				}
 			}
+
 		} else {
 			TW_paragraphs = content_paragraphs;
 			converted_CN = await cecc.to_CN(TW_paragraphs);
+
+			if (answer_paragraphs) {
+				for (let index = 0; index < answer_paragraphs.length; index++) {
+					if (!assert([converted_CN[index], answer_paragraphs[index]], file_name + ` #${index + 1}-TW answer`)) {
+						CeL.info(`　 繁\t${JSON.stringify(TW_paragraphs[index])}\n→ 簡\t${JSON.stringify(converted_CN[index])}\n ans.\t${JSON.stringify(answer_paragraphs[index])}`);
+					}
+				}
+			}
 		}
 
 		let converted_TW = await cecc.to_TW(converted_CN, { get_full_data: true, generate_condition: true, should_be: TW_paragraphs });
@@ -101,7 +136,7 @@ add_test('正確率檢核', async (assert, setup_test, finish_test, options) => 
 		converted_TW = converted_TW.converted_paragraphs;
 		for (let index = 0; index < TW_paragraphs.length; index++) {
 			if (!assert([converted_TW[index], TW_paragraphs[index]], file_name + ` #${index + 1}`)) {
-				CeL.info(`　 繁\t${JSON.stringify(TW_paragraphs[index])}\n→ 簡\t${JSON.stringify(converted_CN[index])}\n→ 繁\t${JSON.stringify(converted_TW[index])}`);
+				CeL.info(`　 繁\t${JSON.stringify(TW_paragraphs[index])}\n→ 簡\t${JSON.stringify(converted_CN[index])}\n→ 繁\t${JSON.stringify(converted_TW[index])}\n 原繁\t${JSON.stringify(TW_paragraphs[index])}`);
 				TW_paragraphs.correction_conditions[index].forEach(correction => {
 					if (correction.parsed[CeCC.KEY_matched_condition]) {
 						CeL.log('Matched condition: ' + correction.parsed[CeCC.KEY_matched_condition].condition_text);

@@ -98,7 +98,8 @@ class Chinese_converter {
 				CN: require(module_base_path + 'dictionaries/TW_to_CN.LTP.filters.js'),
 			};
 			this.tag_paragraph = tag_paragraph_LTP;
-			this.paragraphs_tag_mode = !this.LTP_URL;
+			// .batch_get_tag 批量查詢詞性標記之條件: 1.可接受批量{Array}。 2.單次查詢消耗太大。
+			this.batch_get_tag = !this.LTP_URL;
 
 		} else {
 			load_dictionary.call(this, 'dictionaries/CN_to_TW.jieba.PoS.txt', { language: 'TW' });
@@ -143,9 +144,14 @@ class Chinese_converter {
 			options = { LTP_URL: 'http://localhost:5000/', ...options };
 
 		try {
-			const result = await tag_paragraph_LTP.call(options, '测试');
+			//console.trace(options);
+			// 注意: 測試 LTP server 不可包含空白或者英數字元！
+			const result = await tag_paragraph_LTP.call(options, '測試繁簡轉換伺服器');
+			//console.trace(result);
 			return Array.isArray(result) && options.LTP_URL;
-		} catch { }
+		} catch (e) {
+			//console.error(e);
+		}
 	}
 	//#parse_condition = parse_condition
 }
@@ -324,6 +330,7 @@ function get_convert_to_conditions(work_data, convertion_pairs, options) {
 	return convertion_set.get(key);
 }
 
+const KEY_postfix = Symbol('postfix');
 function load_dictionary(file_path, options) {
 	const word_list = CeL.data.pair.remove_comments(CeL.read_file(module_base_path + file_path)).split('\n');
 	// 初始化 initialization: convertion_pairs
@@ -331,6 +338,7 @@ function load_dictionary(file_path, options) {
 	convertion_pairs.set(KEY_tag_filter, Object.create(null));
 	convertion_pairs.set(KEY_tag_pattern_filter, Object.create(null));
 	convertion_pairs.set(KEY_general_pattern_filter, new Map);
+	convertion_pairs.set(KEY_postfix, []);
 
 	for (let conditions of word_list) {
 		conditions = conditions.trim();
@@ -342,7 +350,9 @@ function load_dictionary(file_path, options) {
 			continue;
 		}
 		const filter = parse_condition.call(this, conditions[0]);
-		if (!filter[this.KEY_word] && !filter[this.KEY_PoS_tag]) {
+		if (filter.filter_name === 'postfix') {
+			//console.trace(filter);
+		} else if (!filter[this.KEY_word] && !filter[this.KEY_PoS_tag]) {
 			if (conditions[0].trim())
 				CeL.error(`Invalid word filter: ${conditions[0]}`);
 			continue;
@@ -350,7 +360,8 @@ function load_dictionary(file_path, options) {
 		if (filter.not_match)
 			throw new Error('NYI: not_match');
 
-		const convert_to_conditions = get_convert_to_conditions.call(this, filter, convertion_pairs, { create: true, try_tag: true });
+		const convert_to_conditions = filter.filter_name === 'postfix' ? convertion_pairs.get(KEY_postfix)
+			: get_convert_to_conditions.call(this, filter, convertion_pairs, { create: true, try_tag: true });
 		for (let index = 1; index < conditions.length; index++) {
 			let condition = conditions[index];
 			if (!condition.trim()) {
@@ -363,6 +374,7 @@ function load_dictionary(file_path, options) {
 		}
 		//console.trace(convert_to_conditions);
 	}
+	//console.trace(this.convertion_pairs);
 }
 
 // ----------------------------------------------------------------------------
@@ -507,6 +519,7 @@ const get_all_possible_matched_condition_options = [{ try_tag: true }, , { try_t
 function get_all_possible_matched_condition(word_data, convertion_pairs, index, tagged_word_list, options) {
 	let best_matched_data;
 	for (const _options of get_all_possible_matched_condition_options) {
+		// 引用 options 主要是為了 options.convert_to_language @ condition_filter_LTP()。
 		const matched_data = get_matched_condition.call(this, word_data, convertion_pairs, index, tagged_word_list, { ...options, ..._options });
 		if (matched_data) {
 			if (matched_data.matched_condition)
@@ -903,6 +916,15 @@ function convert_paragraph(paragraph, options) {
 			converted_text[index] = word_data[KEY_prefix_spaces] + converted_text[index];
 	});
 
+	// 事後轉換函數。
+	//console.trace([this.convertion_pairs, options]);
+	convertion_pairs.get(KEY_postfix).forEach(single_condition => {
+		if (single_condition.filter_name in this.filters[options.convert_to_language]) {
+			//console.trace(single_condition);
+			this.filters[options.convert_to_language][single_condition.filter_name].call(this, { single_condition, converted_text, tagged_word_list, options });
+		}
+	});
+
 	if (options.generate_condition && converted_text.join('') !== options.should_be[options.paragraph_index]) {
 		const condition_list = generate_condition_LTP.call(this, { tagged_word_list, converted_text }, options);
 		if (!options.should_be.correction_conditions)
@@ -933,7 +955,8 @@ function convert_Chinese(paragraphs, options) {
 
 	const domain = this.detect_domain(paragraphs, options);
 
-	if (this.paragraphs_tag_mode && !Array.isArray(options.tagged_word_list_of_paragraphs)) {
+	if (this.batch_get_tag && !Array.isArray(options.tagged_word_list_of_paragraphs)) {
+		// 批量取得詞性標注。
 		const tagged_word_list_of_paragraphs = this.tag_paragraph(paragraphs, options);
 		if (CeL.is_thenable(tagged_word_list_of_paragraphs)) {
 			return options.tagged_word_list_of_paragraphs.then(tagged_word_list_of_paragraphs => {

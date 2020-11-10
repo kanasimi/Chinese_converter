@@ -14,7 +14,7 @@
 在人工智慧讀通文義、繁簡轉換前，中文分詞、判斷語境之後再做轉換，應比單純詞彙比對更準確。辭典應可如維基百科般由眾人編輯，且記錄改變原由，加進 test suit。
 
 ## Concepts
-1. 先中文分詞（附帶詞性標註）+自動判斷句子、段落的語境（配合[維基百科專有名詞轉換](https://zh.wikipedia.org/wiki/Wikipedia:%E5%AD%97%E8%A9%9E%E8%BD%89%E6%8F%9B%E8%99%95%E7%90%86/%E5%85%AC%E5%85%B1%E8%BD%89%E6%8F%9B%E7%B5%84)）
+1. 先中文分詞（附帶詞性標注）+自動判斷句子、段落的語境（配合[維基百科專有名詞轉換](https://zh.wikipedia.org/wiki/Wikipedia:%E5%AD%97%E8%A9%9E%E8%BD%89%E6%8F%9B%E8%99%95%E7%90%86/%E5%85%AC%E5%85%B1%E8%BD%89%E6%8F%9B%E7%B5%84)）
 2. 再繁簡轉換（輕量化繁簡轉換辭典負擔）
 
 ## Process
@@ -25,7 +25,8 @@
 
 ## Features
 1. 經由判斷詞性，可簡單判斷如何轉換。例如動詞用<code>幹</code>，形容詞用<code>乾</code>。
-2. 自附條件式生成功能，可快速生成辭典用的候選條件式。
+2. 自帶條件式生成功能，可快速生成辭典用的候選條件式。
+3. 自附 cache 功能，可大大降低多次轉譯長文的時間（例如在測試期間、修改辭典條件欲重新轉換）。
 
 ## Installation
 Install [LTP](https://github.com/HIT-SCIR/ltp) first.
@@ -80,6 +81,16 @@ cecc.to_TW('简体中文');
 cecc.to_CN('繁體中文');
 ```
 
+### 辭典修訂流程
+一次正常的辭典修訂流程：
+1. 閱讀轉換過的文字，發現轉換錯誤。
+2. 改成正確的句子，填入測試檔 [general.TW.txt](_test%20suite/articles/general.TW.txt)。
+3. 啟動 [LTP server](http://ltp.ai/docs/quickstart.html#ltp-server)，`npm test` 跑測試。
+4. 檢核測試工具自動生成的條件式，將合適的條件式填入辭典檔 [CN_to_TW.LTP.PoS.txt](dictionaries/CN_to_TW.LTP.PoS.txt)。必要時添加新 filter 功能函數於 [CN_to_TW.LTP.filters.js](dictionaries/CN_to_TW.LTP.filters.js)。
+5. `npm test` 確認無衝突。
+6. 通過測試後 push 新辭典檔。
+
+
 ## See also
 ### 中文分詞
 * [“结巴”中文分词](https://github.com/fxsjy/jieba) [繁體版本](https://github.com/ldkrsi/jieba-zh_TW)
@@ -103,4 +114,5 @@ cecc.to_CN('繁體中文');
 * [新同文堂](https://github.com/tongwentang/tongwen-core)
 * [ConvertZZ](https://github.com/flier268/ConvertZZ)
 * [繁化姬](https://zhconvert.org/)
+* [繁簡轉換王](https://convert.tw/)
 * 厦门大学 [汉字简繁文本智能转换系统](http://jf.xmu.edu.cn/)

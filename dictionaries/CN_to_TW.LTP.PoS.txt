@@ -10,7 +10,7 @@ from	PoS:default condition1	condition2
 
 format of condition: @see parse_condition() @ Chinese_converter.js
 
-盡可能使用痔瘡精確描述，避免正規表達式匹配，如此應可加快速度。
+盡可能使用字串精確描述，避免正規表達式匹配，如此應可加快速度。
 
 LTP tag (PoS) 詞性標記:
 https://www.twblogs.net/a/5d4d0684bd9eee541c30e4f8
@@ -20,6 +20,16 @@ https://www.cnblogs.com/CheeseZH/p/4682353.html
 */
 
 /*
+
+注意：本檔未符合之字詞，會經 CeL.zh_conversion.CN_to_TW 轉換。
+@see function forced_convert_to_TW() @ Chinese_converter.js
+
+CeL.CN_to_TW 之辭典檔見:
+https://github.com/kanasimi/CeJS/blob/master/extension/zh_conversion/corrections_to_TW.txt
+依然未符合者，將以 OpenCC 轉換。
+https://github.com/BYVoid/OpenCC
+
+
 
 LTP将人民日报的标注集映射到了863的
 https://github.com/HIT-SCIR/ltp/issues/416
@@ -287,6 +297,8 @@ d:几一	~
 
 v:刮	颳<role>/风/
 
+v:粘	黏
+
 v:愈	癒
 
 v:舍	捨
@@ -324,7 +336,11 @@ v:防御	~防御+手+洗
 // 夸父逐日
 i:夸父	~
 
+// 采 彩 採
+// 精彩
+n:精采	~
 nh:宁采臣	寧采臣
+
 nh:林冲	~
 nh:/里/	~~/裡/里/
 // 神羅天征
@@ -336,11 +352,20 @@ ns:埔里	~
 // ------------------------------------------------------------------------------------------------
 // 地區習慣用詞轉換
 
+r:它们	~牠們<VOB>v:/怕/
+
 // 標點符號修正。
+/*
 wp:“	「
 wp:”	」
+wp:‘	『
+wp:’	』
 // 解析錯誤: 日前报载“十前任部长九人可能起诉”云云。
-wp:/[“”]/	<修正引號>
+wp:/[“”‘’]/	<修正引號>
+*/
+// 有時 "”" 竟會被當做 n:
+<postfix>	<修正引號>
+
 
 /*
 // unit/物理量/國際單位/國際單位制詞頭

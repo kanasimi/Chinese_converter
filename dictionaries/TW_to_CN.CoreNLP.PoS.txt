@@ -1,6 +1,6 @@
 /*
 
-// ª`ÄÀ/¨Ò¥y
+// æ³¨é‡‹/ä¾‹å¥
 from	default
 from	PoS:default
 from	condition1	condition2
@@ -8,6 +8,6 @@ from	PoS:default condition1	condition2
 
 format of condition: @see parse_condition() @ Chinese_converter.js
 
-Stanford CoreNLP µü©Ê¼Ğ°O: https://www.itread01.com/content/1541845623.html
+Stanford CoreNLP è©æ€§æ¨™è¨˜: https://www.itread01.com/content/1541845623.html
 
 */
