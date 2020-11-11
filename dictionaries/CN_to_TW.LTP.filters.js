@@ -1,4 +1,6 @@
 ﻿
+'use strict';
+
 
 function 修正引號(configuration) {
 	const converted_text = configuration.converted_text;

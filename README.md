@@ -81,10 +81,10 @@ cecc.to_TW('简体中文');
 cecc.to_CN('繁體中文');
 ```
 
-### 辭典修訂流程
+## 辭典修訂流程
 一次正常的辭典修訂流程：
 1. 閱讀轉換過的文字，發現轉換錯誤。
-2. 改成正確的句子，填入測試檔 [general.TW.txt](_test%20suite/articles/general.TW.txt)。
+2. 改成正確的句子，填入測試檔 [general.TW.txt](_test%20suite/articles/general.TW.txt) 與 [general.TW.answer.txt](_test%20suite/articles/general.TW.answer.txt)。
 3. 啟動 [LTP server](http://ltp.ai/docs/quickstart.html#ltp-server)，`npm test` 跑測試。
 4. 檢核測試工具自動生成的條件式，將合適的條件式填入辭典檔 [CN_to_TW.LTP.PoS.txt](dictionaries/CN_to_TW.LTP.PoS.txt)。必要時添加新 filter 功能函數於 [CN_to_TW.LTP.filters.js](dictionaries/CN_to_TW.LTP.filters.js)。
 5. `npm test` 確認無衝突。
@@ -103,6 +103,7 @@ cecc.to_CN('繁體中文');
 * [中央研究院語言所 中文斷詞系統](http://ckipsvr.iis.sinica.edu.tw/) [線上展示](http://sunlight.iis.sinica.edu.tw/uwextract/demo.htm)
 * [CKIP Lab](https://ckip.iis.sinica.edu.tw/) [CkipTagger開源中文處理工具](https://github.com/ckiplab/ckiptagger) [線上展示](https://ckip.iis.sinica.edu.tw/service/corenlp/)
 * 清华大学 [THULAC](http://thulac.thunlp.org/) [線上展示](http://thulac.thunlp.org/demo)
+* 教育部语言文字应用研究所计算语言学研究室 [语料库在线](http://corpus.zhonghuayuwen.org/index.aspx) [線上展示](http://corpus.zhonghuayuwen.org/CpsWParser.aspx)
 
 * [NLPIR](https://github.com/NLPIR-team/NLPIR) [中科院计算所 词性类别](http://103.242.175.216:197/nlpir/)
 
@@ -110,9 +111,12 @@ cecc.to_CN('繁體中文');
 * [词性标注的简单综述](https://www.zzjw.cc/2019/11/23/pos-review/)
 
 ### 簡繁轉換
+* [繁化姬](https://zhconvert.org/)
+* [繁簡轉換王](https://convert.tw/)
+
+未考慮詞性之簡繁轉換：
 * [OpenCC](https://github.com/BYVoid/OpenCC)
 * [新同文堂](https://github.com/tongwentang/tongwen-core)
 * [ConvertZZ](https://github.com/flier268/ConvertZZ)
-* [繁化姬](https://zhconvert.org/)
-* [繁簡轉換王](https://convert.tw/)
+* [textpro中文文本批处理程序](https://www.fodian.net/tools/)
 * 厦门大学 [汉字简繁文本智能转换系统](http://jf.xmu.edu.cn/)

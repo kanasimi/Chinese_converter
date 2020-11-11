@@ -51,9 +51,6 @@ CeL.run(['application.debug',
 
 const module_base_path = module.path + '/';
 
-const nodejieba_CN = require("nodejieba");
-nodejieba_CN.load({ dict: module_base_path + 'dictionaries/commons.txt' });
-
 // Cache default convertors without CeCC.
 const CeL_CN_to_TW = CeL.zh_conversion.CN_to_TW, CeL_TW_to_CN = CeL.zh_conversion.TW_to_CN;
 
@@ -82,29 +79,43 @@ class Chinese_converter {
 			this.CoreNLP_URL_properties = {
 				annotators: 'tokenize,ssplit,pos,depparse',
 			};
-			load_dictionary.call(this, 'dictionaries/CN_to_TW.CoreNLP.PoS.txt', { language: 'TW' });
-			load_dictionary.call(this, 'dictionaries/TW_to_CN.CoreNLP.PoS.txt', { language: 'CN' });
+			this.dictionary_file_paths = {
+				TW: 'CN_to_TW.CoreNLP.PoS.txt',
+				CN: 'TW_to_CN.CoreNLP.PoS.txt'
+			};
 			this.tag_paragraph = tag_paragraph_via_CoreNLP;
 
 		} else if (options?.using_LTP) {
 			this.KEY_word = 'text';
 			this.KEY_PoS_tag = 'pos';
 			this.condition_filter = condition_filter_LTP;
-			load_dictionary.call(this, 'dictionaries/CN_to_TW.LTP.PoS.txt', { language: 'TW' });
-			load_dictionary.call(this, 'dictionaries/TW_to_CN.LTP.PoS.txt', { language: 'CN' });
+			this.dictionary_file_paths = {
+				TW: 'CN_to_TW.LTP.PoS.txt',
+				CN: 'TW_to_CN.LTP.PoS.txt'
+			};
 			this.filters = {
 				// CN_to_TW
-				TW: require(module_base_path + 'dictionaries/CN_to_TW.LTP.filters.js'),
-				CN: require(module_base_path + 'dictionaries/TW_to_CN.LTP.filters.js'),
+				TW: require(Chinese_converter.dictionaries_directory + 'CN_to_TW.LTP.filters.js'),
+				CN: require(Chinese_converter.dictionaries_directory + 'TW_to_CN.LTP.filters.js'),
 			};
 			this.tag_paragraph = tag_paragraph_LTP;
 			// .batch_get_tag 批量查詢詞性標記之條件: 1.可接受批量{Array}。 2.單次查詢消耗太大。
 			this.batch_get_tag = !this.LTP_URL;
 
 		} else {
-			load_dictionary.call(this, 'dictionaries/CN_to_TW.jieba.PoS.txt', { language: 'TW' });
-			load_dictionary.call(this, 'dictionaries/TW_to_CN.jieba.PoS.txt', { language: 'CN' });
+			// default: nodejieba
+			this.nodejieba_CN = require("nodejieba");
+			this.nodejieba_CN.load({ dict: Chinese_converter.dictionaries_directory + 'commons.txt' });
+			this.dictionary_file_paths = {
+				TW: 'CN_to_TW.jieba.PoS.txt',
+				CN: 'TW_to_CN.jieba.PoS.txt'
+			};
 			this.tag_paragraph = tag_paragraph_jieba;
+		}
+
+		for (const language in this.dictionary_file_paths) {
+			const dictionary_file_path = this.dictionary_file_paths[language] = Chinese_converter.dictionaries_directory + this.dictionary_file_paths[language];
+			load_dictionary.call(this, dictionary_file_path, { language });
 		}
 	}
 
@@ -157,6 +168,7 @@ class Chinese_converter {
 }
 
 Chinese_converter.KEY_matched_condition = 'matched condition';
+Chinese_converter.dictionaries_directory = module_base_path + 'dictionaries' + CeL.env.path_separator;
 
 // ----------------------------------------------------------------------------
 
@@ -332,7 +344,7 @@ function get_convert_to_conditions(work_data, convertion_pairs, options) {
 
 const KEY_postfix = Symbol('postfix');
 function load_dictionary(file_path, options) {
-	const word_list = CeL.data.pair.remove_comments(CeL.read_file(module_base_path + file_path)).split('\n');
+	const word_list = CeL.data.pair.remove_comments(CeL.read_file(file_path)).split('\n');
 	// 初始化 initialization: convertion_pairs
 	const convertion_pairs = this.convertion_pairs[options.language] = new Map;
 	convertion_pairs.set(KEY_tag_filter, Object.create(null));
@@ -557,7 +569,7 @@ function add_new_web_request(host, promise) {
 
 // POS tagging 词性标注 詞性標注
 function tag_paragraph_jieba(paragraph, options) {
-	return nodejieba_CN.tag(paragraph);
+	return this.nodejieba_CN.tag(paragraph);
 }
 
 // word_data 會被寫入 cache，因此 KEY_prefix_spaces 必須為 JSON 可接受之 key（即 {String}），否則會漏失資訊！
