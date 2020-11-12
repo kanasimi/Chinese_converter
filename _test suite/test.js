@@ -71,9 +71,10 @@ function add_test(test_name, conditions) {
 
 // ============================================================================
 
-const articles_directory = module.path + CeL.env.path_separator + 'articles' + CeL.env.path_separator;
+const module_base_path = module.path + CeL.env.path_separator;
+const articles_directory = module_base_path + 'articles' + CeL.env.path_separator;
 const convert_options = {
-	cache_directory: module.path + CeL.env.path_separator + 'cache_data' + CeL.env.path_separator,
+	cache_directory: module_base_path + 'cache_data' + CeL.env.path_separator,
 	min_cache_length: 40,
 };
 
@@ -100,10 +101,19 @@ async function for_each_test_set(test_configuration) {
 	const test_name = `${text_is_CN ? '簡→' : ''}繁→簡→繁：${test_title}`;
 	setup_test(test_name);
 
+	let answer_paragraphs_is_OK;
+	if (answer_paragraphs) {
+		if (answer_paragraphs.length === content_paragraphs.length) {
+			answer_paragraphs_is_OK = true;
+		} else {
+			CeL.warn(`${test_title}: 預設解答與欲測試之項目數不符，將不採用解答！`);
+		}
+	}
+
 	let TW_paragraphs, converted_CN, tagged_word_list_of_paragraphs;
 	if (text_is_CN) {
 		TW_paragraphs = await cecc.to_TW(content_paragraphs, convert_options);
-		if (answer_paragraphs) {
+		if (answer_paragraphs_is_OK) {
 			for (let index = 0; index < answer_paragraphs.length; index++) {
 				if (!assert([TW_paragraphs[index], answer_paragraphs[index]], test_title + ` #${index + 1}-CN answer`)) {
 					CeL.info(`　 簡\t${JSON.stringify(content_paragraphs[index])}\n→ 繁\t${JSON.stringify(TW_paragraphs[index])}\n ans.\t${JSON.stringify(answer_paragraphs[index])}`);
@@ -122,7 +132,7 @@ async function for_each_test_set(test_configuration) {
 		TW_paragraphs = content_paragraphs;
 		converted_CN = await cecc.to_CN(TW_paragraphs, convert_options);
 
-		if (answer_paragraphs) {
+		if (answer_paragraphs_is_OK) {
 			for (let index = 0; index < answer_paragraphs.length; index++) {
 				if (!assert([converted_CN[index], answer_paragraphs[index]], test_title + ` #${index + 1}-TW answer`)) {
 					CeL.info(`　 繁\t${JSON.stringify(TW_paragraphs[index])}\n→ 簡\t${JSON.stringify(converted_CN[index])}\n ans.\t${JSON.stringify(answer_paragraphs[index])}`);
@@ -171,7 +181,24 @@ function record_test(test_configuration, options) {
 
 // ============================================================================
 
-function no_new_file(file_path, answer_file_path, options) {
+async function no_new_file(file_path, answer_file_path, options) {
+	const file_status = CeL.storage.fso_status(file_path);
+	const answer_file_status = CeL.storage.fso_status(answer_file_path);
+	if (!answer_file_status || file_status.mtime - answer_file_status.mtime > 0) {
+		CeL.info(`Generate a new answer file for ${file_path}...`);
+		let converted_text = CeL.read_file(file_path).toString();
+		const convert_options = {
+			cache_directory: module_base_path + 'answer_cache_data' + CeL.env.path_separator,
+			min_cache_length: 40,
+		};
+		converted_text = options.text_is_CN
+			? await cecc.to_TW(converted_text, convert_options)
+			: await cecc.to_CN(converted_text, convert_options)
+			;
+		console.trace(converted_text.slice(0, 200));
+		CeL.write_file(answer_file_path.replace('.answer.', '.converted.'), converted_text);
+	}
+
 	const latest_test_result_date = Date.parse(latest_test_result[options.test_name]?.date);
 	//console.trace(cecc.dictionary_file_paths);
 	for (const dictionary_file_path of Object.values(cecc.dictionary_file_paths)) {
@@ -184,8 +211,7 @@ function no_new_file(file_path, answer_file_path, options) {
 		}
 	}
 
-	if (latest_test_result_date - CeL.storage.fso_status(file_path).mtime > 0) {
-		const answer_file_status = CeL.storage.fso_status(answer_file_path);
+	if (latest_test_result_date - file_status.mtime > 0) {
 		return !answer_file_status || latest_test_result_date > answer_file_status.mtime;
 	}
 }
@@ -216,13 +242,14 @@ add_test('正確率檢核', async (assert, setup_test, finish_test, options) => 
 
 		const file_path = articles_directory + file_name;
 		const answer_file_path = articles_directory + file_name.replace(/(\.\w+)$/, '.answer$1');
-		if (no_new_file(file_path, answer_file_path, options)) {
-			CeL.info(`Skip ${file_path}: latest test at ${latest_test_result[options.test_name].date}, no news.`);
+		const text_is_CN = file_name_language[1] === 'CN';
+		if (await no_new_file(file_path, answer_file_path, { ...options, text_is_CN })) {
+			CeL.info(`Skip ${file_name}: latest test at ${latest_test_result[options.test_name].date}, no news.`);
 			continue;
 		}
 
 		await for_each_test_set(Object.assign(test_configuration, {
-			test_title: file_name, text_is_CN: file_name_language[1] === 'CN',
+			test_title: file_name, text_is_CN,
 			content_paragraphs: get_paragraphs_of_file(file_path),
 			answer_paragraphs: get_paragraphs_of_file(answer_file_path),
 		}));
@@ -234,7 +261,10 @@ add_test('正確率檢核', async (assert, setup_test, finish_test, options) => 
 
 // ============================================================================
 
-if (require('os').freemem() > 8 * (2 ** 10) ** 3) {
+if (CeL.env.argv.includes('nowiki')) {
+} else if (require('os').freemem() < 6 * (2 ** 10) ** 3) {
+	CeL.warn('RAM 過小，無法執行 wikipedia 測試！');
+} else {
 	CeL.run([
 		// 載入操作維基百科的主要功能。
 		'application.net.wiki',
@@ -294,7 +324,7 @@ if (require('os').freemem() > 8 * (2 ** 10) ** 3) {
 	// --------------------------
 
 	add_test('zhwiki 正確率檢核', async (assert, setup_test, finish_test, options) => {
-		const page_title_list = CeL.data.pair.remove_comments(CeL.read_file(module.path + 'zhwiki.txt').toString())
+		const page_title_list = CeL.data.pair.remove_comments(CeL.read_file(module_base_path + 'zhwiki.txt').toString())
 			.split('\n')
 			.map(page_title => page_title.trim()).filter(page_title => !!page_title);
 		//console.trace([articles_directory, page_title_list]);

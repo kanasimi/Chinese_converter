@@ -29,7 +29,7 @@
 3. 自附 cache 功能，可大大降低多次轉譯長文的時間（例如在測試期間、修改辭典條件欲重新轉換）。
 
 ## Installation
-Install [LTP](https://github.com/HIT-SCIR/ltp) first.
+Install [LTP](https://github.com/HIT-SCIR/ltp) first. 您可能需要 6 GB 記憶體來啟動 LTP server。
 
 經實測，採用哈工大 [LTP](https://github.com/HIT-SCIR/ltp) 4、Small 模型的[服務端版本](http://ltp.ai/docs/quickstart.html#ltp-server)，配合[相對應辭典](dictionaries/CN_to_TW.LTP.PoS.txt)，可正確 繁→簡→繁 轉換[測試檔](_test%20suite/articles)中的文字。
 
@@ -38,13 +38,18 @@ On Windows, install LTP:
 1. [安裝 Pytorch](https://codertw.com/%E7%A8%8B%E5%BC%8F%E8%AA%9E%E8%A8%80/635797/)。如果 `pip install ltp` 不成功則
    至 [Pytorch 官方網站](http://pytorch.org/)選擇合適版本離線安裝。
 
-   CUDA version: `nvidia-smi`
+   CUDA version: `"%ProgramFiles%\NVIDIA Corporation\NVSMI\nvidia-smi.exe"`
 
    `pip install torch-*.whl`
 
    // e.g., cu101/torch-1.7.0%2Bcu101-cp38-cp38-win_amd64.whl
 
-2. Install LTP:
+2. Install tornado:
+```cmd
+pip install tornado
+```
+
+3. Install LTP:
 ```cmd
 pip install ltp
 ```
@@ -113,10 +118,10 @@ cecc.to_CN('繁體中文');
 ### 簡繁轉換
 * [繁化姬](https://zhconvert.org/)
 * [繁簡轉換王](https://convert.tw/)
+* [textpro中文文本批处理程序](https://www.fodian.net/tools/)
 
 未考慮詞性之簡繁轉換：
 * [OpenCC](https://github.com/BYVoid/OpenCC)
 * [新同文堂](https://github.com/tongwentang/tongwen-core)
 * [ConvertZZ](https://github.com/flier268/ConvertZZ)
-* [textpro中文文本批处理程序](https://www.fodian.net/tools/)
 * 厦门大学 [汉字简繁文本智能转换系统](http://jf.xmu.edu.cn/)

@@ -49,7 +49,7 @@ CeL.run(['application.debug',
 	// CeL.fs_mkdir(), CeL.wiki.read_dump()
 	'application.storage']);
 
-const module_base_path = module.path + '/';
+const module_base_path = module.path + CeL.env.path_separator;
 
 // Cache default convertors without CeCC.
 const CeL_CN_to_TW = CeL.zh_conversion.CN_to_TW, CeL_TW_to_CN = CeL.zh_conversion.TW_to_CN;
