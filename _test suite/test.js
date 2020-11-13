@@ -185,19 +185,20 @@ async function no_new_file(file_path, answer_file_path, options) {
 	const file_status = CeL.storage.fso_status(file_path);
 	const answer_file_status = CeL.storage.fso_status(answer_file_path);
 	if (!answer_file_status || file_status.mtime - answer_file_status.mtime > 0) {
-		CeL.info(`Generate a new answer file for ${file_path}...`);
+		CeL.info(`Generate a new answer file for ${options.file_name}...`);
 		let converted_text = CeL.read_file(file_path).toString();
-		const convert_options = {
-			cache_directory: module_base_path + 'answer_cache_data' + CeL.env.path_separator,
-			min_cache_length: 40,
-		};
 		converted_text = options.text_is_CN
 			? await cecc.to_TW(converted_text, convert_options)
 			: await cecc.to_CN(converted_text, convert_options)
 			;
-		console.trace(converted_text.slice(0, 200));
-		CeL.write_file(answer_file_path.replace('.answer.', '.converted.'), converted_text);
+		//console.trace(converted_text.slice(0, 200));
+		CeL.write_file(answer_file_path
+			//.replace('.answer.', '.converted.')
+			, converted_text);
 	}
+
+	if (CeL.env.argv.includes('recheck'))
+		return;
 
 	const latest_test_result_date = Date.parse(latest_test_result[options.test_name]?.date);
 	//console.trace(cecc.dictionary_file_paths);
@@ -243,7 +244,7 @@ add_test('正確率檢核', async (assert, setup_test, finish_test, options) => 
 		const file_path = articles_directory + file_name;
 		const answer_file_path = articles_directory + file_name.replace(/(\.\w+)$/, '.answer$1');
 		const text_is_CN = file_name_language[1] === 'CN';
-		if (await no_new_file(file_path, answer_file_path, { ...options, text_is_CN })) {
+		if (await no_new_file(file_path, answer_file_path, { ...options, text_is_CN, file_name })) {
 			CeL.info(`Skip ${file_name}: latest test at ${latest_test_result[options.test_name].date}, no news.`);
 			continue;
 		}
@@ -263,7 +264,7 @@ add_test('正確率檢核', async (assert, setup_test, finish_test, options) => 
 
 if (CeL.env.argv.includes('nowiki')) {
 } else if (require('os').freemem() < 6 * (2 ** 10) ** 3) {
-	CeL.warn('RAM 過小，無法執行 wikipedia 測試！');
+	CeL.warn('RAM 過小，跳過 wikipedia 測試！');
 } else {
 	CeL.run([
 		// 載入操作維基百科的主要功能。
@@ -324,7 +325,7 @@ if (CeL.env.argv.includes('nowiki')) {
 	// --------------------------
 
 	add_test('zhwiki 正確率檢核', async (assert, setup_test, finish_test, options) => {
-		const page_title_list = CeL.data.pair.remove_comments(CeL.read_file(module_base_path + 'zhwiki.txt').toString())
+		const page_title_list = CeL.data.pair.remove_comments(CeL.read_file(module_base_path + 'zhwiki pages.txt').toString())
 			.split('\n')
 			.map(page_title => page_title.trim()).filter(page_title => !!page_title);
 		//console.trace([articles_directory, page_title_list]);

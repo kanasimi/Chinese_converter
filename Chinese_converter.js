@@ -649,6 +649,7 @@ function recover_original_paragraphs(parsed, options) {
 	if (!token_count_array)
 		return parsed;
 
+	// 警告: 這種合併可能造成不可依賴的 .id, .offset, .parent 等！
 	return token_count_array.map((length, index) => {
 		let parsed_index = index === 0 ? 0 : token_count_array[index - 1];
 		const result_token = parsed[parsed_index];
