@@ -191,7 +191,6 @@ async function no_new_file(file_path, answer_file_path, options) {
 			? await cecc.to_TW(converted_text, convert_options)
 			: await cecc.to_CN(converted_text, convert_options)
 			;
-		converted_text = converted_text.replace(/,{"id":/g, ',\n{"id":');
 		//console.trace(converted_text.slice(0, 200));
 		CeL.write_file(answer_file_path
 			//.replace('.answer.', '.converted.')

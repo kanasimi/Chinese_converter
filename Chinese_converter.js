@@ -873,7 +873,10 @@ function convert_paragraph(paragraph, options) {
 		CeL.create_directory(cache_directory);
 		//console.trace(options);
 		//console.trace(`Write tagged data to ${options.cache_file_path}`);
-		CeL.write_file(options.cache_file_path, JSON.stringify(tagged_word_list));
+		CeL.write_file(options.cache_file_path,
+			// 詞性標注結果換行，方便查詢檢視。
+			JSON.stringify(tagged_word_list).replace(/,{"id":/g, ',\n{"id":')
+		);
 	}
 
 	// ---------------------------------------------
