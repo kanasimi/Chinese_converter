@@ -282,23 +282,24 @@ function parse_condition(condition, options) {
 
 const KEY_tag_filter = Symbol('tag filter'), KEY_tag_pattern_filter = Symbol('tag pattern filter'), KEY_general_pattern_filter = Symbol('general pattern filter'), KEY_pattern = 'pattern';
 
-function get_convert_to_conditions(work_data, convertion_pairs, options) {
-	let convertion_set, key = work_data[this.KEY_word], pattern;
+function get_convert_to_conditions(options) {
+	const { word_data, convertion_pairs } = options;
+	let convertion_set, key = word_data[this.KEY_word], pattern;
 	const KEY_PoS_tag = this.KEY_PoS_tag;
 
 	function set_tag_convertion(KEY) {
 		convertion_set = convertion_pairs.get(KEY);
-		if (!convertion_set[work_data[KEY_PoS_tag]]) {
+		if (!convertion_set[word_data[KEY_PoS_tag]]) {
 			if (!options?.create)
 				return;
-			convertion_set[work_data[KEY_PoS_tag]] = new Map;
+			convertion_set[word_data[KEY_PoS_tag]] = new Map;
 		}
 		//console.trace(convertion_set);
-		return convertion_set = convertion_set[work_data[KEY_PoS_tag]];
+		return convertion_set = convertion_set[word_data[KEY_PoS_tag]];
 	}
 
 	if (CeL.is_RegExp(key) || options?.search_pattern) {
-		if (options?.try_tag && work_data[KEY_PoS_tag]) {
+		if (options?.try_tag && word_data[KEY_PoS_tag]) {
 			if (!set_tag_convertion(KEY_tag_pattern_filter))
 				return;
 		} else {
@@ -319,7 +320,7 @@ function get_convert_to_conditions(work_data, convertion_pairs, options) {
 		}
 
 	} else {
-		if (options?.try_tag && work_data[KEY_PoS_tag]) {
+		if (options?.try_tag && word_data[KEY_PoS_tag]) {
 			if (!set_tag_convertion(KEY_tag_filter))
 				return;
 		} else {
@@ -373,7 +374,7 @@ function load_dictionary(file_path, options) {
 			throw new Error('NYI: not_match');
 
 		const convert_to_conditions = filter.filter_name === 'postfix' ? convertion_pairs.get(KEY_postfix)
-			: get_convert_to_conditions.call(this, filter, convertion_pairs, { create: true, try_tag: true });
+			: get_convert_to_conditions.call(this, { word_data: filter, convertion_pairs, create: true, try_tag: true });
 		for (let index = 1; index < conditions.length; index++) {
 			let condition = conditions[index];
 			if (!condition.trim()) {
@@ -397,23 +398,39 @@ function condition_filter_LTP(single_condition, word_data, options) {
 		return true;
 
 	//console.trace([single_condition, word_data, options]);
+
+	const { tagged_word_list } = options;
+	// assert: word_data === tagged_word_list[options.index_of_tagged_word_list]
+	const tagged_word_list_index_offset = options.index_of_tagged_word_list - word_data.id;
+
 	if (single_condition.filter_name === word_data.relation) {
 		// 指定關係。
-		//console.trace([single_condition.filter_target, options.tagged_word_list[word_data.parent]]);
+		//console.trace([single_condition.filter_target, tagged_word_list[word_data.parent]]);
 		// e.g., ~只<ATT>b:/表/
-		return match_single_condition.call(this, single_condition.filter_target, options.tagged_word_list[word_data.parent], options);
+		return match_single_condition.call(this, single_condition.filter_target, tagged_word_list[tagged_word_list_index_offset + word_data.parent], options);
 	}
 
 	let matched;
 
 	matched = single_condition.filter_name.match(/^←(.+)$/);
 	if (matched) {
+		matched = matched[1];
 		// 搜尋反向關係。
-		return options.tagged_word_list.some(word_data_to_test =>
-			word_data_to_test.parent === word_data.id
-			&& word_data_to_test.relation === matched[1]
-			&& match_single_condition.call(this, single_condition.filter_target, word_data_to_test, options)
-		);
+		for (let index = tagged_word_list_index_offset, latest_id = 0; index < tagged_word_list.length; index++) {
+			const word_data_to_test = tagged_word_list[index];
+			if (latest_id > word_data_to_test.id) {
+				// tagged_word_list 可能是 recover_original_paragraphs() 多次查詢拼合起來的。當 (latest_id > word_data_to_test.id) 的時候，已經超越本次查詢的範圍。
+				// assert: word_data_to_test.id === 0
+				return;
+			}
+			latest_id = word_data_to_test.id;
+			if (word_data_to_test.parent === word_data.id
+				&& word_data_to_test.relation === matched
+				&& match_single_condition.call(this, single_condition.filter_target, word_data_to_test, options)
+			) {
+				return true;
+			}
+		}
 	}
 
 	matched = single_condition.filter_name.match(/(?<property_name>(?:role|parent))(?:\.(?<sub_property_name>[^:]+):(?<sub_property_value>.+))?/);
@@ -424,8 +441,9 @@ function condition_filter_LTP(single_condition, word_data, options) {
 		// e.g., 沖<role.type:A1>/[水浴杯]/
 		// 搜尋 roles / parents。
 		return word_data[matched.property_name + 's'].some(token => {
-			if (token.parent in options.tagged_word_list) {
-				Object.assign(token, options.tagged_word_list[token.parent]);
+			const parent_index = tagged_word_list_index_offset + token.parent;
+			if (parent_index in tagged_word_list) {
+				Object.assign(token, tagged_word_list[parent_index]);
 			}
 			return (!matched.sub_property_name || token[matched.sub_property_name] === matched.sub_property_value)
 				&& match_single_condition.call(this, filter_target, token, options);
@@ -464,8 +482,8 @@ function match_single_condition(single_condition, word_data, options) {
 	return true;
 }
 
-function match_condition(conditions, word_data, index, tagged_word_list, options) {
-	options = { ...options, conditions, word_data, index, tagged_word_list };
+function match_condition(options) {
+	const { conditions, word_data, tagged_word_list } = options;
 	//console.trace([conditions, word_data]);
 	if (!Array.isArray(conditions))
 		return match_single_condition.call(this, conditions, word_data, options) && conditions;
@@ -477,7 +495,7 @@ function match_condition(conditions, word_data, index, tagged_word_list, options
 		return;
 
 	// 向後檢查。
-	for (let index_of_condition = target_index + 1, index_of_target = index + 1; index_of_condition < conditions.length; index_of_condition++) {
+	for (let index_of_condition = target_index + 1, index_of_target = options.index_of_tagged_word_list + 1; index_of_condition < conditions.length; index_of_condition++) {
 		if (index_of_target >= tagged_word_list.length)
 			return;
 		const condition = conditions[index_of_condition];
@@ -491,7 +509,7 @@ function match_condition(conditions, word_data, index, tagged_word_list, options
 	}
 
 	// 向前檢查。
-	for (let index_of_condition = target_index - 1, index_of_target = index - 1; index_of_condition >= 0; index_of_condition--) {
+	for (let index_of_condition = target_index - 1, index_of_target = options.index_of_tagged_word_list - 1; index_of_condition >= 0; index_of_condition--) {
 		if (index_of_target < 0)
 			return;
 		const condition = conditions[index_of_condition];
@@ -507,8 +525,8 @@ function match_condition(conditions, word_data, index, tagged_word_list, options
 	return conditions[target_index];
 }
 
-function get_matched_condition(word_data, convertion_pairs, index, tagged_word_list, options) {
-	let convert_to_conditions = get_convert_to_conditions.call(this, word_data, convertion_pairs, options);
+function get_matched_condition(options) {
+	let convert_to_conditions = get_convert_to_conditions.call(this, options);
 	//console.trace([word_data, convert_to_conditions]);
 	//console.trace(convert_to_conditions);
 	if (!convert_to_conditions) {
@@ -518,7 +536,7 @@ function get_matched_condition(word_data, convertion_pairs, index, tagged_word_l
 	// assert: convert_to_conditions = [{ [this.KEY_word]: '詞', [this.KEY_PoS_tag]: '詞性' }, { [this.KEY_word]: '詞', [this.KEY_PoS_tag]: '詞性' }, ...]
 	for (let index_of_conditions = 0; index_of_conditions < convert_to_conditions.length; index_of_conditions++) {
 		const conditions = convert_to_conditions[index_of_conditions];
-		const matched_condition = match_condition.call(this, conditions, word_data, index, tagged_word_list, options);
+		const matched_condition = match_condition.call(this, { ...options, conditions });
 		if (matched_condition) {
 			return { matched_condition, convert_to_conditions };
 		}
@@ -528,11 +546,11 @@ function get_matched_condition(word_data, convertion_pairs, index, tagged_word_l
 }
 
 const get_all_possible_matched_condition_options = [{ try_tag: true }, , { try_tag: true, search_pattern: true }, { search_pattern: true }];
-function get_all_possible_matched_condition(word_data, convertion_pairs, index, tagged_word_list, options) {
+function get_all_possible_matched_condition(options) {
 	let best_matched_data;
 	for (const _options of get_all_possible_matched_condition_options) {
 		// 引用 options 主要是為了 options.convert_to_language @ condition_filter_LTP()。
-		const matched_data = get_matched_condition.call(this, word_data, convertion_pairs, index, tagged_word_list, { ...options, ..._options });
+		const matched_data = get_matched_condition.call(this, { ...options, ..._options });
 		if (matched_data) {
 			if (matched_data.matched_condition)
 				return matched_data;
@@ -645,11 +663,11 @@ function generate_condition_LTP(configuration, options) {
 }
 
 function recover_original_paragraphs(parsed, options) {
-	const token_count_array = options.token_count_array;
+	const { token_count_array } = options;
 	if (!token_count_array)
 		return parsed;
 
-	// 警告: 這種合併可能造成不可依賴的 .id, .offset, .parent 等！
+	// 警告: 這種合併可能造成不可靠的 .id, .offset, .parent 等！在 condition_filter_LTP() 中以 tagged_word_list_index_offset 處理此問題。
 	return token_count_array.map((length, index) => {
 		let parsed_index = index === 0 ? 0 : token_count_array[index - 1];
 		const result_token = parsed[parsed_index];
@@ -836,7 +854,7 @@ function forced_convert_to_CN(paragraph, index, tagged_word_list, options) {
  * @param {Object}[options]
  */
 function convert_paragraph(paragraph, options) {
-	let cache_directory = options.cache_directory;
+	let { cache_directory } = options;
 	if (cache_directory) {
 		if (!/[\\\/]$/.test(cache_directory))
 			cache_directory += CeL.env.path_separator;
@@ -889,10 +907,11 @@ function convert_paragraph(paragraph, options) {
 	const word_convert_mode = !options.forced_convert_mode || options.forced_convert_mode === 'word';
 	const word_mode_options = { mode: 'word_first', ...options };
 
-	let converted_text = tagged_word_list.map((word_data, index) => {
-		const matched_condition_data = get_all_possible_matched_condition.call(this, word_data, convertion_pairs, index, tagged_word_list, options);
+	let converted_text = tagged_word_list.map((word_data, index_of_tagged_word_list) => {
+		// assert: word_data === tagged_word_list[index_of_tagged_word_list]
+		const matched_condition_data = get_all_possible_matched_condition.call(this, { ...options, word_data, convertion_pairs, index_of_tagged_word_list, tagged_word_list });
 		if (!matched_condition_data) {
-			return word_convert_mode ? forced_convert(word_data[this.KEY_word], index, tagged_word_list, word_mode_options) : word_data[this.KEY_word];
+			return word_convert_mode ? forced_convert(word_data[this.KEY_word], index_of_tagged_word_list, tagged_word_list, word_mode_options) : word_data[this.KEY_word];
 		}
 
 		//const { convert_to_conditions, matched_condition } = matched_condition_data;
@@ -902,7 +921,7 @@ function convert_paragraph(paragraph, options) {
 				word_data[Chinese_converter.KEY_matched_condition] = to_word_data;
 
 			if (to_word_data.filter_name in this.filters[options.convert_to_language]) {
-				return this.filters[options.convert_to_language][to_word_data.filter_name].call(this, { word_data, index, tagged_word_list, matched_condition_data, options });
+				return this.filters[options.convert_to_language][to_word_data.filter_name].call(this, { word_data, index_of_tagged_word_list, tagged_word_list, matched_condition_data, options });
 			}
 
 			let word = word_data[this.KEY_word], to_word = to_word_data[this.KEY_word];
@@ -918,13 +937,13 @@ function convert_paragraph(paragraph, options) {
 			}
 			const do_after_converting = to_word_data.do_after_converting;
 			if (do_after_converting) {
-				word = forced_convert(word, index, tagged_word_list, word_mode_options);
+				word = forced_convert(word, index_of_tagged_word_list, tagged_word_list, word_mode_options);
 				word = word.replace(do_after_converting, do_after_converting.replace_to);
 			}
 			return word;
 		}
 
-		return word_convert_mode ? forced_convert(word_data[this.KEY_word], index, tagged_word_list, word_mode_options) : word_data[this.KEY_word];
+		return word_convert_mode ? forced_convert(word_data[this.KEY_word], index_of_tagged_word_list, tagged_word_list, word_mode_options) : word_data[this.KEY_word];
 	});
 	// 維持與輸入相同格式。
 	tagged_word_list.forEach((word_data, index) => {
@@ -988,7 +1007,7 @@ function convert_Chinese(paragraphs, options) {
 
 function execute_convert_Chinese(paragraphs, options) {
 	let converted_paragraphs = [];
-	const tagged_word_list_of_paragraphs = options.tagged_word_list_of_paragraphs;
+	const { tagged_word_list_of_paragraphs } = options;
 	let some_async;
 	//console.trace(paragraphs);
 	for (let paragraph_index = 0; paragraph_index < paragraphs.length; paragraph_index++) {
