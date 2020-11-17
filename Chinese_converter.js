@@ -845,7 +845,7 @@ function convert_paragraph(paragraph, options) {
 			// 超過此長度才 cache。
 			&& (!options.min_cache_length || paragraph.length >= options.min_cache_length)
 		) {
-			// 避免污染，重新造一個 options。
+			// 重新造一個 options 以避免污染。
 			options = {
 				...options,
 				cache_file_path: cache_directory + CeL.to_file_name(paragraph.slice(0, 40) + '.' + paragraph.hashCode() + '.json')
