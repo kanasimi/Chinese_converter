@@ -232,7 +232,8 @@ function parse_condition(condition, options) {
 		if (do_after_converting) {
 			do_after_converting = do_after_converting.groups;
 			matched.word = do_after_converting.word;
-			condition_data.do_after_converting = do_after_converting = do_after_converting.do_after_converting.toRegExp({ allow_replacement: true });
+			do_after_converting = do_after_converting.do_after_converting.toRegExp({ allow_replacement: true });
+			condition_data.do_after_converting = do_after_converting;
 		}
 		if (matched.word) {
 			let filter = matched.word.match(/^(?<word>.*?)<(?<filter_name>[^<>]+)>(?<filter_target>.*?)$/);
@@ -283,7 +284,9 @@ function parse_condition(condition, options) {
 const KEY_tag_filter = Symbol('tag filter'), KEY_tag_pattern_filter = Symbol('tag pattern filter'), KEY_general_pattern_filter = Symbol('general pattern filter'), KEY_pattern = 'pattern';
 
 function get_convert_to_conditions(options) {
-	const { word_data, convertion_pairs } = options;
+	const { word_data, convertion_pairs }
+		// incase "Variable 'options' is null checked here, but its property is accessed without null check prior"
+		= options === null ? Object.create(null) : options;
 	let convertion_set, key = word_data[this.KEY_word], pattern;
 	const KEY_PoS_tag = this.KEY_PoS_tag;
 

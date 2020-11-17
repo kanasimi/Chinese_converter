@@ -263,6 +263,7 @@ add_test('正確率檢核', async (assert, setup_test, finish_test, options) => 
 // ============================================================================
 
 if (CeL.env.argv.includes('nowiki')) {
+	CeL.info(`跳過 wikipedia 測試。`);
 } else if (require('os').freemem() < 6 * (2 ** 10) ** 3) {
 	CeL.warn('RAM 過小，跳過 wikipedia 測試！');
 } else {
