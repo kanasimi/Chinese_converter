@@ -147,12 +147,12 @@ async function for_each_test_set(test_configuration) {
 	for (let index = 0; index < TW_paragraphs.length; index++) {
 		if (!assert([converted_TW[index], TW_paragraphs[index]], test_title + ` #${index + 1}`)) {
 			CeL.info(`　 繁\t${JSON.stringify(TW_paragraphs[index])}\n→ 簡\t${JSON.stringify(converted_CN[index])}\n→ 繁\t${JSON.stringify(converted_TW[index])}\n 原繁\t${JSON.stringify(TW_paragraphs[index])}`);
-			TW_paragraphs.correction_conditions[index].forEach(correction => {
+			TW_paragraphs.correction_conditions && TW_paragraphs.correction_conditions[index].forEach(correction => {
 				if (correction.parsed[CeCC.KEY_matched_condition]) {
-					CeL.log('Matched condition: ' + correction.parsed[CeCC.KEY_matched_condition].condition_text);
+					CeL.log('Matched condition 匹配的條件式: ' + correction.parsed[CeCC.KEY_matched_condition].condition_text);
 				}
 				// 自動提供候選條件式。
-				CeL.log(`Candidate correction for ${correction.parsed.text}:\n${correction.join('\t')}`);
+				CeL.log(`Candidate correction for ${correction.parsed.text} 為符合答案建議可採用條件式:\n${correction.join('\t')}`);
 			});
 			if (test_configuration.error_count++ < test_configuration.max_error_tags_showing && test_configuration.max_error_tags_showing) {
 				if (tagged_word_list_of_paragraphs) {

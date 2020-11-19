@@ -98,6 +98,7 @@ class Chinese_converter {
 				TW: require(Chinese_converter.dictionaries_directory + 'CN_to_TW.LTP.filters.js'),
 				CN: require(Chinese_converter.dictionaries_directory + 'TW_to_CN.LTP.filters.js'),
 			};
+			this.generate_condition = generate_condition_LTP;
 			this.tag_paragraph = tag_paragraph_LTP;
 			// .batch_get_tag 批量查詢詞性標記之條件: 1.可接受批量{Array}。 2.單次查詢消耗太大。
 			this.batch_get_tag = !this.LTP_URL;
@@ -419,13 +420,14 @@ function condition_filter_LTP(single_condition, word_data, options) {
 	if (matched) {
 		matched = matched[1];
 		// 搜尋反向關係。
-		for (let index = tagged_word_list_index_offset, latest_id = 0; index < tagged_word_list.length; index++) {
+		for (let index = tagged_word_list_index_offset, latest_id = -1; index < tagged_word_list.length; index++) {
 			const word_data_to_test = tagged_word_list[index];
-			if (latest_id > word_data_to_test.id) {
+			if (latest_id >= word_data_to_test.id) {
 				// tagged_word_list 可能是 recover_original_paragraphs() 多次查詢拼合起來的。當 (latest_id > word_data_to_test.id) 的時候，已經超越本次查詢的範圍。
 				// assert: word_data_to_test.id === 0
 				return;
 			}
+			// assert: word_data_to_test.id === latest_id + 1
 			latest_id = word_data_to_test.id;
 			if (word_data_to_test.parent === word_data.id
 				&& word_data_to_test.relation === matched
@@ -623,18 +625,22 @@ function recover_spaces(parsed, paragraph) {
 
 // @inner 自動生成辭典用的候選條件式。
 function generate_condition_LTP(configuration, options) {
-	let { tagged_word_list, converted_text } = configuration;
-	const should_be_text = options.should_be[options.paragraph_index];
-	//console.trace([should_be_text, converted_text, tagged_word_list, options.paragraph_index]);
+	const { tagged_word_list, converted_text, should_be_text } = configuration;
+	const start_index = configuration.end_index >= 0 ? configuration.end_index : 0;
+	const end_index = isNaN(configuration.end_index) ? tagged_word_list.length : Math.min(tagged_word_list.length, configuration.end_index);
+	//console.trace([configuration, options.paragraph_index]);
+	const tagged_word_list_index_offset = start_index - tagged_word_list[start_index].id;
+	//assert: tagged_word_list[tagged_word_list_index_offset].id === 0
 
 	let offset = 0;
 	const condition_list = [];
-	tagged_word_list.forEach((word_data, index) => {
+	for (let index = start_index; index < end_index; index++) {
+		const word_data = tagged_word_list[index];
 		const converted_to = converted_text[index];
 		const from_slice = should_be_text.substr(offset, converted_to.length);
 		offset += converted_to.length;
 		if (from_slice === converted_to) {
-			return;
+			continue;
 		}
 		//console.trace([from_slice, word_data]);
 
@@ -651,16 +657,24 @@ function generate_condition_LTP(configuration, options) {
 			}
 		});
 		// 反向關係。
-		tagged_word_list.forEach((_word_data, _index) => {
-			if (_word_data.parent === /* word_data.id */ index) {
-				condition.push(`~${from_slice.trim()}<←${_word_data.relation}>${word_data_to_condition.call(this, _word_data)}`);
+		for (let _index = tagged_word_list_index_offset, latest_id = -1; _index < tagged_word_list.length; _index++) {
+			const word_data_to_test = tagged_word_list[_index];
+			if (latest_id >= word_data_to_test.id) {
+				// tagged_word_list 可能是 recover_original_paragraphs() 多次查詢拼合起來的。當 (latest_id > word_data_to_test.id) 的時候，已經超越本次查詢的範圍。
+				// assert: word_data_to_test.id === 0
+				break;
 			}
-		});
+			// assert: word_data_to_test.id === latest_id + 1
+			latest_id = word_data_to_test.id;
+			if (word_data_to_test.parent === /* word_data.id */ index) {
+				condition.push(`~${from_slice.trim()}<←${word_data_to_test.relation}>${word_data_to_condition.call(this, word_data_to_test)}`);
+			}
+		}
 		//CeL.info(`${generate_condition_LTP.name}: Condition for ${word_data[this.KEY_word]}→${from_slice.trim()}:`);
 		Object.assign(condition, { parsed: word_data, target: from_slice.trim() });
 		//CeL.log(condition.join('\t'));
 		condition_list.push(condition);
-	});
+	}
 
 	return condition_list;
 }
@@ -948,7 +962,7 @@ function convert_paragraph(paragraph, options) {
 
 		return word_convert_mode ? forced_convert(word_data[this.KEY_word], index_of_tagged_word_list, tagged_word_list, word_mode_options) : word_data[this.KEY_word];
 	});
-	// 維持與輸入相同格式。
+	// 維持與輸入相同格式: 補全失落的空白字元。
 	tagged_word_list.forEach((word_data, index) => {
 		if (word_data[KEY_prefix_spaces])
 			converted_text[index] = word_data[KEY_prefix_spaces] + converted_text[index];
@@ -963,11 +977,39 @@ function convert_paragraph(paragraph, options) {
 		}
 	});
 
-	if (options.generate_condition && converted_text.join('') !== options.should_be[options.paragraph_index]) {
-		const condition_list = generate_condition_LTP.call(this, { tagged_word_list, converted_text }, options);
-		if (!options.should_be.correction_conditions)
-			options.should_be.correction_conditions = [];
-		options.should_be.correction_conditions[options.paragraph_index] = condition_list;
+	// ---------------------------------------------
+
+	if (options.generate_condition && this.generate_condition) {
+		// options.generate_condition_for = { convert_from_text : should_convert_to_text }
+		if (options.generate_condition_for) {
+			/** {Number}未發現之index。 const: 基本上與程式碼設計合一，僅表示名義，不可更改。(=== -1) */
+			const NOT_FOUND = ''.indexOf('_');
+			// 長度累加
+			let converted_text_length_accumulation;
+			for (const convert_from_text in options.generate_condition_for) {
+				let index = paragraph.indexOf(convert_from_text);
+				if (index === NOT_FOUND)
+					continue;
+				if (!converted_text_length_accumulation) {
+					converted_text_length_accumulation = [];
+					const length = 0;
+					converted_text.forEach(token => { converted_text_length_accumulation.push(length += token.length); });
+				}
+				index = converted_text_length_accumulation.search_sorted(convert_from_text.length);
+			}
+		}
+
+		const should_be_text = options.should_be[options.paragraph_index];
+		const _converted_text = converted_text.join('');
+		if (_converted_text.length !== should_be_text.length) {
+			CeL.error(`預設解答與轉換後之文字長度不符，將跳過解答: ${should_be_text}`);
+
+		} else if (_converted_text !== should_be_text) {
+			const condition_list = this.generate_condition({ tagged_word_list, converted_text, should_be_text }, options);
+			if (!options.should_be.correction_conditions)
+				options.should_be.correction_conditions = [];
+			options.should_be.correction_conditions[options.paragraph_index] = condition_list;
+		}
 	}
 
 	converted_text = converted_text.join('');
