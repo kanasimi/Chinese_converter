@@ -49,6 +49,9 @@ CeL.run(['application.debug',
 	// CeL.fs_mkdir(), CeL.wiki.read_dump()
 	'application.storage']);
 
+/** {Number}未發現之index。 const: 基本上與程式碼設計合一，僅表示名義，不可更改。(=== -1) */
+const NOT_FOUND = ''.indexOf('_');
+
 const module_base_path = module.path + CeL.env.path_separator;
 
 // Cache default convertors without CeCC.
@@ -95,8 +98,8 @@ class Chinese_converter {
 			};
 			this.filters = {
 				// CN_to_TW
-				TW: require(Chinese_converter.dictionaries_directory + 'CN_to_TW.LTP.filters.js'),
-				CN: require(Chinese_converter.dictionaries_directory + 'TW_to_CN.LTP.filters.js'),
+				TW: require(this.dictionaries_directory + 'CN_to_TW.LTP.filters.js'),
+				CN: require(this.dictionaries_directory + 'TW_to_CN.LTP.filters.js'),
 			};
 			this.generate_condition = generate_condition_LTP;
 			this.tag_paragraph = tag_paragraph_LTP;
@@ -106,7 +109,7 @@ class Chinese_converter {
 		} else {
 			// default: nodejieba
 			this.nodejieba_CN = require("nodejieba");
-			this.nodejieba_CN.load({ dict: Chinese_converter.dictionaries_directory + 'commons.txt' });
+			this.nodejieba_CN.load({ dict: this.dictionaries_directory + 'commons.txt' });
 			this.dictionary_file_paths = {
 				TW: 'CN_to_TW.jieba.PoS.txt',
 				CN: 'TW_to_CN.jieba.PoS.txt'
@@ -115,9 +118,22 @@ class Chinese_converter {
 		}
 
 		for (const language in this.dictionary_file_paths) {
-			const dictionary_file_path = this.dictionary_file_paths[language] = Chinese_converter.dictionaries_directory + this.dictionary_file_paths[language];
+			const dictionary_file_path = this.dictionary_file_paths[language]
+				= this.dictionaries_directory + this.dictionary_file_paths[language];
 			load_dictionary.call(this, dictionary_file_path, { language });
 		}
+
+		this.generate_condition_for_language = Object.create(null);
+		// 會在每次轉換都測試是否有相符之文字。
+		this.text_to_check_files.forEach(from_file_name => load_text_to_check.call(this, from_file_name));
+		CeL.storage.read_directory(this.test_articles_directory).forEach(from_file_name => {
+			const matched = from_file_name.match(/watch_target\.(?<work_title>[^.]+)\.(?<to_language>TW|CN)\.\w+$/);
+			if (matched) {
+				load_text_to_check.call(this, from_file_name, {
+					export: { work_title: matched.groups.work_title }
+				});
+			}
+		});
 	}
 
 	/**
@@ -158,7 +174,7 @@ class Chinese_converter {
 		try {
 			//console.trace(options);
 			// 注意: 測試 LTP server 不可包含空白或者英數字元！
-			const result = await tag_paragraph_LTP.call(options, '測試繁簡轉換伺服器');
+			const result = await tag_paragraph_LTP.call(options, '測試繁簡轉換伺服器是否正常運作');
 			//console.trace(result);
 			return Array.isArray(result) && options.LTP_URL;
 		} catch (e) {
@@ -168,8 +184,42 @@ class Chinese_converter {
 	//#parse_condition = parse_condition
 }
 
-Chinese_converter.KEY_matched_condition = 'matched condition';
-Chinese_converter.dictionaries_directory = module_base_path + 'dictionaries' + CeL.env.path_separator;
+// ----------------------------------------------------------------------------
+
+function load_text_to_check(from_file_name, options) {
+	let check_language = from_file_name.match(/\.(TW|CN)\.\w+$/);
+	//console.trace([file_name, file_name_language]);
+	if (!check_language) {
+		CeL.error(`無法判別檔案之語言: ${from_file_name}`);
+		return;
+	}
+
+	check_language = check_language[1];
+
+	const to_file_name = from_file_name.replace(/(\.\w+)$/, '.converted$1');
+	const convert_to_texts = get_paragraphs_of_file(this.test_articles_directory + from_file_name);
+	if (!convert_to_texts)
+		return;
+
+	// .TW.* 為轉換之答案/標的，因此檢查的是相反語言。 .converted 才是原文！
+	const convert_from_texts = get_paragraphs_of_file(this.test_articles_directory + to_file_name);
+	if (!convert_from_texts)
+		return;
+	if (convert_to_texts.length !== convert_from_texts.length) {
+		CeL.error(`${from_file_name} 與 ${to_file_name} 含有不同數量之字串！此${CeL.gettext.get_alias(check_language)}之標的檔與欲測試之項目數不符，將不採用解答！若檔案為自動生成，您可以刪除舊檔後，重新生成轉換標的檔案。`);
+		return;
+	}
+
+	CeL.info(`${load_text_to_check.name}: 自動檢核 ${convert_to_texts.length}個${options?.export?.work_title ? `《${options.export.work_title}》` : ''}${CeL.gettext.get_alias(check_language === 'TW' ? 'CN' : 'TW')}之字串。`);
+	// this.generate_condition_for_language[convert_to_language] = { convert_from_text: should_convert_to_text, ... }
+	const generate_condition_for = this.generate_condition_for_language[check_language]
+		|| (this.generate_condition_for_language[check_language] = Object.create(null));
+	convert_to_texts.forEach((should_convert_to_text, index) => {
+		generate_condition_for[convert_from_texts[index]] = { should_convert_to_text, ...options.export };
+	});
+	//console.trace(this.generate_condition_for_language);
+	return this.generate_condition_for_language;
+}
 
 // ----------------------------------------------------------------------------
 
@@ -349,7 +399,7 @@ function get_convert_to_conditions(options) {
 
 const KEY_postfix = Symbol('postfix');
 function load_dictionary(file_path, options) {
-	const word_list = CeL.data.pair.remove_comments(CeL.read_file(file_path)).split('\n');
+	const word_list = get_paragraphs_of_file(file_path);
 	// 初始化 initialization: convertion_pairs
 	const convertion_pairs = this.convertion_pairs[options.language] = new Map;
 	convertion_pairs.set(KEY_tag_filter, Object.create(null));
@@ -358,9 +408,6 @@ function load_dictionary(file_path, options) {
 	convertion_pairs.set(KEY_postfix, []);
 
 	for (let conditions of word_list) {
-		conditions = conditions.trim();
-		if (!conditions)
-			continue;
 		conditions = conditions.split('\t');
 		if (conditions.length < 2) {
 			CeL.error(`${load_dictionary.name}: 未設定轉換條件: ${conditions.join('\t')}`);
@@ -626,9 +673,9 @@ function recover_spaces(parsed, paragraph) {
 // @inner 自動生成辭典用的候選條件式。
 function generate_condition_LTP(configuration, options) {
 	const { tagged_word_list, converted_text, should_be_text } = configuration;
-	const start_index = configuration.end_index >= 0 ? configuration.end_index : 0;
+	const start_index = configuration.start_index >= 0 ? configuration.start_index : 0;
 	const end_index = isNaN(configuration.end_index) ? tagged_word_list.length : Math.min(tagged_word_list.length, configuration.end_index);
-	//console.trace([configuration, options.paragraph_index]);
+	//console.trace([configuration, options.paragraph_index, start_index, end_index]);
 	const tagged_word_list_index_offset = start_index - tagged_word_list[start_index].id;
 	//assert: tagged_word_list[tagged_word_list_index_offset].id === 0
 
@@ -639,6 +686,7 @@ function generate_condition_LTP(configuration, options) {
 		const converted_to = converted_text[index];
 		const from_slice = should_be_text.substr(offset, converted_to.length);
 		offset += converted_to.length;
+		//console.trace([from_slice, word_data]);
 		if (from_slice === converted_to) {
 			continue;
 		}
@@ -646,14 +694,14 @@ function generate_condition_LTP(configuration, options) {
 
 		const condition = [word_data_to_condition.call(this, word_data)];
 		if (word_data.parent >= 0) {
-			condition.push(`~${from_slice.trim()}<${word_data.relation}>${word_data_to_condition.call(this, tagged_word_list[word_data.parent])}`);
+			condition.push(`~${from_slice.trim()}<${word_data.relation}>${word_data_to_condition.call(this, tagged_word_list[tagged_word_list_index_offset + word_data.parent])}`);
 		}
 		word_data.roles.forEach(role => {
 			condition.push(`~${from_slice.trim()}<role.type:${role.type}>${word_data_to_condition.call(this, role)}`);
 		});
 		word_data.parents.forEach(parent => {
 			if (parent.parent >= 0) {
-				condition.push(`~${from_slice.trim()}<parent.relate:${parent.relate}>${word_data_to_condition.call(this, tagged_word_list[parent.parent])}`);
+				condition.push(`~${from_slice.trim()}<parent.relate:${parent.relate}>${word_data_to_condition.call(this, tagged_word_list[tagged_word_list_index_offset + parent.parent])}`);
 			}
 		});
 		// 反向關係。
@@ -864,6 +912,10 @@ function forced_convert_to_CN(paragraph, index, tagged_word_list, options) {
 	return CeL_TW_to_CN(paragraph, options);
 }
 
+// 詞性標注結果換行，方便查詢檢視。
+function beautify_tagged_word_list(tagged_word_list) {
+	return JSON.stringify(tagged_word_list).replace(/,{"id":/g, ',\n{"id":');
+}
 
 /**
  * 轉換段落文字。
@@ -908,10 +960,7 @@ function convert_paragraph(paragraph, options) {
 		CeL.create_directory(cache_directory);
 		//console.trace(options);
 		//console.trace(`Write tagged data to ${options.cache_file_path}`);
-		CeL.write_file(options.cache_file_path,
-			// 詞性標注結果換行，方便查詢檢視。
-			JSON.stringify(tagged_word_list).replace(/,{"id":/g, ',\n{"id":')
-		);
+		CeL.write_file(options.cache_file_path, beautify_tagged_word_list(tagged_word_list));
 	}
 
 	// ---------------------------------------------
@@ -924,6 +973,8 @@ function convert_paragraph(paragraph, options) {
 	const word_convert_mode = !options.forced_convert_mode || options.forced_convert_mode === 'word';
 	const word_mode_options = { mode: 'word_first', ...options };
 
+	const generate_condition_for = options.generate_condition_for || this.generate_condition_for_language[options.convert_to_language];
+
 	let converted_text = tagged_word_list.map((word_data, index_of_tagged_word_list) => {
 		// assert: word_data === tagged_word_list[index_of_tagged_word_list]
 		const matched_condition_data = get_all_possible_matched_condition.call(this, { ...options, word_data, convertion_pairs, index_of_tagged_word_list, tagged_word_list });
@@ -934,7 +985,7 @@ function convert_paragraph(paragraph, options) {
 		//const { convert_to_conditions, matched_condition } = matched_condition_data;
 		const to_word_data = matched_condition_data.matched_condition;
 		if (to_word_data) {
-			if (options.generate_condition)
+			if (options.generate_condition || generate_condition_for)
 				word_data[Chinese_converter.KEY_matched_condition] = to_word_data;
 
 			if (to_word_data.filter_name in this.filters[options.convert_to_language]) {
@@ -979,36 +1030,102 @@ function convert_paragraph(paragraph, options) {
 
 	// ---------------------------------------------
 
-	if (options.generate_condition && this.generate_condition) {
-		// options.generate_condition_for = { convert_from_text : should_convert_to_text }
-		if (options.generate_condition_for) {
-			/** {Number}未發現之index。 const: 基本上與程式碼設計合一，僅表示名義，不可更改。(=== -1) */
-			const NOT_FOUND = ''.indexOf('_');
-			// 長度累加
-			let converted_text_length_accumulation;
-			for (const convert_from_text in options.generate_condition_for) {
-				let index = paragraph.indexOf(convert_from_text);
-				if (index === NOT_FOUND)
-					continue;
-				if (!converted_text_length_accumulation) {
-					converted_text_length_accumulation = [];
-					const length = 0;
-					converted_text.forEach(token => { converted_text_length_accumulation.push(length += token.length); });
-				}
-				index = converted_text_length_accumulation.search_sorted(convert_from_text.length);
+	if (generate_condition_for && this.generate_condition) {
+		// 長度累加紀錄。
+		let converted_text_length_accumulation;
+		for (let [convert_from_text, should_convert_to] of Object.entries(generate_condition_for)) {
+			const should_convert_to_text = CeL.is_Object(should_convert_to) ? should_convert_to.should_convert_to_text : should_convert_to;
+			if (convert_from_text.length !== should_convert_to_text.length) {
+				CeL.error(`預設解答與轉換前之文字長度不符，跳過解答: ${should_convert_to_text}`);
+				delete generate_condition_for[convert_from_text];
+				continue;
 			}
+
+			let start_index = paragraph.indexOf(convert_from_text), end_index;
+			if (start_index === NOT_FOUND)
+				continue;
+
+			if (!converted_text_length_accumulation) {
+				// 初始化 converted_text_length_accumulation。
+				converted_text_length_accumulation = [0];
+				let length = 0;
+				converted_text.forEach(token => { converted_text_length_accumulation.push(length += token.length); });
+			}
+
+			let should_be_text = should_convert_to_text;
+			converted_text_length_accumulation.search_sorted(start_index + should_be_text.length, {
+				found(index, is_near) {
+					if (is_near) {
+						should_be_text += converted_text[index].slice(start_index + should_be_text.length - converted_text_length_accumulation[index]);
+						end_index = index + 1;
+					} else {
+						end_index = index;
+					}
+				}
+			});
+			converted_text_length_accumulation.search_sorted(start_index, {
+				found(index, is_near) {
+					if (is_near) {
+						should_be_text = converted_text[index].slice(0, start_index - converted_text_length_accumulation[index]) + should_be_text;
+					}
+					start_index = index;
+				}
+			});
+			const converted_text_String = converted_text.slice(start_index, end_index).join('');
+			if (converted_text_String.length !== should_be_text.length) {
+				// 轉換前後。
+				CeL.error(`預設解答與轉換後之文字長度不符，跳過解答: ${should_be_text}`);
+				continue;
+			}
+
+			if (!CeL.is_Object(should_convert_to)) {
+				// 初始化。
+				generate_condition_for[convert_from_text] = should_convert_to = { should_convert_to_text };
+			}
+			if (!should_convert_to.check_result)
+				should_convert_to.check_result = [];
+			if (converted_text_String === should_be_text) {
+				// 紀錄已處理過的項目。
+				should_convert_to.check_result.push('the same');
+				continue;
+			}
+
+			should_convert_to.check_result.push('different');
+			//CeL.info(`檢查: ${convert_from_text}→${should_be_text}`);
+			//console.trace({ tagged_word_list, converted_text, should_be_text, start_index, end_index });
+			const condition_list = this.generate_condition({ tagged_word_list, converted_text, should_be_text, start_index, end_index }, options);
+			//console.trace(condition_list);
+			CeL.info(`${CeL.gettext.get_alias(options.convert_to_language === 'TW' ? 'CN' : 'TW').slice(0, 1)}\t${convert_from_text}\n→\t${converted_text_String.replace(/\n[\s\S]*$/, '')}\n應為\t${should_convert_to_text}`);
+			condition_list.forEach(condition => {
+				if (condition.parsed[Chinese_converter.KEY_matched_condition]) {
+					CeL.log('Matched condition 匹配的條件式: ' + condition.parsed[Chinese_converter.KEY_matched_condition].condition_text);
+				}
+				// 自動提供可符合答案之候選條件式。
+				CeL.log(`Candidate correction for ${JSON.stringify(condition.parsed.text)}:\n${condition.join('\t')}`);
+			});
+			CeL.debug(beautify_tagged_word_list(tagged_word_list.slice(start_index, end_index)), 0);
 		}
 
-		const should_be_text = options.should_be[options.paragraph_index];
-		const _converted_text = converted_text.join('');
-		if (_converted_text.length !== should_be_text.length) {
-			CeL.error(`預設解答與轉換後之文字長度不符，將跳過解答: ${should_be_text}`);
+		//TODO: 檢查還有哪些尚未處理。
+	}
 
-		} else if (_converted_text !== should_be_text) {
-			const condition_list = this.generate_condition({ tagged_word_list, converted_text, should_be_text }, options);
-			if (!options.should_be.correction_conditions)
-				options.should_be.correction_conditions = [];
-			options.should_be.correction_conditions[options.paragraph_index] = condition_list;
+	if (options.generate_condition && this.generate_condition) {
+		if (options.should_be) {
+			//should_be_text: should_convert_to_text
+			const should_be_text = options.should_be[options.paragraph_index];
+			const converted_text_String = converted_text.join('');
+			if (converted_text_String.length !== should_be_text.length) {
+				// 轉換前後。
+				CeL.error(`預設解答與轉換後之文字長度不符，跳過解答: ${should_be_text}`);
+
+			} else if (converted_text_String !== should_be_text) {
+				const condition_list = this.generate_condition({ tagged_word_list, converted_text, should_be_text }, options);
+				if (!options.should_be.correction_conditions)
+					options.should_be.correction_conditions = [];
+				options.should_be.correction_conditions[options.paragraph_index] = condition_list;
+			}
+		} else {
+			CeL.error(`未設定 options.should_be！`);
 		}
 	}
 
@@ -1095,6 +1212,24 @@ function return_converted_paragraphs(options, converted_paragraphs) {
 
 // ----------------------------------------------------------------------------
 
+// 注意：LTP 於末尾有無句號、數個句子是合併或拆分解析，會有不同解析結果。
+// (?:[。？！]|……)[\r\n]*|
+function get_paragraphs_of_text(text) {
+	if (!text)
+		return;
+
+	const paragraphs = CeL.data.pair.remove_comments(text.toString())
+		.split('\n')
+		.map(text => text.trim()).filter(text => !!text);
+
+	if (paragraphs.length > 0)
+		return paragraphs;
+}
+
+function get_paragraphs_of_file(file_name) {
+	return get_paragraphs_of_text(CeL.read_file(file_name));
+}
+
 // 前期轉換函數: 將網頁原始碼轉成分詞用的文字。
 function normalize_HTML(html) {
 	html = CeL.HTML_to_Unicode(html)
@@ -1111,7 +1246,22 @@ function normalize_HTML(html) {
 
 // ----------------------------------------------------------------------------
 
-Object.assign(Chinese_converter.prototype, { tag_paragraph_jieba, tag_paragraph_via_CoreNLP });
+Object.assign(Chinese_converter, {
+	KEY_matched_condition: 'matched condition',
+
+	get_paragraphs_of_text, get_paragraphs_of_file,
+	beautify_tagged_word_list,
+});
+
+Object.assign(Chinese_converter.prototype, {
+	tag_paragraph_jieba, tag_paragraph_via_CoreNLP,
+
+	dictionaries_directory: module_base_path + 'dictionaries' + CeL.env.path_separator,
+
+	test_articles_directory: module_base_path + '_test suite' + CeL.env.path_separator + 'articles' + CeL.env.path_separator,
+	// 這些是特別的檔案: 會自動檢核。
+	text_to_check_files: ['watch_target.TW.txt', 'watch_target.CN.txt'],
+});
 
 module.exports = Chinese_converter;
 

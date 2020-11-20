@@ -95,6 +95,9 @@ cecc.to_CN('繁體中文');
 5. `npm test` 確認無衝突。
 6. 通過測試後 push 新辭典檔。
 
+有時另外挑出句子會解析出不同語法，此時必須透過完整轉換文本修訂辭典：通過 [work_crawler](https://github.com/kanasimi/work_crawler) 選擇繁簡轉換功能，並隨時修訂辭典，應先設定 .cache_directory（work_crawler 會自動設定）。
+測試檔改用 [to check.TW.txt](_test%20suite/articles/to check.TW.txt)、[to check.CN.txt](_test%20suite/articles/to check.CN.txt)，會在每次轉換都測試是否有相符之文字。
+
 
 ## See also
 ### 中文分詞

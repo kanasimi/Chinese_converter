@@ -73,6 +73,13 @@ function add_test(test_name, conditions) {
 
 const module_base_path = module.path + CeL.env.path_separator;
 const articles_directory = module_base_path + 'articles' + CeL.env.path_separator;
+
+add_test('基本檢核', async (assert, setup_test, finish_test, options) => {
+	assert([articles_directory, cecc.test_articles_directory]);
+});
+
+// ------------------------------------------------------------------
+
 const convert_options = {
 	cache_directory: module_base_path + 'cache_data' + CeL.env.path_separator,
 	min_cache_length: 40,
@@ -85,20 +92,12 @@ if (latest_test_result)
 else
 	latest_test_result = Object.create(null);
 
-function get_paragraphs_of_text(text) {
-	return text
-		// 注意：LTP 於末尾有無句號、數個句子是合併或拆分解析，會有不同解析結果。
-		// (?:[。？！]|……)[\r\n]*|
-		.split(/[\r\n]+/)
-		.map(line => line.trim()).filter(line => !!line && !/^(\/\/)/.test(line));
-}
-
 async function for_each_test_set(test_configuration) {
 	const { assert, setup_test, finish_test,
-		test_title, text_is_CN,
+		test_title, text_is_TW,
 		content_paragraphs, answer_paragraphs } = test_configuration;
 
-	const test_name = `${text_is_CN ? '簡→' : ''}繁→簡→繁：${test_title}`;
+	const test_name = `${text_is_TW ? '' : '简→'}繁→简→繁：${test_title}`;
 	setup_test(test_name);
 
 	let answer_paragraphs_is_OK;
@@ -106,17 +105,30 @@ async function for_each_test_set(test_configuration) {
 		if (answer_paragraphs.length === content_paragraphs.length) {
 			answer_paragraphs_is_OK = true;
 		} else {
-			CeL.warn(`${test_title}: 預設解答與欲測試之項目數不符，將不採用解答！`);
+			// 含有不同數量之字串！
+			CeL.warn(`${test_title}: 預設解答與欲測試之項目數不符，將不採用解答！若檔案為自動生成，您可以刪除舊檔後，重新生成轉換標的檔案。`);
 		}
 	}
 
 	let TW_paragraphs, converted_CN, tagged_word_list_of_paragraphs;
-	if (text_is_CN) {
+	if (text_is_TW) {
+		TW_paragraphs = content_paragraphs;
+		converted_CN = await cecc.to_CN(TW_paragraphs, convert_options);
+
+		if (answer_paragraphs_is_OK) {
+			for (let index = 0; index < answer_paragraphs.length; index++) {
+				if (!assert([converted_CN[index], answer_paragraphs[index]], test_title + ` #${index + 1}-TW answer`)) {
+					CeL.info(`　 繁\t${JSON.stringify(TW_paragraphs[index])}\n→ 简\t${JSON.stringify(converted_CN[index])}\n應為\t${JSON.stringify(answer_paragraphs[index])}`);
+				}
+			}
+		}
+
+	} else {
 		TW_paragraphs = await cecc.to_TW(content_paragraphs, convert_options);
 		if (answer_paragraphs_is_OK) {
 			for (let index = 0; index < answer_paragraphs.length; index++) {
 				if (!assert([TW_paragraphs[index], answer_paragraphs[index]], test_title + ` #${index + 1}-CN answer`)) {
-					CeL.info(`　 簡\t${JSON.stringify(content_paragraphs[index])}\n→ 繁\t${JSON.stringify(TW_paragraphs[index])}\n ans.\t${JSON.stringify(answer_paragraphs[index])}`);
+					CeL.info(`　 简\t${JSON.stringify(content_paragraphs[index])}\n→ 繁\t${JSON.stringify(TW_paragraphs[index])}\n應為\t${JSON.stringify(answer_paragraphs[index])}`);
 				}
 			}
 		}
@@ -124,19 +136,7 @@ async function for_each_test_set(test_configuration) {
 		converted_CN = await cecc.to_CN(TW_paragraphs, convert_options);
 		for (let index = 0; index < content_paragraphs.length; index++) {
 			if (!assert([converted_CN[index], content_paragraphs[index]], test_title + ` #${index + 1}-CN`)) {
-				CeL.info(`　 簡\t${JSON.stringify(content_paragraphs[index])}\n→ 繁\t${JSON.stringify(TW_paragraphs[index])}\n→ 簡\t${JSON.stringify(converted_CN[index])}\n 原簡\t${JSON.stringify(content_paragraphs[index])}`);
-			}
-		}
-
-	} else {
-		TW_paragraphs = content_paragraphs;
-		converted_CN = await cecc.to_CN(TW_paragraphs, convert_options);
-
-		if (answer_paragraphs_is_OK) {
-			for (let index = 0; index < answer_paragraphs.length; index++) {
-				if (!assert([converted_CN[index], answer_paragraphs[index]], test_title + ` #${index + 1}-TW answer`)) {
-					CeL.info(`　 繁\t${JSON.stringify(TW_paragraphs[index])}\n→ 簡\t${JSON.stringify(converted_CN[index])}\n ans.\t${JSON.stringify(answer_paragraphs[index])}`);
-				}
+				CeL.info(`　 简\t${JSON.stringify(content_paragraphs[index])}\n→ 繁\t${JSON.stringify(TW_paragraphs[index])}\n→ 简\t${JSON.stringify(converted_CN[index])}\n 原简\t${JSON.stringify(content_paragraphs[index])}`);
 			}
 		}
 	}
@@ -146,20 +146,17 @@ async function for_each_test_set(test_configuration) {
 	converted_TW = converted_TW.converted_paragraphs;
 	for (let index = 0; index < TW_paragraphs.length; index++) {
 		if (!assert([converted_TW[index], TW_paragraphs[index]], test_title + ` #${index + 1}`)) {
-			CeL.info(`　 繁\t${JSON.stringify(TW_paragraphs[index])}\n→ 簡\t${JSON.stringify(converted_CN[index])}\n→ 繁\t${JSON.stringify(converted_TW[index])}\n 原繁\t${JSON.stringify(TW_paragraphs[index])}`);
+			CeL.info(`　 繁\t${JSON.stringify(TW_paragraphs[index])}\n→ 简\t${JSON.stringify(converted_CN[index])}\n→ 繁\t${JSON.stringify(converted_TW[index])}\n 原繁\t${JSON.stringify(TW_paragraphs[index])}`);
 			TW_paragraphs.correction_conditions && TW_paragraphs.correction_conditions[index].forEach(correction => {
 				if (correction.parsed[CeCC.KEY_matched_condition]) {
 					CeL.log('Matched condition 匹配的條件式: ' + correction.parsed[CeCC.KEY_matched_condition].condition_text);
 				}
 				// 自動提供候選條件式。
-				CeL.log(`Candidate correction for ${correction.parsed.text} 為符合答案建議可採用條件式:\n${correction.join('\t')}`);
+				CeL.log(`Candidate correction for ${JSON.stringify(correction.parsed.text)}:\n${correction.join('\t')}`);
 			});
 			if (test_configuration.error_count++ < test_configuration.max_error_tags_showing && test_configuration.max_error_tags_showing) {
-				if (tagged_word_list_of_paragraphs) {
-					console.log(tagged_word_list_of_paragraphs[index]);
-				} else {
-					console.log(await cecc.tag_paragraph(converted_CN[index]));
-				}
+				const tagged_word_list = tagged_word_list_of_paragraphs ? tagged_word_list_of_paragraphs[index] : await cecc.tag_paragraph(converted_CN[index]);
+				console.log(CeCC.beautify_tagged_word_list(tagged_word_list));
 			}
 		}
 	}
@@ -187,9 +184,9 @@ async function no_new_file(file_path, answer_file_path, options) {
 	if (!answer_file_status || file_status.mtime - answer_file_status.mtime > 0) {
 		CeL.info(`Generate a new answer file for ${options.file_name}...`);
 		let converted_text = CeL.read_file(file_path).toString();
-		converted_text = options.text_is_CN
-			? await cecc.to_TW(converted_text, convert_options)
-			: await cecc.to_CN(converted_text, convert_options)
+		converted_text = options.text_is_TW
+			? await cecc.to_CN(converted_text, convert_options)
+			: await cecc.to_TW(converted_text, convert_options)
 			;
 		//console.trace(converted_text.slice(0, 200));
 		CeL.write_file(answer_file_path
@@ -217,15 +214,6 @@ async function no_new_file(file_path, answer_file_path, options) {
 	}
 }
 
-function get_paragraphs_of_file(file_path) {
-	//console.trace(`Read ${articles_directory + file_name}`);
-	const contents = CeL.read_file(file_path);
-	if (!contents)
-		return;
-
-	return get_paragraphs_of_text(CeL.data.pair.remove_comments(contents.toString()));
-}
-
 add_test('正確率檢核', async (assert, setup_test, finish_test, options) => {
 	const file_list = CeL.storage.read_directory(articles_directory);
 	//console.trace([articles_directory, file_list]);
@@ -236,23 +224,23 @@ add_test('正確率檢核', async (assert, setup_test, finish_test, options) => 
 	};
 
 	for (const file_name of file_list) {
-		let file_name_language = file_name.match(/\.(CN|TW)\.\w+$/);
+		let file_name_language = file_name.match(/\.(TW|CN)\.\w+$/);
 		//console.trace([file_name, file_name_language]);
 		if (!file_name_language)
 			continue;
 
 		const file_path = articles_directory + file_name;
-		const answer_file_path = articles_directory + file_name.replace(/(\.\w+)$/, '.answer$1');
-		const text_is_CN = file_name_language[1] === 'CN';
-		if (await no_new_file(file_path, answer_file_path, { ...options, text_is_CN, file_name })) {
+		const answer_file_path = articles_directory + file_name.replace(/(\.\w+)$/, '.converted$1');
+		const text_is_TW = file_name_language[1] === 'TW';
+		if (await no_new_file(file_path, answer_file_path, { ...options, text_is_TW, file_name })) {
 			CeL.info(`Skip ${file_name}: latest test at ${latest_test_result[options.test_name].date}, no news.`);
 			continue;
 		}
 
 		await for_each_test_set(Object.assign(test_configuration, {
-			test_title: file_name, text_is_CN,
-			content_paragraphs: get_paragraphs_of_file(file_path),
-			answer_paragraphs: get_paragraphs_of_file(answer_file_path),
+			test_title: file_name, text_is_TW,
+			content_paragraphs: CeCC.get_paragraphs_of_file(file_path),
+			answer_paragraphs: CeCC.get_paragraphs_of_file(answer_file_path),
 		}));
 	}
 
@@ -326,9 +314,7 @@ if (CeL.env.argv.includes('nowiki')) {
 	// --------------------------
 
 	add_test('zhwiki 正確率檢核', async (assert, setup_test, finish_test, options) => {
-		const page_title_list = CeL.data.pair.remove_comments(CeL.read_file(module_base_path + 'zhwiki pages.txt').toString())
-			.split('\n')
-			.map(page_title => page_title.trim()).filter(page_title => !!page_title);
+		const page_title_list = CeCC.get_paragraphs_of_file(module_base_path + 'zhwiki pages.txt');
 		//console.trace([articles_directory, page_title_list]);
 
 		const test_configuration = {
@@ -341,9 +327,9 @@ if (CeL.env.argv.includes('nowiki')) {
 			//console.log(page_data.wikitext);
 
 			await for_each_test_set(Object.assign(test_configuration, {
-				test_title: page_title, text_is_CN: false,
-				content_paragraphs: get_paragraphs_of_text(await get_parsed_wikitext(page_data, 'zh-tw')),
-				answer_paragraphs: get_paragraphs_of_text(await get_parsed_wikitext(page_data, 'zh-cn')),
+				test_title: page_title, text_is_TW: true,
+				content_paragraphs: CeCC.get_paragraphs_of_text(await get_parsed_wikitext(page_data, 'zh-tw')),
+				answer_paragraphs: CeCC.get_paragraphs_of_text(await get_parsed_wikitext(page_data, 'zh-cn')),
 			}));
 		}
 
