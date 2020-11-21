@@ -186,6 +186,10 @@ class Chinese_converter {
 
 // ----------------------------------------------------------------------------
 
+function to_converted_file_path(file_name) {
+	return file_name.replace(/(\.\w+)$/, '.converted$1');
+}
+
 function load_text_to_check(from_file_name, options) {
 	let check_language = from_file_name.match(/\.(TW|CN)\.\w+$/);
 	//console.trace([file_name, file_name_language]);
@@ -196,7 +200,7 @@ function load_text_to_check(from_file_name, options) {
 
 	check_language = check_language[1];
 
-	const to_file_name = from_file_name.replace(/(\.\w+)$/, '.converted$1');
+	const to_file_name = to_converted_file_path(from_file_name);
 	const convert_to_texts = get_paragraphs_of_file(this.test_articles_directory + from_file_name);
 	if (!convert_to_texts)
 		return;
@@ -1095,7 +1099,7 @@ function convert_paragraph(paragraph, options) {
 			//console.trace({ tagged_word_list, converted_text, should_be_text, start_index, end_index });
 			const condition_list = this.generate_condition({ tagged_word_list, converted_text, should_be_text, start_index, end_index }, options);
 			//console.trace(condition_list);
-			CeL.info(`${CeL.gettext.get_alias(options.convert_to_language === 'TW' ? 'CN' : 'TW').slice(0, 1)}\t${convert_from_text}\n→\t${converted_text_String.replace(/\n[\s\S]*$/, '')}\n應為\t${should_convert_to_text}`);
+			CeL.info(`${CeL.gettext.get_alias(options.convert_to_language === 'TW' ? 'CN' : 'TW').slice(0, 1)}\t${convert_from_text}\n→\t${converted_text_String.replace(/^([^\n]+)\n[\s\S]*$/, '$1')}\n應為\t${should_convert_to_text}`);
 			condition_list.forEach(condition => {
 				if (condition.parsed[Chinese_converter.KEY_matched_condition]) {
 					CeL.log('Matched condition 匹配的條件式: ' + condition.parsed[Chinese_converter.KEY_matched_condition].condition_text);
@@ -1251,6 +1255,7 @@ Object.assign(Chinese_converter, {
 
 	get_paragraphs_of_text, get_paragraphs_of_file,
 	beautify_tagged_word_list,
+	to_converted_file_path,
 });
 
 Object.assign(Chinese_converter.prototype, {

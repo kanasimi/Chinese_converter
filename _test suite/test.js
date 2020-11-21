@@ -178,15 +178,20 @@ function record_test(test_configuration, options) {
 
 // ============================================================================
 
-async function no_new_file(file_path, answer_file_path, options) {
+async function not_new_article_to_check(file_name, options) {
+	const file_path = this.test_articles_directory + file_name;
 	const file_status = CeL.storage.fso_status(file_path);
+
+	const answer_file_path = options.answer_file_path
+		|| (options.answer_file_name ? this.test_articles_directory + options.answer_file_name : CeCC.to_converted_file_path(file_path));
 	const answer_file_status = CeL.storage.fso_status(answer_file_path);
+
 	if (!answer_file_status || file_status.mtime - answer_file_status.mtime > 0) {
-		CeL.info(`Generate a new answer file for ${options.file_name}...`);
+		CeL.info(`${not_new_article_to_check.name}: Generate a new answer file for ${options.file_name}...`);
 		let converted_text = CeL.read_file(file_path).toString();
 		converted_text = options.text_is_TW
-			? await cecc.to_CN(converted_text, convert_options)
-			: await cecc.to_TW(converted_text, convert_options)
+			? await this.to_CN(converted_text, convert_options)
+			: await this.to_TW(converted_text, convert_options)
 			;
 		//console.trace(converted_text.slice(0, 200));
 		CeL.write_file(answer_file_path
@@ -198,8 +203,8 @@ async function no_new_file(file_path, answer_file_path, options) {
 		return;
 
 	const latest_test_result_date = Date.parse(latest_test_result[options.test_name]?.date);
-	//console.trace(cecc.dictionary_file_paths);
-	for (const dictionary_file_path of Object.values(cecc.dictionary_file_paths)) {
+	//console.trace(this.dictionary_file_paths);
+	for (const dictionary_file_path of Object.values(this.dictionary_file_paths)) {
 		const dictionary_file_status = CeL.storage.fso_status(dictionary_file_path);
 		//console.trace(dictionary_file_status);
 		//console.trace(dictionary_file_status.mtime - latest_test_result_date);
@@ -230,9 +235,9 @@ add_test('正確率檢核', async (assert, setup_test, finish_test, options) => 
 			continue;
 
 		const file_path = articles_directory + file_name;
-		const answer_file_path = articles_directory + file_name.replace(/(\.\w+)$/, '.converted$1');
+		const answer_file_path = CeCC.to_converted_file_path(file_path);
 		const text_is_TW = file_name_language[1] === 'TW';
-		if (await no_new_file(file_path, answer_file_path, { ...options, text_is_TW, file_name })) {
+		if (await not_new_article_to_check.call(cecc, file_name, { ...options, text_is_TW, file_name })) {
 			CeL.info(`Skip ${file_name}: latest test at ${latest_test_result[options.test_name].date}, no news.`);
 			continue;
 		}

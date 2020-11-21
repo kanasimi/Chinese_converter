@@ -11,10 +11,10 @@
 [![DeepScan grade](https://deepscan.io/api/teams/4788/projects/14427/branches/268541/badge/grade.svg)](https://deepscan.io/dashboard#view=project&tid=4788&pid=14427&bid=268541)
 
 # CeCC - Colorless echo Chinese converter
-在人工智慧讀通文義、繁簡轉換前，中文分詞、判斷語境之後再做轉換，應比單純詞彙比對更準確。辭典應可如維基百科般由眾人編輯，且記錄改變原由，加進 test suit。
+在人工智慧讀通文義、繁簡轉換前，應用[自然語言處理](https://zh.wikipedia.org/wiki/%E8%87%AA%E7%84%B6%E8%AF%AD%E8%A8%80%E5%A4%84%E7%90%86)中文分詞、標注詞性、判斷語境之後再做轉換，[應比單純詞彙比對更準確](https://www.ccjk.com/word%E4%B8%AD%E6%96%87%E7%AE%80%E7%B9%81%E8%BD%AC%E6%8D%A2%E5%AD%98%E5%9C%A8%E7%9A%84%E9%97%AE%E9%A2%98%E4%B8%8E%E8%A7%A3%E5%86%B3%E5%AF%B9%E7%AD%96-%E8%BD%AC%E8%BD%BD/)。辭典應可如維基百科般由眾人編輯，且記錄改變原由，加進 test suit。
 
 ## Concepts
-1. 先中文分詞（附帶詞性標注）+自動判斷句子、段落的語境（配合[維基百科專有名詞轉換](https://zh.wikipedia.org/wiki/Wikipedia:%E5%AD%97%E8%A9%9E%E8%BD%89%E6%8F%9B%E8%99%95%E7%90%86/%E5%85%AC%E5%85%B1%E8%BD%89%E6%8F%9B%E7%B5%84)）
+1. 先中文分詞（附帶詞義、詞性標注）+自動判斷句子、段落的語境（配合[維基百科專有名詞轉換](https://zh.wikipedia.org/wiki/Wikipedia:%E5%AD%97%E8%A9%9E%E8%BD%89%E6%8F%9B%E8%99%95%E7%90%86/%E5%85%AC%E5%85%B1%E8%BD%89%E6%8F%9B%E7%B5%84)）
 2. 再繁簡轉換（輕量化繁簡轉換辭典負擔）
 
 ## Process
@@ -77,17 +77,24 @@ npm install cecc
 1. 啟動 [LTP server](http://ltp.ai/docs/quickstart.html#ltp-server)，預設為 http://localhost:5000/ 。
 
 2. Try codes:
-```javascript
-// load module
-const CeCC = require('cecc');
-// chinese_converter
-const cecc = new CeCC({ LTP_URL : 'http://localhost:5000/' });
-cecc.to_TW('简体中文');
-cecc.to_CN('繁體中文');
-```
+   ```javascript
+   // load module
+   const CeCC = require('cecc');
+   // chinese_converter
+   const cecc = new CeCC({ LTP_URL : 'http://localhost:5000/' });
+   cecc.to_TW('简体中文');
+   cecc.to_CN('繁體中文');
+   ```
+3. TODO: 完整測試。
+   ```sh
+   # 重新生成 .converted.* 。
+   npm test reconvert
+   # 重新生成所有詞性查詢 cache。
+   npm test ignore_cache
+   ```
 
 ## 辭典修訂流程
-一次正常的辭典修訂流程：
+### 一次正常的單句式辭典修訂流程
 1. 閱讀轉換過的文字，發現轉換錯誤。
 2. 改成正確的句子，填入測試檔 [general.TW.txt](_test%20suite/articles/general.TW.txt) 與 [general.TW.answer.txt](_test%20suite/articles/general.TW.answer.txt)。
 3. 啟動 [LTP server](http://ltp.ai/docs/quickstart.html#ltp-server)，`npm test` 跑測試。
@@ -95,9 +102,14 @@ cecc.to_CN('繁體中文');
 5. `npm test` 確認無衝突。
 6. 通過測試後 push 新辭典檔。
 
+### 邊閱讀文本邊修訂流程
 有時另外挑出句子會解析出不同語法，此時必須透過完整轉換文本修訂辭典：通過 [work_crawler](https://github.com/kanasimi/work_crawler) 選擇繁簡轉換功能，並隨時修訂辭典，應先設定 .cache_directory（work_crawler 會自動設定）。
 測試檔改用 [to check.TW.txt](_test%20suite/articles/to check.TW.txt)、[to check.CN.txt](_test%20suite/articles/to check.CN.txt)，會在每次轉換都測試是否有相符之文字。
 
+
+## Defect
+* LTP 轉換速率過慢。
+* 字典仍過於薄弱、有缺陷，尚待加強。
 
 ## See also
 ### 中文分詞
