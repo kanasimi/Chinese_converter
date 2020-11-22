@@ -126,7 +126,7 @@ class Chinese_converter {
 		this.generate_condition_for_language = Object.create(null);
 		// 會在每次轉換都測試是否有相符之文字。
 		this.text_to_check_files.forEach(from_file_name => load_text_to_check.call(this, from_file_name));
-		CeL.storage.read_directory(this.test_articles_directory).forEach(from_file_name => {
+		CeL.read_directory(this.test_articles_directory).forEach(from_file_name => {
 			const matched = from_file_name.match(/watch_target\.(?<work_title>[^.]+)\.(?<to_language>TW|CN)\.\w+$/);
 			if (matched) {
 				load_text_to_check.call(this, from_file_name, {
@@ -190,31 +190,96 @@ function to_converted_file_path(file_name) {
 	return file_name.replace(/(\.\w+)$/, '.converted$1');
 }
 
-function load_text_to_check(from_file_name, options) {
-	let check_language = from_file_name.match(/\.(TW|CN)\.\w+$/);
-	//console.trace([file_name, file_name_language]);
+async function regenerate_converted(file_path, answer_file_path, options) {
+	CeL.info(`${regenerate_converted.name}: Generate a new answer file for ${options.file_name || file_path}...`);
+
+	// Create backup
+	const backup_file_path = answer_file_path.replace(/(\.\w+)$/, '.bak$1');
+	CeL.remove_file(backup_file_path);
+	CeL.move_file(answer_file_path, backup_file_path);
+
+	let converted_text = CeL.read_file(file_path).toString();
+	converted_text = options.text_is_TW
+		? await this.to_CN(converted_text, options.convert_options)
+		: await this.to_TW(converted_text, options.convert_options)
+		;
+	//console.trace(converted_text.slice(0, 200));
+	CeL.write_file(answer_file_path
+		//.replace('.answer.', '.converted.')
+		, converted_text);
+}
+
+async function not_new_article_to_check(file_name, options) {
+	const file_path = this.test_articles_directory + file_name;
+	const file_status = CeL.fso_status(file_path);
+
+	const answer_file_path = options.answer_file_path
+		|| (options.answer_file_name ? this.test_articles_directory + options.answer_file_name : Chinese_converter.to_converted_file_path(file_path));
+	const answer_file_status = CeL.fso_status(answer_file_path);
+
+	// 重新生成 .converted.* 解答檔案。
+	if (options.regenerate_converted || !answer_file_status || file_status.mtime - answer_file_status.mtime > 0) {
+		await this.regenerate_converted(file_path, answer_file_path, { ...options, file_name, });
+	}
+
+	if (options.recheck) {
+		// 既然要重新檢查，即便詞典檔是舊的，依然算作有新變化。
+		return;
+	}
+
+	// -----------------------------------
+
+	// 檢查上一次測試後，是否有新詞典檔。
+	const latest_test_result = options.latest_test_result;
+	const latest_test_result_date = latest_test_result ? Date.parse(latest_test_result[options.test_name]?.date)
+		// 檢查是否有比測試檔或 .converted.* 解答檔案更新的新詞典檔。
+		: answer_file_status ? Math.max(file_status.mtime.getTime(), answer_file_status.mtime.getTime()) : file_status.mtime.getTime();
+	//console.trace(this.dictionary_file_paths);
+	for (const dictionary_file_path of Object.values(this.dictionary_file_paths)) {
+		const dictionary_file_status = CeL.fso_status(dictionary_file_path);
+		//console.trace(dictionary_file_status);
+		//console.trace([dictionary_file_status.mtime - latest_test_result_date, answer_file_status && answer_file_status.mtime - dictionary_file_status.mtime]);
+		if (dictionary_file_status.mtime - latest_test_result_date > 0) {
+			CeL.info(`${not_new_article_to_check.name}: 有新詞典檔 ${dictionary_file_path}`);
+			if (latest_test_result)
+				delete latest_test_result[options.test_name];
+			return;
+		}
+	}
+
+	// 檢查上一次測試是否比測試檔更新。
+	//console.trace(latest_test_result_date - file_status.mtime);
+	if (latest_test_result_date - file_status.mtime > 0) {
+		//console.trace(!answer_file_status || latest_test_result_date > answer_file_status.mtime);
+		return !answer_file_status || latest_test_result_date > answer_file_status.mtime;
+	}
+}
+
+function load_text_to_check(convert_to_text__file_name, options) {
+	let check_language = convert_to_text__file_name.match(/\.(TW|CN)\.\w+$/);
+	//console.trace([convert_to_text__file_name, check_language]);
 	if (!check_language) {
-		CeL.error(`無法判別檔案之語言: ${from_file_name}`);
+		CeL.error(`無法判別檔案之語言: ${convert_to_text__file_name}`);
 		return;
 	}
 
 	check_language = check_language[1];
 
-	const to_file_name = to_converted_file_path(from_file_name);
-	const convert_to_texts = get_paragraphs_of_file(this.test_articles_directory + from_file_name);
+	const text_to_check_file_name = to_converted_file_path(convert_to_text__file_name);
+	const convert_to_texts = get_paragraphs_of_file(this.test_articles_directory + convert_to_text__file_name);
 	if (!convert_to_texts)
 		return;
 
 	// .TW.* 為轉換之答案/標的，因此檢查的是相反語言。 .converted 才是原文！
-	const convert_from_texts = get_paragraphs_of_file(this.test_articles_directory + to_file_name);
+	const convert_from_texts = get_paragraphs_of_file(this.test_articles_directory + text_to_check_file_name);
 	if (!convert_from_texts)
 		return;
 	if (convert_to_texts.length !== convert_from_texts.length) {
-		CeL.error(`${from_file_name} 與 ${to_file_name} 含有不同數量之字串！此${CeL.gettext.get_alias(check_language)}之標的檔與欲測試之項目數不符，將不採用解答！若檔案為自動生成，您可以刪除舊檔後，重新生成轉換標的檔案。`);
+		CeL.error(`${convert_to_text__file_name} 與 ${text_to_check_file_name} 含有不同數量之字串！此${CeL.gettext.get_alias(check_language)}之標的檔與欲測試之項目數不符，將不採用解答！若檔案為自動生成，您可以刪除舊檔後，重新生成轉換標的檔案。`);
 		return;
 	}
 
-	CeL.info(`${load_text_to_check.name}: 自動檢核 ${convert_to_texts.length}個${options?.export?.work_title ? `《${options.export.work_title}》` : ''}${CeL.gettext.get_alias(check_language === 'TW' ? 'CN' : 'TW')}之字串。`);
+	CeL.info(`${load_text_to_check.name}: 自動檢核 ${convert_to_texts.length}個${options?.export?.work_title ? `《${options.export.work_title}》` : ''}${CeL.gettext.get_alias(check_language === 'TW' ? 'CN' : 'TW')}→${CeL.gettext.get_alias(check_language)} 之字串。`);
 	// this.generate_condition_for_language[convert_to_language] = { convert_from_text: should_convert_to_text, ... }
 	const generate_condition_for = this.generate_condition_for_language[check_language]
 		|| (this.generate_condition_for_language[check_language] = Object.create(null));
@@ -223,6 +288,31 @@ function load_text_to_check(from_file_name, options) {
 	});
 	//console.trace(this.generate_condition_for_language);
 	return this.generate_condition_for_language;
+}
+
+function report_text_to_check(options) {
+	const generate_condition_for = this.generate_condition_for_language[options.convert_to_language];
+	const lost_texts = [];
+	let OK_count = 0, NG_count = 0;
+	for (const convert_from in generate_condition_for) {
+		const convert_data = generate_condition_for[convert_from];
+		const check_result = convert_data.check_result;
+		if (!check_result) {
+			lost_texts.push(convert_data.should_convert_to_text);
+			continue;
+		}
+		if (check_result.NG.length > 0)
+			NG_count++;
+		else
+			OK_count++;
+	}
+
+	const message = `${report_text_to_check.name}: ${OK_count} OK, ${NG_count} NG.${lost_texts.length > 0 ? ` ${lost_texts.length} lost:\n\t${lost_texts.join('\n\t')}` : ''}`;
+	if (NG_count > 0)
+		CeL.error(message);
+	else
+		CeL.log(message);
+	return { lost_texts, OK_count, NG_count };
 }
 
 // ----------------------------------------------------------------------------
@@ -1086,26 +1176,28 @@ function convert_paragraph(paragraph, options) {
 				// 初始化。
 				generate_condition_for[convert_from_text] = should_convert_to = { should_convert_to_text };
 			}
-			if (!should_convert_to.check_result)
-				should_convert_to.check_result = [];
+			if (!should_convert_to.check_result) {
+				// 初始化。
+				should_convert_to.check_result = { OK: [], NG: [] };
+			}
 			if (converted_text_String === should_be_text) {
 				// 紀錄已處理過的項目。
-				should_convert_to.check_result.push('the same');
+				should_convert_to.check_result.OK.push(true);
 				continue;
 			}
 
-			should_convert_to.check_result.push('different');
+			should_convert_to.check_result.NG.push(true);
 			//CeL.info(`檢查: ${convert_from_text}→${should_be_text}`);
 			//console.trace({ tagged_word_list, converted_text, should_be_text, start_index, end_index });
 			const condition_list = this.generate_condition({ tagged_word_list, converted_text, should_be_text, start_index, end_index }, options);
 			//console.trace(condition_list);
-			CeL.info(`${CeL.gettext.get_alias(options.convert_to_language === 'TW' ? 'CN' : 'TW').slice(0, 1)}\t${convert_from_text}\n→\t${converted_text_String.replace(/^([^\n]+)\n[\s\S]*$/, '$1')}\n應為\t${should_convert_to_text}`);
+			CeL.log(`${CeL.gettext.get_alias(options.convert_to_language === 'TW' ? 'CN' : 'TW').slice(0, 1)}\t${convert_from_text}\n→\t${converted_text_String.replace(/^([^\n]+)\n[\s\S]*$/, '$1')}\n應為\t${should_convert_to_text}`);
 			condition_list.forEach(condition => {
 				if (condition.parsed[Chinese_converter.KEY_matched_condition]) {
-					CeL.log('Matched condition 匹配的條件式: ' + condition.parsed[Chinese_converter.KEY_matched_condition].condition_text);
+					CeL.warn('Matched condition 匹配的條件式: ' + condition.parsed[Chinese_converter.KEY_matched_condition].condition_text);
 				}
 				// 自動提供可符合答案之候選條件式。
-				CeL.log(`Candidate correction for ${JSON.stringify(condition.parsed.text)}:\n${condition.join('\t')}`);
+				CeL.info(`Candidate correction for ${JSON.stringify(condition.parsed.text)}:\n${condition.join('\t')}`);
 			});
 			CeL.debug(beautify_tagged_word_list(tagged_word_list.slice(start_index, end_index)), 0);
 		}
@@ -1266,6 +1358,9 @@ Object.assign(Chinese_converter.prototype, {
 	test_articles_directory: module_base_path + '_test suite' + CeL.env.path_separator + 'articles' + CeL.env.path_separator,
 	// 這些是特別的檔案: 會自動檢核。
 	text_to_check_files: ['watch_target.TW.txt', 'watch_target.CN.txt'],
+
+	regenerate_converted, not_new_article_to_check,
+	report_text_to_check,
 });
 
 module.exports = Chinese_converter;

@@ -146,13 +146,13 @@ async function for_each_test_set(test_configuration) {
 	converted_TW = converted_TW.converted_paragraphs;
 	for (let index = 0; index < TW_paragraphs.length; index++) {
 		if (!assert([converted_TW[index], TW_paragraphs[index]], test_title + ` #${index + 1}`)) {
-			CeL.info(`　 繁\t${JSON.stringify(TW_paragraphs[index])}\n→ 简\t${JSON.stringify(converted_CN[index])}\n→ 繁\t${JSON.stringify(converted_TW[index])}\n 原繁\t${JSON.stringify(TW_paragraphs[index])}`);
+			CeL.log(`　 繁\t${JSON.stringify(TW_paragraphs[index])}\n→ 简\t${JSON.stringify(converted_CN[index])}\n→ 繁\t${JSON.stringify(converted_TW[index])}\n 原繁\t${JSON.stringify(TW_paragraphs[index])}`);
 			TW_paragraphs.correction_conditions && TW_paragraphs.correction_conditions[index].forEach(correction => {
 				if (correction.parsed[CeCC.KEY_matched_condition]) {
-					CeL.log('Matched condition 匹配的條件式: ' + correction.parsed[CeCC.KEY_matched_condition].condition_text);
+					CeL.warn('Matched condition 匹配的條件式: ' + correction.parsed[CeCC.KEY_matched_condition].condition_text);
 				}
 				// 自動提供候選條件式。
-				CeL.log(`Candidate correction for ${JSON.stringify(correction.parsed.text)}:\n${correction.join('\t')}`);
+				CeL.info(`Candidate correction for ${JSON.stringify(correction.parsed.text)}:\n${correction.join('\t')}`);
 			});
 			if (test_configuration.error_count++ < test_configuration.max_error_tags_showing && test_configuration.max_error_tags_showing) {
 				const tagged_word_list = tagged_word_list_of_paragraphs ? tagged_word_list_of_paragraphs[index] : await cecc.tag_paragraph(converted_CN[index]);
@@ -178,47 +178,6 @@ function record_test(test_configuration, options) {
 
 // ============================================================================
 
-async function not_new_article_to_check(file_name, options) {
-	const file_path = this.test_articles_directory + file_name;
-	const file_status = CeL.storage.fso_status(file_path);
-
-	const answer_file_path = options.answer_file_path
-		|| (options.answer_file_name ? this.test_articles_directory + options.answer_file_name : CeCC.to_converted_file_path(file_path));
-	const answer_file_status = CeL.storage.fso_status(answer_file_path);
-
-	if (!answer_file_status || file_status.mtime - answer_file_status.mtime > 0) {
-		CeL.info(`${not_new_article_to_check.name}: Generate a new answer file for ${options.file_name}...`);
-		let converted_text = CeL.read_file(file_path).toString();
-		converted_text = options.text_is_TW
-			? await this.to_CN(converted_text, convert_options)
-			: await this.to_TW(converted_text, convert_options)
-			;
-		//console.trace(converted_text.slice(0, 200));
-		CeL.write_file(answer_file_path
-			//.replace('.answer.', '.converted.')
-			, converted_text);
-	}
-
-	if (CeL.env.argv.includes('recheck'))
-		return;
-
-	const latest_test_result_date = Date.parse(latest_test_result[options.test_name]?.date);
-	//console.trace(this.dictionary_file_paths);
-	for (const dictionary_file_path of Object.values(this.dictionary_file_paths)) {
-		const dictionary_file_status = CeL.storage.fso_status(dictionary_file_path);
-		//console.trace(dictionary_file_status);
-		//console.trace(dictionary_file_status.mtime - latest_test_result_date);
-		if (dictionary_file_status.mtime - latest_test_result_date > 0) {
-			delete latest_test_result[options.test_name];
-			return;
-		}
-	}
-
-	if (latest_test_result_date - file_status.mtime > 0) {
-		return !answer_file_status || latest_test_result_date > answer_file_status.mtime;
-	}
-}
-
 add_test('正確率檢核', async (assert, setup_test, finish_test, options) => {
 	const file_list = CeL.storage.read_directory(articles_directory);
 	//console.trace([articles_directory, file_list]);
@@ -229,6 +188,8 @@ add_test('正確率檢核', async (assert, setup_test, finish_test, options) => 
 	};
 
 	for (const file_name of file_list) {
+		if (file_name.includes('.bak.'))
+			continue;
 		let file_name_language = file_name.match(/\.(TW|CN)\.\w+$/);
 		//console.trace([file_name, file_name_language]);
 		if (!file_name_language)
@@ -237,7 +198,12 @@ add_test('正確率檢核', async (assert, setup_test, finish_test, options) => 
 		const file_path = articles_directory + file_name;
 		const answer_file_path = CeCC.to_converted_file_path(file_path);
 		const text_is_TW = file_name_language[1] === 'TW';
-		if (await not_new_article_to_check.call(cecc, file_name, { ...options, text_is_TW, file_name })) {
+		if (await cecc.not_new_article_to_check(file_name, {
+			...options, text_is_TW,
+			latest_test_result, convert_options,
+			regenerate_converted: CeL.env.argv.includes('regenerate_converted'),
+			recheck: CeL.env.argv.includes('recheck')
+		})) {
 			CeL.info(`Skip ${file_name}: latest test at ${latest_test_result[options.test_name].date}, no news.`);
 			continue;
 		}
@@ -257,7 +223,7 @@ add_test('正確率檢核', async (assert, setup_test, finish_test, options) => 
 
 if (CeL.env.argv.includes('nowiki')) {
 	CeL.info(`跳過 wikipedia 測試。`);
-} else if (require('os').freemem() < 6 * (2 ** 10) ** 3) {
+} else if (require('os').freemem() < /* 6GB RAM */ 6 * (2 ** 10) ** 3) {
 	CeL.warn('RAM 過小，跳過 wikipedia 測試！');
 } else {
 	CeL.run([

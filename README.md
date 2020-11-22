@@ -36,13 +36,11 @@ Install [LTP](https://github.com/HIT-SCIR/ltp) first. 您可能需要 6 GB 記�
 ### Install 中文分詞: LTP
 On Windows, install LTP:
 1. [安裝 Pytorch](https://codertw.com/%E7%A8%8B%E5%BC%8F%E8%AA%9E%E8%A8%80/635797/)。如果 `pip install ltp` 不成功則
-   至 [Pytorch 官方網站](http://pytorch.org/)選擇合適版本離線安裝。
+   至 [Pytorch 官方網站](http://pytorch.org/)選擇合適版本離線安裝。 e.g., `cu101/torch-1.7.0%2Bcu101-cp38-cp38-win_amd64.whl`
 
    CUDA version: `"%ProgramFiles%\NVIDIA Corporation\NVSMI\nvidia-smi.exe"`
 
    `pip install torch-*.whl`
-
-   // e.g., cu101/torch-1.7.0%2Bcu101-cp38-cp38-win_amd64.whl
 
 2. Install tornado:
 ```cmd
@@ -85,31 +83,34 @@ npm install cecc
    cecc.to_TW('简体中文');
    cecc.to_CN('繁體中文');
    ```
-3. TODO: 完整測試。
+3. 完整測試。
    ```sh
-   # 重新生成 .converted.* 。
-   npm test reconvert
-   # 重新生成所有詞性查詢 cache。
+   # 重新生成 .converted.* 解答檔案。
+   npm test regenerate_converted
+   # TODO: 重新生成所有詞性查詢 cache。
    npm test ignore_cache
    ```
 
 ## 辭典修訂流程
 ### 一次正常的單句式辭典修訂流程
 1. 閱讀轉換過的文字，發現轉換錯誤。
-2. 改成正確的句子，填入測試檔 [general.TW.txt](_test%20suite/articles/general.TW.txt) 與 [general.TW.answer.txt](_test%20suite/articles/general.TW.answer.txt)。
+2. 改成正確的句子，填入測試檔 [general.TW.txt](_test%20suite/articles/general.TW.txt) 或 [general.TW.answer.txt](_test%20suite/articles/general.TW.answer.txt)。
 3. 啟動 [LTP server](http://ltp.ai/docs/quickstart.html#ltp-server)，`npm test` 跑測試。
-4. 檢核測試工具自動生成的條件式，將合適的條件式填入辭典檔 [CN_to_TW.LTP.PoS.txt](dictionaries/CN_to_TW.LTP.PoS.txt)。必要時添加新 filter 功能函數於 [CN_to_TW.LTP.filters.js](dictionaries/CN_to_TW.LTP.filters.js)。
+4. 檢核測試工具自動生成的條件式，將合適的條件式填入辭典檔 [CN_to_TW.LTP.PoS.txt](dictionaries/CN_to_TW.LTP.PoS.txt) 或 [TW_to_CN.LTP.PoS.txt](dictionaries/TW_to_CN.LTP.PoS.txt)。必要時添加新 filter 功能函數於 [CN_to_TW.LTP.filters.js](dictionaries/CN_to_TW.LTP.filters.js)。
 5. `npm test` 確認無衝突。
 6. 通過測試後 push 新辭典檔。
 
 ### 邊閱讀文本邊修訂流程
 有時另外挑出句子會解析出不同語法，此時必須透過完整轉換文本修訂辭典：通過 [work_crawler](https://github.com/kanasimi/work_crawler) 選擇繁簡轉換功能，並隨時修訂辭典，應先設定 .cache_directory（work_crawler 會自動設定）。
-測試檔改用 [to check.TW.txt](_test%20suite/articles/to check.TW.txt)、[to check.CN.txt](_test%20suite/articles/to check.CN.txt)，會在每次轉換都測試是否有相符之文字。
-
+1. 閱讀轉換過的文字，發現轉換錯誤。
+2. 改成正確的句子，填入作品相應的測試檔 `_test suite/articles/watch_target.作品名稱.(TW|CN).txt` (e.g., [watch_target.第一序列.TW.txt](_test%20suite/articles/watch_target.第一序列.TW.txt))，會在每次轉換都測試是否有相符之文字。
+3. 持續修改辭典檔至能通過 `npm test nowiki` 測試。
+4. 重新生成繁簡轉換後文本，檢核測試工具自動生成的條件式，將合適的條件式填入辭典檔 [CN_to_TW.LTP.PoS.txt](dictionaries/CN_to_TW.LTP.PoS.txt) 或 [TW_to_CN.LTP.PoS.txt](dictionaries/TW_to_CN.LTP.PoS.txt)。
+5. 全部閱讀檢核完後，將作品相應的測試檔的文句填入測試檔 [general.TW.txt](_test%20suite/articles/general.TW.txt) 或 [general.TW.answer.txt](_test%20suite/articles/general.TW.answer.txt)。
 
 ## Defect
 * LTP 轉換速率過慢。
-* 字典仍過於薄弱、有缺陷，尚待加強。
+* 詞典仍過於薄弱、有缺陷，尚待加強。
 
 ## See also
 ### 中文分詞

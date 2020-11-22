@@ -10,35 +10,36 @@ from	PoS:default condition1	condition2
 
 format of condition: @see parse_condition() @ Chinese_converter.js
 
-盡可能使用字串精確描述，避免正規表達式匹配，如此應可加快速度。
+盡可能使用字串精確描述，避免正規表達式匹配、反向查詢(<←*>)，如此應可加快速度。
+除了解析錯誤時的詞性外，盡可能詳細標注條件式，減少誤判機會。
+
+注意：本檔未符合之字詞，會經 CeL.zh_conversion.CN_to_TW / TW_to_CN 轉換。
+@see function forced_convert_to_TW() / forced_convert_to_CN () @ Chinese_converter.js
+
+CeL.zh_conversion.CN_to_TW / TW_to_CN 之辭典檔見:
+https://github.com/kanasimi/CeJS/blob/master/extension/zh_conversion/
+依然未符合者，將以 OpenCC 轉換。
+https://github.com/BYVoid/OpenCC
+
 
 LTP tag (PoS) 詞性標記:
 https://www.twblogs.net/a/5d4d0684bd9eee541c30e4f8
 https://www.ltp-cloud.com/intro
 https://www.cnblogs.com/CheeseZH/p/4682353.html
 
-*/
 
-/*
+LTP将人民日报的标注集映射到了863的
+https://github.com/HIT-SCIR/ltp/issues/416
 
-注意：本檔未符合之字詞，會經 CeL.zh_conversion.TW_to_CN 轉換。
-@see function forced_convert_to_TW() @ Chinese_converter.js
+https://zhuanlan.zhihu.com/p/89763176
 
-CeL.TW_to_CN 之辭典檔見:
-https://github.com/kanasimi/CeJS/blob/master/extension/zh_conversion/corrections_to_CN.txt
-依然未符合者，將以 OpenCC 轉換。
-https://github.com/BYVoid/OpenCC
+LTP demo (base 模型):
+http://ltp.ai/demo.html
 
-*/
-
-/*
-https://www.zhihu.com/question/46378037
-在目前使用汉字的国家和地区中，中国大陆、香港和日本均保持了「著」和「着」的分化，算是将明代以来「著」去声、入声分化的趋势用语言文字规范的方式给固化下来了。只有台湾的语言文字规范最为保守，来自去声、入声的「著」，全部都作「著」，而不用「着」字。甚至台湾的 Big5 编码字符集中都没有「着」字。
-
-民国在大陆时期出版的《國語辭典》，入声的「着」、「著」都可以使用，而去声的 zhù（ㄓㄨˋ）只能用「著」表示
+https://github.com/HIT-SCIR/ltp/issues/407#issuecomment-686864300
+bert 类的transformers都有512个最大字符长度的限制，然后我们的web demo运行的是base模型
 
 */
-
 
 
 著稱	著称
