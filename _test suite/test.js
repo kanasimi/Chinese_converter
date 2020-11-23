@@ -80,10 +80,7 @@ add_test('基本檢核', async (assert, setup_test, finish_test, options) => {
 
 // ------------------------------------------------------------------
 
-const convert_options = {
-	cache_directory: module_base_path + 'cache_data' + CeL.env.path_separator,
-	min_cache_length: 40,
-};
+const convert_options = cecc.regenerate_converted.default_convert_options;
 
 const latest_test_result_file = convert_options.cache_directory + 'latest_test_result.json';
 let latest_test_result = CeL.read_file(latest_test_result_file);
