@@ -353,7 +353,7 @@ function report_text_to_check(options) {
 	let OK_count = 0, NG_count = 0;
 	for (const convert_from in generate_condition_for) {
 		const convert_data = generate_condition_for[convert_from];
-		const check_result = convert_data.check_result;
+		const { check_result } = convert_data;
 		if (!check_result) {
 			lost_texts.push(convert_data.should_convert_to_text);
 			continue;
@@ -415,17 +415,24 @@ function word_data_to_condition(word_data, options) {
 }
 
 // parse rule
-// convert {String}condition to {Object}word_data or {Object}condition
-function parse_condition(condition, options) {
-	condition = condition.split('+');
+// convert {String}full_condition_text to {Object}word_data or {Object}condition
+function parse_condition(full_condition_text, options) {
 	let target_index;
-	condition = condition.map((token, index) => {
+
+	function set_as_target(condition_data) {
+		condition_data.is_target = true;
+		condition_data.full_condition_text = full_condition_text;
+		if (options?.matched_condition)
+			condition_data.matched_condition = options.matched_condition;
+	}
+
+	const condition = full_condition_text.split('+').map((token, index) => {
 		const matched = token.match(PATTERN_condition).groups;
 		const condition_data = { condition_text: token };
 		if (matched.is_target && !options?.no_target) {
-			condition_data.is_target = true;
+			set_as_target(condition_data);
 			if (target_index >= 0)
-				CeL.warn(`${parse_condition.name}: Multiple target: ${condition.join('+')}`);
+				CeL.warn(`${parse_condition.name}: Multiple target: ${full_condition_text}`);
 			else
 				target_index = index;
 		}
@@ -468,7 +475,7 @@ function parse_condition(condition, options) {
 
 	if (!(target_index >= 0) && !options?.no_target) {
 		// 當僅僅只有單一 token 時，預設即為當前標的。
-		condition[0].is_target = true;
+		set_as_target(condition[0]);
 	}
 
 	if (condition.length === 1) {
@@ -482,6 +489,16 @@ function parse_condition(condition, options) {
 
 	return condition;
 }
+
+function show_correction_condition(correction_condition) {
+	const to_word_data = correction_condition.parsed[Chinese_converter.KEY_matched_condition];
+	if (to_word_data) {
+		CeL.warn(`Matched condition 匹配的條件式: ${to_word_data.matched_condition ? `${to_word_data.matched_condition} → ` : ''}${to_word_data.full_condition_text}`);
+	}
+	// 自動提供可符合答案之候選條件式。
+	CeL.info(`Candidate correction for ${JSON.stringify(correction_condition.parsed.text)}:\n${correction_condition.join('\t')}`);
+}
+
 
 const KEY_tag_filter = Symbol('tag filter'), KEY_tag_pattern_filter = Symbol('tag pattern filter'), KEY_general_pattern_filter = Symbol('general pattern filter'), KEY_pattern = 'pattern';
 
@@ -560,16 +577,17 @@ function load_dictionary(file_path, options) {
 
 	for (let conditions of word_list) {
 		conditions = conditions.split('\t');
-		if (conditions.length < 2) {
+		const matched_condition = conditions[0].trim();
+		if (conditions.length < 2 || !matched_condition) {
 			CeL.error(`${load_dictionary.name}: 未設定轉換條件: ${conditions.join('\t')}`);
 			continue;
 		}
-		const filter = parse_condition.call(this, conditions[0]);
+		const filter = parse_condition.call(this, matched_condition);
 		if (filter.filter_name === 'postfix') {
 			//console.trace(filter);
 		} else if (!filter[this.KEY_word] && !filter[this.KEY_PoS_tag]) {
-			if (conditions[0].trim())
-				CeL.error(`Invalid word filter: ${conditions[0]}`);
+			// assert: !!matched_condition === true
+			CeL.error(`Invalid word filter: ${matched_condition}`);
 			continue;
 		}
 		if (filter.not_match)
@@ -583,7 +601,7 @@ function load_dictionary(file_path, options) {
 				CeL.error(`${load_dictionary.name}: Empty condition[${index}] in ${JSON.stringify(conditions)}`);
 				continue;
 			}
-			condition = parse_condition.call(this, condition);
+			condition = parse_condition.call(this, condition, { matched_condition });
 			// TODO: 將 {Array} 之 pattern 轉成 {Regexp} 之 pattern，採用 .replace(pattern, token => match_condition(token))。
 			convert_to_conditions.push(condition);
 		}
@@ -1249,13 +1267,7 @@ function convert_paragraph(paragraph, options) {
 			const condition_list = this.generate_condition({ tagged_word_list, converted_text, should_be_text, start_index, end_index }, options);
 			//console.trace(condition_list);
 			CeL.log(`${CeL.gettext.get_alias(options.convert_to_language === 'TW' ? 'CN' : 'TW').slice(0, 1)}\t${convert_from_text}\n→\t${converted_text_String.replace(/^([^\n]+)\n[\s\S]*$/, '$1')}\n應為\t${should_convert_to_text}`);
-			condition_list.forEach(condition => {
-				if (condition.parsed[Chinese_converter.KEY_matched_condition]) {
-					CeL.warn('Matched condition 匹配的條件式: ' + condition.parsed[Chinese_converter.KEY_matched_condition].condition_text);
-				}
-				// 自動提供可符合答案之候選條件式。
-				CeL.info(`Candidate correction for ${JSON.stringify(condition.parsed.text)}:\n${condition.join('\t')}`);
-			});
+			condition_list.forEach(show_correction_condition);
 			CeL.debug(beautify_tagged_word_list(tagged_word_list.slice(start_index, end_index)), 0);
 		}
 
@@ -1401,6 +1413,7 @@ function normalize_HTML(html) {
 
 Object.assign(Chinese_converter, {
 	KEY_matched_condition: 'matched condition',
+	show_correction_condition,
 
 	get_paragraphs_of_text, get_paragraphs_of_file,
 	beautify_tagged_word_list,

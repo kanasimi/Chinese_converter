@@ -144,13 +144,7 @@ async function for_each_test_set(test_configuration) {
 	for (let index = 0; index < TW_paragraphs.length; index++) {
 		if (!assert([converted_TW[index], TW_paragraphs[index]], test_title + ` #${index + 1}`)) {
 			CeL.log(`　 繁\t${JSON.stringify(TW_paragraphs[index])}\n→ 简\t${JSON.stringify(converted_CN[index])}\n→ 繁\t${JSON.stringify(converted_TW[index])}\n 原繁\t${JSON.stringify(TW_paragraphs[index])}`);
-			TW_paragraphs.correction_conditions && TW_paragraphs.correction_conditions[index].forEach(correction => {
-				if (correction.parsed[CeCC.KEY_matched_condition]) {
-					CeL.warn('Matched condition 匹配的條件式: ' + correction.parsed[CeCC.KEY_matched_condition].condition_text);
-				}
-				// 自動提供候選條件式。
-				CeL.info(`Candidate correction for ${JSON.stringify(correction.parsed.text)}:\n${correction.join('\t')}`);
-			});
+			TW_paragraphs.correction_conditions && TW_paragraphs.correction_conditions[index].forEach(CeCC.show_correction_condition);
 			if (test_configuration.error_count++ < test_configuration.max_error_tags_showing && test_configuration.max_error_tags_showing) {
 				const tagged_word_list = tagged_word_list_of_paragraphs ? tagged_word_list_of_paragraphs[index] : await cecc.tag_paragraph(converted_CN[index]);
 				console.log(CeCC.beautify_tagged_word_list(tagged_word_list));
