@@ -263,6 +263,8 @@ async function not_new_article_to_check(convert_from_text__file_name, options) {
 	}
 }
 
+const KEY_files_loaded = Symbol('files loaded');
+
 function load_text_to_check(should_be_text__file_name, options) {
 	if (CeL.is_Object(should_be_text__file_name)) {
 		if (should_be_text__file_name.all) {
@@ -285,6 +287,7 @@ function load_text_to_check(should_be_text__file_name, options) {
 				options.export.work_title = should_be_text__file_name.work_title;
 			//e.g., "watch_target.第一序列.TW.txt"
 			should_be_text__file_name = `watch_target.${should_be_text__file_name.work_title}.${should_be_text__file_name.convert_to_language}.${DEFAULT_TEST_FILE_EXTENSION}`;
+			//console.trace(should_be_text__file_name);
 		} else {
 			throw new Error(`${load_text_to_check.name}: Invalid should_be_text__file_name: ${JSON.stringify(should_be_text__file_name)}`);
 		}
@@ -302,14 +305,14 @@ function load_text_to_check(should_be_text__file_name, options) {
 	const convert_to_text__data = get_convert_to_text__file_status.call(this, should_be_text__file_name, options);
 	const should_be_text__file_path = convert_to_text__data.convert_from_text__file_path;
 	if (!this.generate_condition_for_language || options?.reset) {
-		// 初始化。
-		this.generate_condition_for_language = { files_loaded: [] };
+		//console.trace('初始化。');
+		this.generate_condition_for_language = { [KEY_files_loaded]: [] };
 	}
-	if (this.generate_condition_for_language.files_loaded.includes(should_be_text__file_path)) {
+	if (this.generate_condition_for_language[KEY_files_loaded].includes(should_be_text__file_path)) {
 		CeL.log(`${load_text_to_check.name}: The file is already loaded, skip ${should_be_text__file_path}`);
 		return;
 	}
-	this.generate_condition_for_language.files_loaded.push(should_be_text__file_path);
+	this.generate_condition_for_language[KEY_files_loaded].push(should_be_text__file_path);
 	const should_be_texts = get_paragraphs_of_file(should_be_text__file_path);
 	if (!should_be_texts)
 		return;
@@ -1266,9 +1269,15 @@ function convert_paragraph(paragraph, options) {
 			//console.trace({ tagged_word_list, converted_text, should_be_text, start_index, end_index });
 			const condition_list = this.generate_condition({ tagged_word_list, converted_text, should_be_text, start_index, end_index }, options);
 			//console.trace(condition_list);
-			CeL.log(`${CeL.gettext.get_alias(options.convert_to_language === 'TW' ? 'CN' : 'TW').slice(0, 1)}\t${convert_from_text}\n→\t${converted_text_String.replace(/^([^\n]+)\n[\s\S]*$/, '$1')}\n應為\t${should_convert_to_text}`);
+			const tagged_word_list_pieces = tagged_word_list.slice(start_index, end_index);
+			CeL.log(`${CeL.gettext.get_alias(options.convert_to_language === 'TW' ? 'CN' : 'TW').slice(0, 1)
+				}\t${tagged_word_list_pieces.map(word_data => word_data_to_condition.call(this, word_data)).join('+')
+				}\n\t${JSON.stringify(convert_from_text)
+				}\n→\t${JSON.stringify(converted_text_String.replace(/^([^\n]+)\n[\s\S]*$/, '$1'))
+				}\n應為\t${JSON.stringify(should_convert_to_text)
+				}`);
 			condition_list.forEach(show_correction_condition);
-			CeL.debug(beautify_tagged_word_list(tagged_word_list.slice(start_index, end_index)), 0);
+			CeL.debug(beautify_tagged_word_list(tagged_word_list_pieces), 0);
 		}
 
 		//TODO: 檢查還有哪些尚未處理。
@@ -1381,7 +1390,7 @@ function return_converted_paragraphs(options, converted_paragraphs) {
 // (?:[。？！]|……)[\r\n]*|
 function get_paragraphs_of_text(text) {
 	if (!text)
-		return;
+		return '';
 
 	const paragraphs = CeL.data.pair.remove_comments(text.toString())
 		.split('\n')
@@ -1389,6 +1398,7 @@ function get_paragraphs_of_text(text) {
 
 	if (paragraphs.length > 0)
 		return paragraphs;
+	return '';
 }
 
 function get_paragraphs_of_file(file_name) {
@@ -1428,6 +1438,8 @@ Object.assign(Chinese_converter.prototype, {
 	test_articles_directory: test_directory + 'articles' + CeL.env.path_separator,
 	// 這些是特別的檔案: 會自動檢核。
 	text_to_check_files: ['watch_target.TW.txt', 'watch_target.CN.txt'],
+
+	word_data_to_condition,
 
 	regenerate_converted, not_new_article_to_check,
 	load_text_to_check, report_text_to_check,

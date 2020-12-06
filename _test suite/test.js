@@ -115,7 +115,10 @@ async function for_each_test_set(test_configuration) {
 		if (answer_paragraphs_is_OK) {
 			for (let index = 0; index < answer_paragraphs.length; index++) {
 				if (!assert([converted_CN[index], answer_paragraphs[index]], test_title + ` #${index + 1}-TW answer`)) {
-					CeL.info(`　 繁\t${JSON.stringify(TW_paragraphs[index])}\n→ 简\t${JSON.stringify(converted_CN[index])}\n應為\t${JSON.stringify(answer_paragraphs[index])}`);
+					CeL.info(`　 繁\t${JSON.stringify(TW_paragraphs[index])
+						}\n→ 简\t${JSON.stringify(converted_CN[index])
+						}\n應為\t${JSON.stringify(answer_paragraphs[index])
+						}`);
 				}
 			}
 		}
@@ -125,7 +128,10 @@ async function for_each_test_set(test_configuration) {
 		if (answer_paragraphs_is_OK) {
 			for (let index = 0; index < answer_paragraphs.length; index++) {
 				if (!assert([TW_paragraphs[index], answer_paragraphs[index]], test_title + ` #${index + 1}-CN answer`)) {
-					CeL.info(`　 简\t${JSON.stringify(content_paragraphs[index])}\n→ 繁\t${JSON.stringify(TW_paragraphs[index])}\n應為\t${JSON.stringify(answer_paragraphs[index])}`);
+					CeL.info(`　 简\t${JSON.stringify(content_paragraphs[index])
+						}\n→ 繁\t${JSON.stringify(TW_paragraphs[index])
+						}\n應為\t${JSON.stringify(answer_paragraphs[index])
+						}`);
 				}
 			}
 		}
@@ -133,7 +139,11 @@ async function for_each_test_set(test_configuration) {
 		converted_CN = await cecc.to_CN(TW_paragraphs, convert_options);
 		for (let index = 0; index < content_paragraphs.length; index++) {
 			if (!assert([converted_CN[index], content_paragraphs[index]], test_title + ` #${index + 1}-CN`)) {
-				CeL.info(`　 简\t${JSON.stringify(content_paragraphs[index])}\n→ 繁\t${JSON.stringify(TW_paragraphs[index])}\n→ 简\t${JSON.stringify(converted_CN[index])}\n 原简\t${JSON.stringify(content_paragraphs[index])}`);
+				CeL.info(`　 简\t${JSON.stringify(content_paragraphs[index])
+					}\n→ 繁\t${JSON.stringify(TW_paragraphs[index])
+					}\n→ 简\t${JSON.stringify(converted_CN[index])
+					}\n 原简\t${JSON.stringify(content_paragraphs[index])
+					}`);
 			}
 		}
 	}
@@ -143,10 +153,15 @@ async function for_each_test_set(test_configuration) {
 	converted_TW = converted_TW.converted_paragraphs;
 	for (let index = 0; index < TW_paragraphs.length; index++) {
 		if (!assert([converted_TW[index], TW_paragraphs[index]], test_title + ` #${index + 1}`)) {
-			CeL.log(`　 繁\t${JSON.stringify(TW_paragraphs[index])}\n→ 简\t${JSON.stringify(converted_CN[index])}\n→ 繁\t${JSON.stringify(converted_TW[index])}\n 原繁\t${JSON.stringify(TW_paragraphs[index])}`);
+			const tagged_word_list = tagged_word_list_of_paragraphs ? tagged_word_list_of_paragraphs[index] : await cecc.tag_paragraph(converted_CN[index]);
+			CeL.log(`　 繁\t${JSON.stringify(TW_paragraphs[index])
+				}\n→ 简\t${tagged_word_list.map(word_data => cecc.word_data_to_condition(word_data)).join('+')
+				}\n\t${JSON.stringify(converted_CN[index])
+				}\n→ 繁\t${JSON.stringify(converted_TW[index])
+				}\n 原繁\t${JSON.stringify(TW_paragraphs[index])
+				}`);
 			TW_paragraphs.correction_conditions && TW_paragraphs.correction_conditions[index].forEach(CeCC.show_correction_condition);
 			if (test_configuration.error_count++ < test_configuration.max_error_tags_showing && test_configuration.max_error_tags_showing) {
-				const tagged_word_list = tagged_word_list_of_paragraphs ? tagged_word_list_of_paragraphs[index] : await cecc.tag_paragraph(converted_CN[index]);
 				console.log(CeCC.beautify_tagged_word_list(tagged_word_list));
 			}
 		}
