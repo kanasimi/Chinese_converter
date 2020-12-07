@@ -1,6 +1,6 @@
 /*
 
-採用哈工大 [LTP](https://github.com/HIT-SCIR/ltp) 4、Small 模型
+採用哈工大 [LTP](https://github.com/HIT-SCIR/ltp) 4.1.1、Small(v3) 模型
 
 // 注釋/例句
 from	default

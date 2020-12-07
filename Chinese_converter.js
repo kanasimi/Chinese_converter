@@ -494,12 +494,13 @@ function parse_condition(full_condition_text, options) {
 }
 
 function show_correction_condition(correction_condition) {
+	//console.trace(correction_condition);
 	const to_word_data = correction_condition.parsed[Chinese_converter.KEY_matched_condition];
 	if (to_word_data) {
 		CeL.warn(`Matched condition 匹配的條件式: ${to_word_data.matched_condition ? `${to_word_data.matched_condition} → ` : ''}${to_word_data.full_condition_text}`);
 	}
 	// 自動提供可符合答案之候選條件式。
-	CeL.info(`Candidate correction for ${JSON.stringify(correction_condition.parsed.text)}:\n${correction_condition.join('\t')}`);
+	CeL.info(`Candidate correction for ${JSON.stringify(correction_condition.parsed.text)}→${JSON.stringify(correction_condition.target)} (錯誤轉換為 ${JSON.stringify(correction_condition.error_converted_to)}):\n${correction_condition.join('\t')}`);
 }
 
 
@@ -891,7 +892,7 @@ function generate_condition_LTP(configuration, options) {
 			}
 		}
 		//CeL.info(`${generate_condition_LTP.name}: Condition for ${word_data[this.KEY_word]}→${from_slice.trim()}:`);
-		Object.assign(condition, { parsed: word_data, target: from_slice.trim() });
+		Object.assign(condition, { parsed: word_data, target: from_slice.trim(), error_converted_to: converted_to });
 		//CeL.log(condition.join('\t'));
 		condition_list.push(condition);
 	}
@@ -960,6 +961,7 @@ function get_LTP_data(options) {
 					resolve();
 				}
 			}, null, { text: paragraph }, {
+				error_retry: 4,
 				headers: {
 					'Content-Type': 'Content-type: application/json; charset=utf-8'
 				}
@@ -1065,7 +1067,9 @@ function tag_paragraph_via_CoreNLP(paragraph, options) {
 				//console.log(paragraph);
 				resolve(convert_CoreNLP_result(XMLHttp.responseText));
 			}
-		}, null, paragraph)
+		}, null, paragraph, {
+			error_retry: 4
+		})
 	}));
 }
 

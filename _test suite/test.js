@@ -230,7 +230,7 @@ add_test('正確率檢核', async (assert, setup_test, finish_test, options) => 
 if (CeL.env.argv.includes('nowiki')) {
 	CeL.info(`跳過 wikipedia 測試。`);
 } else if (require('os').freemem() < /* 6GB RAM */ 6 * (2 ** 10) ** 3) {
-	CeL.warn('RAM 過小，跳過 wikipedia 測試！');
+	CeL.warn(`RAM 過小 (${CeL.to_KiB(require('os').freemem())})，跳過 wikipedia 測試！`);
 } else {
 	CeL.run([
 		// 載入操作維基百科的主要功能。
