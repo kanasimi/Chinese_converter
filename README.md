@@ -38,7 +38,7 @@ On Windows, install LTP:
 1. [安裝 Pytorch](https://codertw.com/%E7%A8%8B%E5%BC%8F%E8%AA%9E%E8%A8%80/635797/)。如果 `pip install ltp` 不成功則
    至 [Pytorch 官方網站](http://pytorch.org/)選擇合適版本離線安裝。 e.g., `cu101/torch-1.7.0%2Bcu101-cp38-cp38-win_amd64.whl`
 
-   CUDA version: `"%ProgramFiles%\NVIDIA Corporation\NVSMI\nvidia-smi.exe"` or `%SystemRoot%\System32\nvidia-smi.exe`
+   CUDA version: `"%ProgramFiles%\NVIDIA Corporation\NVSMI\nvidia-smi.exe"` or `"%SystemRoot%\System32\nvidia-smi.exe"`
 
    `pip install torch-*.whl`
 
@@ -111,7 +111,7 @@ npm install cecc
 ## Defect
 * LTP 轉換速率過慢。
 * 詞典仍過於薄弱、有缺陷，尚待加強。
-* 因為當前語言解析程式仍處於粗糙階段，解析結果不甚穩定；更換程式版本就需要大幅改變辭典。
+* 因為當前語言解析程式仍處於粗糙階段，解析結果不甚穩定；更換 LTP 程式版本就需要大幅改變辭典。
 
 ## See also
 ### 中文分詞
