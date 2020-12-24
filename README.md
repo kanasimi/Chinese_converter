@@ -1,7 +1,7 @@
 ﻿[![npm version](https://badge.fury.io/js/cecc.svg)](https://www.npmjs.com/package/cecc)
 [![npm downloads](https://img.shields.io/npm/dm/cecc.svg)](https://www.npmjs.com/package/cecc)
 <!--
-[![Build Status](https://travis-ci.org/kanasimi/Chinese_converter.svg?branch=master)](https://travis-ci.org/kanasimi/Chinese_converter)
+[![Travis CI Build Status](https://travis-ci.com/kanasimi/Chinese_converter.svg?branch=master)](https://travis-ci.com/kanasimi/Chinese_converter)
 [![codecov](https://codecov.io/gh/kanasimi/Chinese_converter/branch/master/graph/badge.svg)](https://codecov.io/gh/kanasimi/Chinese_converter)
 -->
 
