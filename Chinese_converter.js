@@ -1277,7 +1277,9 @@ function convert_paragraph(paragraph, options) {
 			CeL.log(`${CeL.gettext.get_alias(options.convert_to_language === 'TW' ? 'CN' : 'TW').slice(0, 1)
 				}\t${tagged_word_list_pieces.map(word_data => word_data_to_condition.call(this, word_data)).join('+')
 				}\n\t${JSON.stringify(convert_from_text)
-				}\n→\t${JSON.stringify(converted_text_String.replace(/^([^\n]+)\n[\s\S]*$/, '$1'))
+				}\n→\t${JSON.stringify(converted_text_String.replace(/^([^\n]+)\n[\s\S]*$/, '$1')
+					// remove word_data[KEY_prefix_spaces]
+					.trimStart())
 				}\n應為\t${JSON.stringify(should_convert_to_text)
 				}`);
 			condition_list.forEach(show_correction_condition);
