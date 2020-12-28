@@ -31,7 +31,7 @@
 ## Installation
 Install [LTP](https://github.com/HIT-SCIR/ltp) first. 您可能需要 6 GB 記憶體來啟動 LTP server。
 
-經實測，採用哈工大 [LTP](https://github.com/HIT-SCIR/ltp) 4.1.1、Small(v3) 模型的[服務端版本](http://ltp.ai/docs/quickstart.html#ltp-server)，配合[相對應辭典](dictionaries/CN_to_TW.LTP.PoS.txt)，可正確 繁→簡→繁 轉換[測試檔](_test%20suite/articles)中的文字。
+經實測，採用哈工大 [LTP](https://github.com/HIT-SCIR/ltp) 4.1.3、Small(v3) 模型的[服務端版本](http://ltp.ai/docs/quickstart.html#ltp-server)，配合[相對應辭典](dictionaries/CN_to_TW.LTP.PoS.txt)，可正確 繁→簡→繁 轉換[測試檔](_test%20suite/articles)中的文字。
 
 ### Install 中文分詞: LTP
 On Windows, install LTP:
@@ -50,6 +50,11 @@ pip install tornado
 3. Install LTP:
 ```cmd
 pip install ltp
+```
+
+4. Upgrade LTP:
+```cmd
+pip install --upgrade ltp
 ```
 
 #### Alternative: Install 中文分詞: nodejieba
