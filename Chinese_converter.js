@@ -414,7 +414,9 @@ const PATTERN_do_after_converting = new RegExp('^(?<word>.*?)~(?<do_after_conver
 
 function word_data_to_condition(word_data, options) {
 	const tag = word_data[this.KEY_PoS_tag];
-	return (tag ? tag + ':' : '') + (word_data[this.KEY_word] || '');
+	return (tag ? tag + ':' : '') + (typeof word_data[this.KEY_word] === 'string' &&
+		// JSON.stringify(): for "\n"
+		JSON.stringify(word_data[this.KEY_word]).slice(1, -1) || word_data[this.KEY_word] || '');
 }
 
 // parse rule
@@ -500,7 +502,8 @@ function show_correction_condition(correction_condition) {
 		CeL.warn(`Matched condition 匹配的條件式: ${to_word_data.matched_condition ? `${to_word_data.matched_condition} → ` : ''}${to_word_data.full_condition_text}`);
 	}
 	// 自動提供可符合答案之候選條件式。
-	CeL.info(`Candidate correction for ${JSON.stringify(correction_condition.parsed.text)}→${JSON.stringify(correction_condition.target)} (錯誤轉換為 ${JSON.stringify(correction_condition.error_converted_to)}):\n${correction_condition.join('\t')}`);
+	CeL.info(`Candidate correction for ${JSON.stringify(correction_condition.parsed.text)}→${JSON.stringify(correction_condition.target)} (錯誤轉換為 ${JSON.stringify(correction_condition.error_converted_to)
+		}):\n${correction_condition.join('\t')}`);
 }
 
 
@@ -1208,7 +1211,7 @@ function convert_paragraph(paragraph, options) {
 
 	if (generate_condition_for && this.generate_condition) {
 		// 長度累加紀錄。
-		let tagged_word_list_text_length_accumulation, converted_text_length_accumulation;
+		let tagged_word_list_length_accumulation, converted_text_length_accumulation;
 		for (let [convert_from_text, should_convert_to] of Object.entries(generate_condition_for)) {
 			const should_convert_to_text = CeL.is_Object(should_convert_to) ? should_convert_to.should_convert_to_text : should_convert_to;
 			if (convert_from_text.length !== should_convert_to_text.length) {
@@ -1221,33 +1224,30 @@ function convert_paragraph(paragraph, options) {
 			if (start_index === NOT_FOUND)
 				continue;
 
-			//console.log(JSON.stringify(paragraph));
-			//console.log(JSON.stringify(converted_text.join('')));
-			//console.log([convert_from_text, paragraph.length === converted_text.join('').length, paragraph.slice(start_index, start_index + 100), converted_text.join('').slice(start_index, start_index + 100)]);
-			if (!tagged_word_list_text_length_accumulation) {
+			if (!tagged_word_list_length_accumulation) {
 				let length = 0;
-				// 初始化 converted_text_length_accumulation。
-				tagged_word_list_text_length_accumulation = [length];
-				tagged_word_list.forEach(word_data => { tagged_word_list_text_length_accumulation.push(length += (word_data[KEY_prefix_spaces] ? word_data[KEY_prefix_spaces].length : 0) + word_data[this.KEY_word].length); });
+				// 初始化。
+				tagged_word_list_length_accumulation = [length];
+				tagged_word_list.forEach(word_data => { tagged_word_list_length_accumulation.push(length += (word_data[KEY_prefix_spaces] ? word_data[KEY_prefix_spaces].length : 0) + word_data[this.KEY_word].length); });
 			}
 			if (!converted_text_length_accumulation) {
 				let length = 0;
-				// 初始化 converted_text_length_accumulation。
+				// 初始化。
 				converted_text_length_accumulation = [length];
 				converted_text.forEach(token => { converted_text_length_accumulation.push(length += token.length); });
 			}
 
-			let should_be_text = should_convert_to_text;
-			tagged_word_list_text_length_accumulation.search_sorted(start_index, {
+			// 找出轉換後文字對應的位置。
+			tagged_word_list_length_accumulation.search_sorted(start_index, {
 				found(index, is_near) {
-					//console.log([index, is_near, converted_text_length_accumulation[index] - tagged_word_list_text_length_accumulation[index]]);
-					// 轉換前後字數可能不同。
-					start_index += converted_text_length_accumulation[index] - tagged_word_list_text_length_accumulation[index];
+					// 轉換前後字數可能不同。 the diff is usually +0.
+					start_index += converted_text_length_accumulation[index] - tagged_word_list_length_accumulation[index];
 				}
 			});
 
 			// assert: converted_text.join('').slice(start_index).startsWith(should_convert_to_text)
 
+			let should_be_text = should_convert_to_text;
 			converted_text_length_accumulation.search_sorted(start_index + should_be_text.length, {
 				found(index, is_near) {
 					//console.log([index, is_near]);
@@ -1259,24 +1259,21 @@ function convert_paragraph(paragraph, options) {
 					}
 				}
 			});
+			let header_move_front = 0;
 			converted_text_length_accumulation.search_sorted(start_index, {
 				found(index, is_near) {
 					if (is_near) {
-						//console.log([converted_text.join('').slice(start_index), should_convert_to_text, converted_text[index].slice(0, start_index - converted_text_length_accumulation[index] + 1), [start_index, converted_text_length_accumulation[index], start_index - converted_text_length_accumulation[index]], converted_text.slice(index - 1, index + 2), should_be_text]);
-						should_be_text = converted_text[index].slice(0, start_index - converted_text_length_accumulation[index]) + should_be_text;
+						header_move_front = start_index - converted_text_length_accumulation[index];
+						should_be_text = converted_text[index].slice(0, header_move_front) + should_be_text;
 					}
 					// assert: should_be_text.startsWith(converted_text[index]);
-					//console.log(should_be_text.startsWith(converted_text[index]));
 					start_index = index;
 				}
 			});
 			const converted_text_String = converted_text.slice(start_index, end_index).join('');
-			if (converted_text.slice(start_index, end_index).join('').includes('余采薇交代')) {
-				//console.log([should_be_text, converted_text.slice(start_index, end_index + 1), tagged_word_list.slice(start_index, end_index + 1)]);
-			}
 			if (converted_text_String.length !== should_be_text.length) {
 				// 轉換前後。
-				CeL.error(`預設解答與轉換後之文字長度不符，跳過解答: ${should_be_text}`);
+				CeL.error(`預設解答 ${JSON.stringify(converted_text_String)} 與轉換後之文字長度不符，跳過解答: ${should_be_text}`);
 				continue;
 			}
 
@@ -1303,7 +1300,7 @@ function convert_paragraph(paragraph, options) {
 			CeL.log(`${CeL.gettext.get_alias(options.convert_to_language === 'TW' ? 'CN' : 'TW').slice(0, 1)
 				}\t${tagged_word_list_pieces.map(word_data => word_data_to_condition.call(this, word_data)).join('+')
 				}\n\t${JSON.stringify(convert_from_text)
-				}\n→\t${JSON.stringify(converted_text_String
+				}\n→\t${JSON.stringify(converted_text_String.slice(header_move_front)
 					// remove word_data[KEY_prefix_spaces]
 					.trim())
 				}\n應為\t${JSON.stringify(should_convert_to_text)

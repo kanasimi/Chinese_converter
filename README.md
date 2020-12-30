@@ -122,7 +122,12 @@ npm install cecc
 ### 中文分詞
 * [“结巴”中文分词](https://github.com/fxsjy/jieba) [繁體版本](https://github.com/ldkrsi/jieba-zh_TW)
    * [用 JS 做語意分析是不是搞錯了什麼(一)：斷詞篇](https://noob.tw/js-nlp-jieba/)
+* [pkuseg：一个多领域中文分词工具包](https://github.com/lancopku/pkuseg-python)
 * [Ansj中文分词](https://github.com/NLPchina/ansj_seg)
+* [中文分词工具比较](https://blog.csdn.net/zzzzlei123123123/article/details/104227223)、[中文分词器分词效果评估对比](https://github.com/ysc/cws_evaluation)、[中文分词工具评估](https://github.com/tiandiweizun/chinese-segmentation-evaluation)、[五款中文分词工具在线PK: Jieba, SnowNLP, PkuSeg, THULAC, HanLP](https://www.tuicool.com/articles/v6RJFf2)
+
+久未更新
+* [IKAnalyzer](https://github.com/wks/ik-analyzer)
 
 ### 詞性標記 词性标注
 * 哈工大 [LTP](https://github.com/HIT-SCIR/ltp) [線上展示](http://ltp.ai/demo.html)
@@ -130,12 +135,16 @@ npm install cecc
 * [中央研究院語言所 中文斷詞系統](http://ckipsvr.iis.sinica.edu.tw/) [線上展示](http://sunlight.iis.sinica.edu.tw/uwextract/demo.htm)
 * [CKIP Lab](https://ckip.iis.sinica.edu.tw/) [CkipTagger開源中文處理工具](https://github.com/ckiplab/ckiptagger) [線上展示](https://ckip.iis.sinica.edu.tw/service/corenlp/)
 * 清华大学 [THULAC](http://thulac.thunlp.org/) [線上展示](http://thulac.thunlp.org/demo)
+* [HanLP](https://github.com/hankcs/HanLP)
 * 教育部语言文字应用研究所计算语言学研究室 [语料库在线](http://corpus.zhonghuayuwen.org/index.aspx) [線上展示](http://corpus.zhonghuayuwen.org/CpsWParser.aspx)
 
 * [NLPIR](https://github.com/NLPIR-team/NLPIR) [中科院计算所 词性类别](http://103.242.175.216:197/nlpir/)
 
-* [中文分词工具比较](https://blog.csdn.net/zzzzlei123123123/article/details/104227223)
 * [词性标注的简单综述](https://www.zzjw.cc/2019/11/23/pos-review/)
+
+久未更新
+* [kcws](https://github.com/koth/kcws)
+* [ZPar statistical parser](https://github.com/frcchang/zpar)
 
 ### 簡繁轉換
 * [繁化姬](https://zhconvert.org/)
@@ -147,3 +156,5 @@ npm install cecc
 * [新同文堂](https://github.com/tongwentang/tongwen-core)
 * [ConvertZZ](https://github.com/flier268/ConvertZZ)
 * 厦门大学 [汉字简繁文本智能转换系统](http://jf.xmu.edu.cn/)
+
+* [搜狗输入法字典 词库下载](https://pinyin.sogou.com/dict/)
