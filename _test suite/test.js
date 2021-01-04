@@ -1,4 +1,16 @@
-﻿'use strict';
+﻿/*
+
+CLS && npm test nowiki
+
+// the 2>&1 instructs that the STDERR to be redirected to STDOUT
+npm test nowiki > "test_report.txt" 2>&1
+
+CHCP 65001
+CLS && type "test_report.txt"
+
+*/
+
+'use strict';
 
 // load module
 const CeCC = require('../Chinese_converter.js');
@@ -71,8 +83,8 @@ function add_test(test_name, conditions) {
 
 // ============================================================================
 
-const module_base_path = module.path + CeL.env.path_separator;
-const articles_directory = module_base_path + 'articles' + CeL.env.path_separator;
+const module_base_path = CeL.append_path_separator(module.path);
+const articles_directory = CeL.append_path_separator(module_base_path + 'articles');
 
 add_test('基本檢核', async (assert, setup_test, finish_test, options) => {
 	assert([articles_directory, cecc.test_articles_directory]);
@@ -80,9 +92,9 @@ add_test('基本檢核', async (assert, setup_test, finish_test, options) => {
 
 // ------------------------------------------------------------------
 
-const convert_options = cecc.regenerate_converted.default_convert_options;
+const default_convert_options = cecc.regenerate_converted.default_convert_options;
 
-const latest_test_result_file = convert_options.cache_directory + 'latest_test_result.json';
+const latest_test_result_file = default_convert_options.cache_directory + 'latest_test_result.json';
 let latest_test_result = CeL.read_file(latest_test_result_file);
 if (latest_test_result)
 	latest_test_result = JSON.parse(latest_test_result.toString());
@@ -110,7 +122,7 @@ async function for_each_test_set(test_configuration) {
 	let TW_paragraphs, converted_CN, tagged_word_list_of_paragraphs;
 	if (text_is_TW) {
 		TW_paragraphs = content_paragraphs;
-		converted_CN = await cecc.to_CN(TW_paragraphs, convert_options);
+		converted_CN = await cecc.to_CN(TW_paragraphs, test_configuration.convert_options);
 
 		if (answer_paragraphs_is_OK) {
 			for (let index = 0; index < answer_paragraphs.length; index++) {
@@ -124,7 +136,7 @@ async function for_each_test_set(test_configuration) {
 		}
 
 	} else {
-		TW_paragraphs = await cecc.to_TW(content_paragraphs, convert_options);
+		TW_paragraphs = await cecc.to_TW(content_paragraphs, test_configuration.convert_options);
 		if (answer_paragraphs_is_OK) {
 			for (let index = 0; index < answer_paragraphs.length; index++) {
 				if (!assert([TW_paragraphs[index], answer_paragraphs[index]], test_title + ` #${index + 1}-CN answer`)) {
@@ -136,7 +148,7 @@ async function for_each_test_set(test_configuration) {
 			}
 		}
 
-		converted_CN = await cecc.to_CN(TW_paragraphs, convert_options);
+		converted_CN = await cecc.to_CN(TW_paragraphs, test_configuration.convert_options);
 		for (let index = 0; index < content_paragraphs.length; index++) {
 			if (!assert([converted_CN[index], content_paragraphs[index]], test_title + ` #${index + 1}-CN`)) {
 				CeL.info(`　 简\t${JSON.stringify(content_paragraphs[index])
@@ -148,21 +160,24 @@ async function for_each_test_set(test_configuration) {
 		}
 	}
 
-	let converted_TW = await cecc.to_TW(converted_CN, { ...convert_options, get_full_data: true, generate_condition: true, should_be: TW_paragraphs });
+	let converted_TW = await cecc.to_TW(converted_CN, { ...test_configuration.convert_options, get_full_data: true, generate_condition: true, should_be: TW_paragraphs });
 	tagged_word_list_of_paragraphs = converted_TW.tagged_word_list_of_paragraphs;
 	converted_TW = converted_TW.converted_paragraphs;
-	for (let index = 0; index < TW_paragraphs.length; index++) {
-		if (!assert([converted_TW[index], TW_paragraphs[index]], test_title + ` #${index + 1}`)) {
-			const tagged_word_list = tagged_word_list_of_paragraphs ? tagged_word_list_of_paragraphs[index] : await cecc.tag_paragraph(converted_CN[index]);
-			CeL.log(`　 繁\t${JSON.stringify(TW_paragraphs[index])
-				}\n→ 简\t${tagged_word_list.map(word_data => cecc.word_data_to_condition(word_data)).join('+')
-				}\n\t${JSON.stringify(converted_CN[index])
-				}\n→ 繁\t${JSON.stringify(converted_TW[index])
-				}\n 原繁\t${JSON.stringify(TW_paragraphs[index])
-				}`);
-			TW_paragraphs.correction_conditions && TW_paragraphs.correction_conditions[index].forEach(CeCC.show_correction_condition);
-			if (test_configuration.error_count++ < test_configuration.max_error_tags_showing && test_configuration.max_error_tags_showing) {
-				console.log(CeCC.beautify_tagged_word_list(tagged_word_list));
+	if (TW_paragraphs.correction_conditions) {
+		for (let index = 0; index < TW_paragraphs.length; index++) {
+			if (TW_paragraphs.correction_conditions[index]
+				&& !assert([converted_TW[index], TW_paragraphs[index]], test_title + ` #${index + 1}`)) {
+				const tagged_word_list = tagged_word_list_of_paragraphs ? tagged_word_list_of_paragraphs[index] : await cecc.tag_paragraph(converted_CN[index]);
+				CeL.log(`　 繁\t${JSON.stringify(TW_paragraphs[index])
+					}\n→ 简\t${tagged_word_list.map(word_data => cecc.word_data_to_condition(word_data)).join('+')
+					}\n\t${JSON.stringify(converted_CN[index])
+					}\n→ 繁\t${JSON.stringify(converted_TW[index])
+					}\n 原繁\t${JSON.stringify(TW_paragraphs[index])
+					}`);
+				TW_paragraphs.correction_conditions[index].forEach(CeCC.show_correction_condition);
+				if (test_configuration.error_count++ < test_configuration.max_error_tags_showing && test_configuration.max_error_tags_showing) {
+					CeL.debug(CeCC.beautify_tagged_word_list(tagged_word_list), 1);
+				}
 			}
 		}
 	}
@@ -201,12 +216,18 @@ add_test('正確率檢核', async (assert, setup_test, finish_test, options) => 
 		if (!file_name_language)
 			continue;
 
+		const convert_options = {
+			...default_convert_options,
+			cache_directory: CeL.append_path_separator(default_convert_options.cache_directory + CeL.to_file_name(file_name)),
+		};
+
 		const file_path = articles_directory + file_name;
 		const answer_file_path = CeCC.to_converted_file_path(file_path);
 		const text_is_TW = file_name_language[1] === 'TW';
 		if (await cecc.not_new_article_to_check(file_name, {
 			...options, text_is_TW,
-			latest_test_result, convert_options,
+			latest_test_result,
+			convert_options,
 			regenerate_converted: CeL.env.argv.includes('regenerate_converted'),
 			recheck: CeL.env.argv.includes('recheck')
 		})) {
@@ -216,6 +237,7 @@ add_test('正確率檢核', async (assert, setup_test, finish_test, options) => 
 
 		await for_each_test_set(Object.assign(test_configuration, {
 			test_title: file_name, text_is_TW,
+			convert_options,
 			content_paragraphs: CeCC.get_paragraphs_of_file(file_path),
 			answer_paragraphs: CeCC.get_paragraphs_of_file(answer_file_path),
 		}));
