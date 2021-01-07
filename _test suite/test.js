@@ -127,10 +127,9 @@ async function for_each_test_set(test_configuration) {
 		if (answer_paragraphs_is_OK) {
 			for (let index = 0; index < answer_paragraphs.length; index++) {
 				if (!assert([converted_CN[index], answer_paragraphs[index]], test_title + ` #${index + 1}-TW answer`)) {
-					CeL.info(`　 繁\t${JSON.stringify(TW_paragraphs[index])
-						}\n→ 简\t${JSON.stringify(converted_CN[index])
-						}\n應為\t${JSON.stringify(answer_paragraphs[index])
-						}`);
+					CeL.info(`　 繁\t${JSON.stringify(TW_paragraphs[index])}`);
+					// 為轉換前後的差異文字著色。
+					CeL.coloring_diff(JSON.stringify(converted_CN[index]), JSON.stringify(answer_paragraphs[index]), { headers: ['→ 简\t', '應為\t'], header_style: { fg: 'cyan' }, print: true });
 				}
 			}
 		}
@@ -140,10 +139,9 @@ async function for_each_test_set(test_configuration) {
 		if (answer_paragraphs_is_OK) {
 			for (let index = 0; index < answer_paragraphs.length; index++) {
 				if (!assert([TW_paragraphs[index], answer_paragraphs[index]], test_title + ` #${index + 1}-CN answer`)) {
-					CeL.info(`　 简\t${JSON.stringify(content_paragraphs[index])
-						}\n→ 繁\t${JSON.stringify(TW_paragraphs[index])
-						}\n應為\t${JSON.stringify(answer_paragraphs[index])
-						}`);
+					CeL.info(`　 简\t${JSON.stringify(content_paragraphs[index])}`);
+					// 為轉換前後的差異文字著色。
+					CeL.coloring_diff(JSON.stringify(TW_paragraphs[index]), JSON.stringify(answer_paragraphs[index]), { headers: ['→ 繁\t', '應為\t'], header_style: { fg: 'cyan' }, print: true });
 				}
 			}
 		}
@@ -153,9 +151,9 @@ async function for_each_test_set(test_configuration) {
 			if (!assert([converted_CN[index], content_paragraphs[index]], test_title + ` #${index + 1}-CN`)) {
 				CeL.info(`　 简\t${JSON.stringify(content_paragraphs[index])
 					}\n→ 繁\t${JSON.stringify(TW_paragraphs[index])
-					}\n→ 简\t${JSON.stringify(converted_CN[index])
-					}\n 原简\t${JSON.stringify(content_paragraphs[index])
 					}`);
+				// 為轉換前後的差異文字著色。
+				CeL.coloring_diff(JSON.stringify(converted_CN[index]), JSON.stringify(content_paragraphs[index]), { headers: ['→ 简\t', ' 原简\t'], header_style: { fg: 'cyan' }, print: true });
 			}
 		}
 	}
@@ -168,12 +166,11 @@ async function for_each_test_set(test_configuration) {
 			if (TW_paragraphs.correction_conditions[index]
 				&& !assert([converted_TW[index], TW_paragraphs[index]], test_title + ` #${index + 1}`)) {
 				const tagged_word_list = tagged_word_list_of_paragraphs ? tagged_word_list_of_paragraphs[index] : await cecc.tag_paragraph(converted_CN[index]);
-				CeL.log(`　 繁\t${JSON.stringify(TW_paragraphs[index])
-					}\n→ 简\t${tagged_word_list.map(word_data => cecc.word_data_to_condition(word_data)).join('+')
-					}\n\t${JSON.stringify(converted_CN[index])
-					}\n→ 繁\t${JSON.stringify(converted_TW[index])
-					}\n 原繁\t${JSON.stringify(TW_paragraphs[index])
-					}`);
+				CeL.log(`　 繁\t${JSON.stringify(TW_paragraphs[index])}`);
+				CeL.info(`→ 简\t${tagged_word_list.map(word_data => cecc.word_data_to_condition(word_data)).join('+')}`);
+				CeL.log(`\t${JSON.stringify(converted_CN[index])}`);
+				// 為轉換前後的差異文字著色。
+				CeL.coloring_diff(JSON.stringify(converted_TW[index]), JSON.stringify(TW_paragraphs[index]), { headers: ['→ 繁\t', ' 原繁\t'], header_style: { fg: 'cyan' }, print: true });
 				TW_paragraphs.correction_conditions[index].forEach(CeCC.show_correction_condition);
 				if (test_configuration.error_count++ < test_configuration.max_error_tags_showing && test_configuration.max_error_tags_showing) {
 					CeL.debug(CeCC.beautify_tagged_word_list(tagged_word_list), 1);

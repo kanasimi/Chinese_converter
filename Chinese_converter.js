@@ -1,6 +1,7 @@
 ﻿/*
 
 TODO:
+
 整合繁簡轉換各家辭典
 簡化辭典複雜度
 
@@ -120,7 +121,7 @@ class Chinese_converter {
 				this.filters[language] = require(this.dictionaries_directory + this.filters[language]);
 			}
 			this.generate_condition = generate_condition_LTP;
-			load_synonym.call(this);
+			load_synonym_dictionary.call(this);
 			this.tag_paragraph = tag_paragraph_LTP;
 			// .batch_get_tag 批量查詢詞性標記之條件: 1.可接受批量{Array}。 2.單次查詢消耗太大。
 			this.batch_get_tag = !this.LTP_URL;
@@ -557,12 +558,21 @@ function get_convert_to_conditions(options) {
 			pattern = key;
 			key = key.toString().replace(/(\w)+$/, flags => flags.replace(/[g]/, ''));
 		} else {
+			const all_matched_conditions = [];
 			for (const convert_to_conditions of convertion_set.values()) {
 				//console.trace([key, convert_to_conditions[KEY_pattern]]);
 				// assert {Array}convert_to_conditions
 				if (convert_to_conditions[KEY_pattern].test(key)) {
-					return convert_to_conditions;
+					if (!options.get_all_matched_conditions)
+						return convert_to_conditions;
+					all_matched_conditions.push(convert_to_conditions);
 				}
+			}
+			if (all_matched_conditions.length > 0) {
+				if (all_matched_conditions.length > 1) {
+					//console.trace(all_matched_conditions);
+				}
+				return all_matched_conditions;
 			}
 		}
 
@@ -586,8 +596,9 @@ function get_convert_to_conditions(options) {
 		//console.trace(convertion_set);
 	}
 
-	// {Array}
-	return convertion_set.get(key);
+	const convert_to_conditions = convertion_set.get(key);
+	// assert: {Array}convert_to_conditions
+	return options.get_all_matched_conditions ? [convert_to_conditions] : convert_to_conditions;
 }
 
 const KEY_postfix = Symbol('postfix');
@@ -627,22 +638,40 @@ function load_dictionary(file_path, options) {
 				continue;
 			}
 			condition = parse_condition.call(this, condition, { matched_condition });
-			// TODO: 將 {Array} 之 pattern 轉成 {Regexp} 之 pattern，採用 .replace(pattern, token => match_condition(token))。
-			convert_to_conditions.push(condition);
+			if (condition.do_after_converting || convert_to_conditions.length === 0 || !convert_to_conditions[convert_to_conditions.length - 1].do_after_converting) {
+				// TODO: 將 {Array} 之 pattern 轉成 {Regexp} 之 pattern，採用 .replace(pattern, token => match_condition(token))。
+				convert_to_conditions.push(condition);
+			} else {
+				// 應該將有 .do_after_converting 的擺到後面。
+				let index = convert_to_conditions.length - 1;
+				while (index > 0 && convert_to_conditions[index - 1].do_after_converting)
+					index--;
+				// assert: !convert_to_conditions[index - 1].do_after_converting && convert_to_conditions[index].do_after_converting
+				// 將沒有 .do_after_converting 的插入到有 .do_after_converting 的之前。
+				convert_to_conditions.splice(index, 0, condition);
+			}
 		}
 		//console.trace(convert_to_conditions);
 	}
+
 	//console.trace(this.convertion_pairs);
 }
 
-function load_synonym() {
+const KEY_synonym_pattern = Symbol('synonym pattern');
+
+function load_synonym_dictionary() {
 	// this.synonyms_of_language['TW'] = {Map} { '台灣' => [ '臺灣' ] }
 	if (!this.synonyms_of_language)
 		this.synonyms_of_language = Object.create(null);
 
 	const file_paths = Object.create(null);
 	for (const language in dictionary_template) {
-		const synonyms_Map = this.synonyms_of_language[language] || (this.synonyms_of_language[language] = new Map);
+		if (!this.synonyms_of_language[language]) {
+			// initialization
+			this.synonyms_of_language[language] = new Map;
+			this.synonyms_of_language[language][KEY_synonym_pattern] = [];
+		}
+		const synonyms_Map = this.synonyms_of_language[language];
 		let synonym_data = CeL.read_file(this.dictionaries_directory + `synonym.${language}.txt`);
 		if (!synonym_data)
 			continue;
@@ -652,14 +681,24 @@ function load_synonym() {
 			if (!line)
 				return;
 			const synonyms = line.split('\t');
-			const 正字正辭 = synonyms.shift();
-			// 有設定`正字正辭`時，僅允許轉換成`正字正辭`，不可轉換為俗寫。
-			const allowed_synonyms = 正字正辭 ? [正字正辭] : synonyms;
+			const 正字正詞 = synonyms.shift();
+			if (synonyms.length === 0) {
+				if (CeL.PATTERN_RegExp_replacement.test(正字正詞)) {
+					// {RegExp}同義詞pattern
+					synonyms_Map[KEY_synonym_pattern].push(正字正詞.toRegExp({ allow_replacement: true }));
+				} else {
+					CeL.error(`${load_synonym_dictionary.name}: No synonym settle: ${正字正詞}`)
+				}
+				return;
+			}
+
+			// 有設定`正字正詞`時，僅允許轉換成`正字正詞`，不可轉換為俗寫。
+			const allowed_synonyms = 正字正詞 ? [正字正詞] : synonyms;
 			synonyms.forEach(synonym => {
 				if (!synonym)
 					return;
 				if (synonyms_Map.has(synonym))
-					CeL.error(`${load_synonym.name}: 重複設定: ${JSON.stringify(synonym)}`);
+					CeL.error(`${load_synonym_dictionary.name}: 重複設定: ${JSON.stringify(synonym)}`);
 				synonyms_Map.set(synonym, allowed_synonyms);
 			});
 		});
@@ -805,34 +844,51 @@ function match_condition(options) {
 }
 
 function get_matched_condition(options) {
-	let convert_to_conditions = get_convert_to_conditions.call(this, options);
-	//console.trace([word_data, convert_to_conditions]);
-	//console.trace(convert_to_conditions);
-	if (!convert_to_conditions) {
+	let all_convert_to_conditions = get_convert_to_conditions.call(this, { ...options, get_all_matched_conditions: true });
+	//console.trace([word_data, all_convert_to_conditions]);
+	//console.trace(all_convert_to_conditions);
+	if (!all_convert_to_conditions) {
 		return;
 	}
 
-	// assert: convert_to_conditions = [{ [this.KEY_word]: '詞', [this.KEY_PoS_tag]: '詞性' }, { [this.KEY_word]: '詞', [this.KEY_PoS_tag]: '詞性' }, ...]
-	for (let index_of_conditions = 0; index_of_conditions < convert_to_conditions.length; index_of_conditions++) {
-		const conditions = convert_to_conditions[index_of_conditions];
-		const matched_condition = match_condition.call(this, { ...options, conditions });
-		if (matched_condition) {
-			return { matched_condition, convert_to_conditions };
+	const all_matched_conditions = [];
+	all_convert_to_conditions.forEach(convert_to_conditions => {
+		// assert: convert_to_conditions = [{ [this.KEY_word]: '詞', [this.KEY_PoS_tag]: '詞性' }, { [this.KEY_word]: '詞', [this.KEY_PoS_tag]: '詞性' }, ...]
+		for (let index_of_conditions = 0; index_of_conditions < convert_to_conditions.length; index_of_conditions++) {
+			const conditions = convert_to_conditions[index_of_conditions];
+			const matched_condition = match_condition.call(this, { ...options, conditions });
+			if (matched_condition) {
+				//console.trace([matched_condition, convert_to_conditions, convert_to_conditions.pattern]);
+				all_matched_conditions.push(matched_condition);
+				if (!convert_to_conditions.pattern) {
+					// 對於非 pattern，僅取第一個 matched 的。
+					return;
+				}
+			}
 		}
+	});
+	if (all_matched_conditions.length > 0) {
+		//console.trace([all_matched_conditions, all_convert_to_conditions]);
+		return { all_matched_conditions, all_convert_to_conditions };
 	}
 
-	return { convert_to_conditions };
+	return { all_convert_to_conditions };
 }
 
 // 先測試整個詞相同的情況，再測試 {RegExp}。先測試包含詞性標注的條件式，再測試泛用情況（不論詞性）。
-const get_all_possible_matched_condition_options = [{ try_tag: true }, , { try_tag: true, search_pattern: true }, { search_pattern: true }];
+const get_all_possible_matched_condition_options = [
+	{ try_tag: true },
+	,
+	{ try_tag: true, search_pattern: true },
+	{ search_pattern: true }
+];
 function get_all_possible_matched_condition(options) {
 	let best_matched_data;
 	for (const _options of get_all_possible_matched_condition_options) {
 		// 引用 options 主要是為了 options.convert_to_language @ condition_filter_LTP()。
 		const matched_data = get_matched_condition.call(this, { ...options, ..._options });
 		if (matched_data) {
-			if (matched_data.matched_condition)
+			if (matched_data.all_matched_conditions)
 				return matched_data;
 			best_matched_data = best_matched_data || matched_data;
 		}
@@ -893,8 +949,15 @@ function recover_spaces(parsed, paragraph) {
 		throw new Error(`Not found: ${JSON.stringify(word)} in ${paragraph}`);
 	}
 
-	if (offset < paragraph.length)
-		parsed.push({ [KEY_word]: paragraph.slice(offset) });
+	//assert: offset <= paragraph.length
+	if (offset < paragraph.length) {
+		// append tail spaces
+		const tail = paragraph.slice(offset).match(/^(\s*)([\s\S]*?)$/);
+		// assert: tail[2] === ''
+		const word_data = { [KEY_prefix_spaces]: tail[1], [KEY_word]: tail[2] };
+		//console.trace([offset, paragraph.length, word_data]);
+		parsed.push(word_data);
+	}
 	//console.trace(parsed);
 }
 
@@ -913,15 +976,27 @@ function generate_condition_LTP(configuration, options) {
 	for (let index = start_index; index < end_index; index++) {
 		const word_data = tagged_word_list[index];
 		const converted_to = converted_text[index];
-		const from_slice = should_be_text.substr(offset, converted_to.length);
+		const index_of_should_be_slice = offset;
+		const should_be_slice = should_be_text.substr(offset, converted_to.length);
 		offset += converted_to.length;
-		//console.trace([from_slice, word_data]);
-		if (from_slice === converted_to) {
+		//console.trace([should_be_slice, word_data]);
+		if (should_be_slice === converted_to) {
 			continue;
 		}
-		//console.trace([from_slice, word_data]);
-		const target = from_slice.trim();
+		//console.trace([should_be_slice, word_data]);
+		const target = should_be_slice.trim();
 		if (synonyms_Map.has(target) && synonyms_Map.get(target).includes(converted_to)) {
+			// 為可接受之同義詞，可跳過。
+			continue;
+		}
+
+		const synonym_pattern_list = synonyms_Map[KEY_synonym_pattern];
+		if (synonym_pattern_list.some(synonym_pattern => {
+			if (synonym_pattern.test(target)
+				// assert: pattern has .replace_to
+				&& synonym_pattern.replace(target) === converted_to)
+				return true;
+		})) {
 			// 為可接受之同義詞，可跳過。
 			continue;
 		}
@@ -953,7 +1028,10 @@ function generate_condition_LTP(configuration, options) {
 			}
 		}
 		//CeL.info(`${generate_condition_LTP.name}: Condition for ${word_data[this.KEY_word]}→${target}:`);
-		Object.assign(condition, { parsed: word_data, target, error_converted_to: converted_to });
+		Object.assign(condition, {
+			parsed: word_data, target, error_converted_to: converted_to,
+			//should_be_slice, index_of_should_be_slice
+		});
 		//CeL.log(condition.join('\t'));
 		condition_list.push(condition);
 	}
@@ -1219,32 +1297,42 @@ function convert_paragraph(paragraph, options) {
 			return word_convert_mode ? forced_convert(word_data[this.KEY_word], index_of_tagged_word_list, tagged_word_list, word_mode_options) : word_data[this.KEY_word];
 		}
 
-		//const { convert_to_conditions, matched_condition } = matched_condition_data;
-		const to_word_data = matched_condition_data.matched_condition;
-		if (to_word_data) {
-			if (options.generate_condition || generate_condition_for)
-				word_data[Chinese_converter.KEY_matched_condition] = to_word_data;
-
-			if (to_word_data.filter_name in this.filters[options.convert_to_language]) {
-				return this.filters[options.convert_to_language][to_word_data.filter_name].call(this, { word_data, index_of_tagged_word_list, tagged_word_list, matched_condition_data, options });
+		const { all_matched_conditions } = matched_condition_data;
+		if (all_matched_conditions) {
+			if (all_matched_conditions.length > 1) {
+				//console.trace(all_matched_conditions);
 			}
+			let word = word_data[this.KEY_word], had_forced_converted;
+			all_matched_conditions.forEach(/*matched_condition*/to_word_data => {
+				if (options.generate_condition || generate_condition_for)
+					word_data[Chinese_converter.KEY_matched_condition] = to_word_data;
 
-			let word = word_data[this.KEY_word], to_word = to_word_data[this.KEY_word];
-			if (to_word) {
-				if (to_word.replace_to) {
-					// {RegExp}to_word
-					word = word.replace(to_word, to_word.replace_to);
-				} else if (typeof to_word === 'string') {
-					word = to_word;
-				} else {
-					throw new Error('Invalid KEY_word: ' + to_word);
+				if (to_word_data.filter_name in this.filters[options.convert_to_language]) {
+					return this.filters[options.convert_to_language][to_word_data.filter_name].call(this, { word_data, index_of_tagged_word_list, tagged_word_list, matched_condition_data, options });
 				}
-			}
-			const do_after_converting = to_word_data.do_after_converting;
-			if (do_after_converting) {
-				word = forced_convert(word, index_of_tagged_word_list, tagged_word_list, word_mode_options);
-				word = word.replace(do_after_converting, do_after_converting.replace_to);
-			}
+
+				const to_word = to_word_data[this.KEY_word];
+				if (to_word) {
+					if (to_word.replace_to) {
+						// {RegExp}to_word
+						word = to_word.replace(word);
+					} else if (typeof to_word === 'string') {
+						word = to_word;
+					} else {
+						throw new Error('Invalid KEY_word: ' + to_word);
+					}
+				}
+				const do_after_converting = to_word_data.do_after_converting;
+				if (do_after_converting) {
+					if (!had_forced_converted) {
+						had_forced_converted = true;
+						word = forced_convert(word, index_of_tagged_word_list, tagged_word_list, word_mode_options);
+					}
+					// assert: pattern has .replace_to
+					word = do_after_converting.replace(word);
+				}
+			});
+
 			return word;
 		}
 
@@ -1364,11 +1452,11 @@ function convert_paragraph(paragraph, options) {
 			CeL.log(`${CeL.gettext.get_alias(options.convert_to_language === 'TW' ? 'CN' : 'TW').slice(0, 1)
 				}\t${tagged_word_list_pieces.map(word_data => word_data_to_condition.call(this, word_data)).join('+')
 				}\n\t${JSON.stringify(convert_from_text)
-				}\n→\t${JSON.stringify(converted_text_String.slice(header_move_front)
-					// remove word_data[KEY_prefix_spaces]
-					.trim())
-				}\n應為\t${JSON.stringify(should_convert_to_text)
 				}`);
+			// 為轉換前後的差異文字著色。
+			CeL.coloring_diff(JSON.stringify(converted_text_String.slice(header_move_front)
+				// remove word_data[KEY_prefix_spaces]
+				.trimStart()), JSON.stringify(should_convert_to_text), { headers: ['→\t', '應為\t'], header_style: { fg: 'cyan' }, print: true });
 			condition_list.forEach(show_correction_condition);
 			CeL.debug(beautify_tagged_word_list(tagged_word_list_pieces), 1);
 		}
