@@ -161,34 +161,58 @@ async function for_each_test_set(test_configuration) {
 	let converted_TW = await cecc.to_TW(converted_CN, { ...test_configuration.convert_options, get_full_data: true, generate_condition: true, should_be: TW_paragraphs });
 	tagged_word_list_of_paragraphs = converted_TW.tagged_word_list_of_paragraphs;
 	converted_TW = converted_TW.converted_paragraphs;
+	let error_count = 0;
 	if (TW_paragraphs.correction_conditions) {
 		for (let index = 0; index < TW_paragraphs.length; index++) {
-			if (TW_paragraphs.correction_conditions[index]
+			const condition_list = TW_paragraphs.correction_conditions[index];
+			if (condition_list
 				&& !assert([converted_TW[index], TW_paragraphs[index]], test_title + ` #${index + 1}`)) {
+				const { index_hash } = condition_list;
+				const SGR_style = CeL.interact.console.SGR_style;
+				const normal_style_tagged = (new SGR_style('fg=cyan;bg=black')).toString(), marked_style_row = 'fg=red;bg=white', marked_style = (new SGR_style(marked_style_row)).toString(), reset_style = (new SGR_style({ reset: true })).toString();
+				const normal_style_converted_CN_row = 'fg=green;bg=black';
+				const ansi_converted_CN = new CeL.interact.console.SGR(converted_CN[index]);
 				const tagged_word_list = tagged_word_list_of_paragraphs ? tagged_word_list_of_paragraphs[index] : await cecc.tag_paragraph(converted_CN[index]);
 				CeL.log(`　 繁\t${JSON.stringify(TW_paragraphs[index])}`);
-				CeL.info(`→ 简\t${tagged_word_list.map(word_data => cecc.word_data_to_condition(word_data)).join('+')}`);
-				CeL.log(`\t${JSON.stringify(converted_CN[index])}`);
+				let spaces_char_count = 0;
+				CeL.log(`${normal_style_tagged}→ 简\t${tagged_word_list.map((word_data, index) => {
+					if (word_data[CeCC.KEY_prefix_spaces])
+						spaces_char_count += word_data[CeCC.KEY_prefix_spaces].length;
+					const text = cecc.word_data_to_condition(word_data);
+					if (!index_hash[index])
+						return text;
+					//console.log([word_data, index_hash[index]]);
+					ansi_converted_CN.style_at(word_data.offset + spaces_char_count, marked_style_row);
+					ansi_converted_CN.style_at(word_data.offset + spaces_char_count + word_data[cecc.KEY_word].length, normal_style_converted_CN_row);
+					console.trace([word_data.offset, spaces_char_count, word_data[cecc.KEY_word].length, converted_CN[index].slice(word_data.offset, word_data.offset + word_data[cecc.KEY_word].length)]);
+					return marked_style + text + normal_style_tagged;
+				}).join('+')}${reset_style}`);
+				//CeL.log(`\t${JSON.stringify(converted_CN[index])}`);
+				CeL.log(`${(new SGR_style(normal_style_converted_CN_row)).toString()}\t ${ansi_converted_CN.toString().replace(/\r/g, '\\r').replace(/\n/g, '\\n')}${reset_style}`);
 				// 為轉換前後的差異文字著色。
 				CeL.coloring_diff(JSON.stringify(converted_TW[index]), JSON.stringify(TW_paragraphs[index]), { headers: ['→ 繁\t', ' 原繁\t'], header_style: { fg: 'cyan' }, print: true });
-				TW_paragraphs.correction_conditions[index].forEach(CeCC.show_correction_condition);
+				condition_list.forEach(CeCC.show_correction_condition);
 				if (test_configuration.error_count++ < test_configuration.max_error_tags_showing && test_configuration.max_error_tags_showing) {
 					CeL.debug(CeCC.beautify_tagged_word_list(tagged_word_list), 1);
 				}
+				error_count++;
 			}
 		}
 	}
+
+	test_configuration.test_results[test_title] = {
+		date: new Date,
+		error_count,
+	};
 
 	finish_test(test_name);
 }
 
 function record_test(test_configuration, options) {
-	if (test_configuration.error_count !== 0) {
-		return;
-	}
-
 	latest_test_result[options.test_name] = {
-		date: new Date
+		date: new Date,
+		error_count: test_configuration.error_count,
+		test_results: test_configuration.test_results
 	};
 
 	CeL.write_file(latest_test_result_file, JSON.stringify(latest_test_result));
@@ -202,6 +226,7 @@ add_test('正確率檢核', async (assert, setup_test, finish_test, options) => 
 
 	const test_configuration = {
 		assert, setup_test, finish_test,
+		test_results: Object.create(null),
 		error_count: 0, max_error_tags_showing: 40,
 	};
 
@@ -315,6 +340,7 @@ if (CeL.env.argv.includes('nowiki')) {
 
 		const test_configuration = {
 			assert, setup_test, finish_test,
+			test_results: Object.create(null),
 			error_count: 0, max_error_tags_showing: 0,
 		};
 

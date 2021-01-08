@@ -249,8 +249,8 @@ async function not_new_article_to_check(convert_from_text__file_name, options) {
 	// -----------------------------------
 
 	// 檢查上一次測試後，是否有新詞典檔。
-	const latest_test_result = options.latest_test_result;
-	const latest_test_result_date = latest_test_result ? Date.parse(latest_test_result[options.test_name]?.date)
+	const latest_test_result = options.latest_test_result && options.latest_test_result[options.test_name];
+	const latest_test_result_date = latest_test_result && latest_test_result[convert_from_text__file_name]?.error_count === 0 ? Date.parse(latest_test_result[convert_from_text__file_name]?.date)
 		// 檢查是否有比測試檔或 .converted.* 解答檔案更新的新詞典檔。
 		: convert_to_text__file_status ? Math.max(convert_from_text__file_status.mtime.getTime(), convert_to_text__file_status.mtime.getTime()) : convert_from_text__file_status.mtime.getTime();
 	//console.trace(this.dictionary_file_paths);
@@ -259,9 +259,9 @@ async function not_new_article_to_check(convert_from_text__file_name, options) {
 		//console.trace(dictionary_file_status);
 		//console.trace([dictionary_file_status.mtime - latest_test_result_date, convert_from_text__file_status && convert_from_text__file_status.mtime - dictionary_file_status.mtime]);
 		if (dictionary_file_status.mtime - latest_test_result_date > 0) {
-			CeL.info(`${not_new_article_to_check.name}: 有新詞典檔 ${dictionary_file_path}`);
+			CeL.info(`${not_new_article_to_check.name}: ${convert_from_text__file_name}: 有新詞典檔 ${dictionary_file_path}`);
 			if (latest_test_result)
-				delete latest_test_result[options.test_name];
+				delete latest_test_result[convert_from_text__file_name];
 			return;
 		}
 	}
@@ -972,7 +972,8 @@ function generate_condition_LTP(configuration, options) {
 	//assert: tagged_word_list[tagged_word_list_index_offset].id === 0
 
 	let offset = 0;
-	const condition_list = [];
+	const condition_list = [], index_hash = Object.create(null);
+	condition_list.index_hash = index_hash;
 	for (let index = start_index; index < end_index; index++) {
 		const word_data = tagged_word_list[index];
 		const converted_to = converted_text[index];
@@ -1002,6 +1003,7 @@ function generate_condition_LTP(configuration, options) {
 		}
 
 		const condition = [word_data_to_condition.call(this, word_data)];
+		word_data.condition = condition;
 		if (word_data.parent >= 0) {
 			condition.push(`~${target}<${word_data.relation}>${word_data_to_condition.call(this, tagged_word_list[tagged_word_list_index_offset + word_data.parent])}`);
 		}
@@ -1034,6 +1036,7 @@ function generate_condition_LTP(configuration, options) {
 		});
 		//CeL.log(condition.join('\t'));
 		condition_list.push(condition);
+		index_hash[index] = condition;
 	}
 
 	return condition_list;
@@ -1471,7 +1474,7 @@ function convert_paragraph(paragraph, options) {
 			const converted_text_String = converted_text.join('');
 			if (converted_text_String.length !== should_be_text.length) {
 				// 轉換前後。
-				CeL.error(`預設解答與轉換後之文字長度不符，跳過解答: ${should_be_text}`);
+				CeL.error(`預設解答與轉換後之文字長度不符，跳過解答: ${should_be_text}\n\t轉換後之文字: ${converted_text_String}`);
 
 			} else if (converted_text_String !== should_be_text) {
 				const condition_list = this.generate_condition({ tagged_word_list, converted_text, should_be_text }, options);
@@ -1609,6 +1612,7 @@ function normalize_HTML(html) {
 
 Object.assign(Chinese_converter, {
 	KEY_matched_condition: 'matched condition',
+	KEY_prefix_spaces,
 	show_correction_condition,
 
 	get_paragraphs_of_text, get_paragraphs_of_file,
