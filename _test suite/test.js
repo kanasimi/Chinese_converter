@@ -241,7 +241,7 @@ add_test('正確率檢核', async (assert, setup_test, finish_test, options) => 
 			regenerate_converted: CeL.env.argv.includes('regenerate_converted'),
 			recheck: CeL.env.argv.includes('recheck')
 		})) {
-			CeL.info(`Skip ${file_name}: latest test at ${latest_test_result[options.test_name].date}, no news.`);
+			CeL.info(`${options.test_name}: Skip ${file_name}: latest test at ${latest_test_result[options.test_name].date}, no news.`);
 			continue;
 		}
 

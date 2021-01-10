@@ -346,12 +346,12 @@ function load_text_to_check(should_be_text__file_name, options) {
 	}
 
 	function setup_generate_condition_for() {
-		// source_text__file_name: .TW.* 為轉換之答案/標的，因此檢查的是相反語言。 .converted 才是原文！
+		// should_be_text__file_path: .TW.* 為轉換之答案/標的，因此檢查的是相反語言。 .converted 才是原文！
 		const source_texts = get_paragraphs_of_file(source_text__file_path);
 		if (!source_texts)
 			return;
 		if (should_be_texts.length !== source_texts.length) {
-			CeL.error(`${should_be_text__file_name} 與 ${source_text__file_name} 含有不同數量之字串！此${CeL.gettext.get_alias(check_language)}之標的檔與欲測試之項目數不符，將不採用解答！若檔案為自動生成，您可以刪除舊檔後，重新生成轉換標的檔案。`);
+			CeL.error(`${should_be_text__file_name} 與 ${should_be_text__file_path} 含有不同數量之字串！此${CeL.gettext.get_alias(check_language)}之標的檔與欲測試之項目數不符，將不採用解答！若檔案為自動生成，您可以刪除舊檔後，重新生成轉換標的檔案。`);
 			return;
 		}
 
@@ -367,12 +367,17 @@ function load_text_to_check(should_be_text__file_name, options) {
 	}
 }
 
+// 顯示用函數。
 function report_text_to_check(options) {
 	if (!this.generate_condition_for_language)
 		return;
 
+	const SGR_style = CeL.interact.console.SGR_style;
+	const normal_style = (new SGR_style('fg=green;bg=black')).toString(), NG_style = (new SGR_style('fg=red;bg=white')).toString(), reset_style = (new SGR_style({ reset: true })).toString();
+
 	const generate_condition_for = this.generate_condition_for_language[options.convert_to_language];
-	const lost_texts = [];
+	// lost_texts: 用來記錄、顯示還有哪些尚未處理。
+	const lost_texts = [], multi_matched = Object.create(null);
 	let OK_count = 0, NG_count = 0;
 	for (const convert_from in generate_condition_for) {
 		const convert_data = generate_condition_for[convert_from];
@@ -381,17 +386,31 @@ function report_text_to_check(options) {
 			lost_texts.push(convert_data.should_convert_to_text);
 			continue;
 		}
+		if (check_result.OK.length + check_result.NG.length > 1) {
+			multi_matched[convert_from] = check_result.OK.length;
+			if (check_result.NG.length > 0)
+				multi_matched[convert_from] += ` + ${NG_style}${check_result.NG.length} NG${normal_style}`;
+		}
 		if (check_result.NG.length > 0)
 			NG_count++;
 		else
 			OK_count++;
 	}
 
-	const message = `${report_text_to_check.name}: ${OK_count} OK, ${NG_count} NG.${lost_texts.length > 0 ? ` ${lost_texts.length} lost:\n\t${lost_texts.join('\n\t')}` : ''}`;
-	if (NG_count > 0)
+	const message = `${report_text_to_check.name}: ${OK_count} OK, ${NG_count
+		} NG.${lost_texts.length > 0 ? ` ${lost_texts.length} lost:\n\t${lost_texts.join('\n\t')}` : ''}`;
+	if (NG_count > 0) {
 		CeL.error(message);
-	else
+	} else {
 		CeL.log(message);
+	}
+	const multi_matched_keys = Object.keys(multi_matched);
+	if (multi_matched_keys.length > 0) {
+		// 這裡可以計算某個值出現幾次。
+		CeL.log(`multi matched counts:\n${normal_style
+			}${multi_matched_keys.map(convert_from => `\t${convert_from}: \t${multi_matched[convert_from]}`).join('\n')
+			}${reset_style}`);
+	}
 	return { lost_texts, OK_count, NG_count };
 }
 
@@ -432,11 +451,15 @@ const PATTERN_condition = /^(?<is_target>~)?(?<not_match>!)?(?:(?<tag>[^:+<>]+):
 // [ all, word, do_after_converting ]
 const PATTERN_do_after_converting = new RegExp('^(?<word>.*?)~(?<do_after_converting>' + CeL.PATTERN_RegExp_replacement.source.slice(1, -1) + ')$');
 
+// JSON.stringify(): for "\n"
+function stringify_condition(condition_text) {
+	return JSON.stringify(condition_text).slice(1, -1);
+}
+
 function word_data_to_condition(word_data, options) {
 	const tag = word_data[this.KEY_PoS_tag];
 	return (tag ? tag + ':' : '') + (typeof word_data[this.KEY_word] === 'string' &&
-		// JSON.stringify(): for "\n"
-		JSON.stringify(word_data[this.KEY_word]).slice(1, -1) || word_data[this.KEY_word] || '');
+		stringify_condition(word_data[this.KEY_word]) || word_data[this.KEY_word] || '');
 }
 
 // parse rule
@@ -483,7 +506,10 @@ function parse_condition(full_condition_text, options) {
 				//console.trace(condition_data);
 			} else {
 				//const replace_pattern = matched.word.match();
-				condition_data[this.KEY_word] = CeL.PATTERN_RegExp.test(matched.word) || CeL.PATTERN_RegExp_replacement.test(matched.word) ? matched.word.toRegExp({ allow_replacement: true }) : matched.word;
+				condition_data[this.KEY_word] = CeL.PATTERN_RegExp.test(matched.word) || CeL.PATTERN_RegExp_replacement.test(matched.word)
+					? matched.word.toRegExp({ allow_replacement: true })
+					// allow '\n' in filter.
+					: matched.word.replace(/\\n/g, '\n').replace(/\\t/g, '\t');
 			}
 		}
 
@@ -516,6 +542,7 @@ function parse_condition(full_condition_text, options) {
 }
 
 // ------------------------------------------------------------------
+// 顯示用函數。
 
 const KEY_matched_condition = 'matched condition';
 function print_correction_condition(correction_condition) {
@@ -536,7 +563,7 @@ function print_section_report(configuration, options) {
 	const { index_hash } = condition_list;
 
 	const SGR_style = CeL.interact.console.SGR_style;
-	const normal_style_tagged = (new SGR_style('fg=cyan;bg=black')).toString(), marked_style_row = 'fg=red;bg=white', marked_style = (new SGR_style(marked_style_row)).toString(), reset_style = (new SGR_style({ reset: true })).toString();
+	const normal_style_tagged = (new SGR_style('fg=blue;bg=cyan')).toString(), marked_style_row = 'fg=red;bg=white', marked_style = (new SGR_style(marked_style_row)).toString(), reset_style = (new SGR_style({ reset: true })).toString();
 	const normal_style_converted_CN_row = 'fg=green;bg=black';
 	const ansi_converted_CN = new CeL.interact.console.SGR(convert_from_text);
 
@@ -1074,16 +1101,17 @@ function generate_condition_LTP(configuration, options) {
 		}
 
 		const condition = [word_data_to_condition.call(this, word_data)];
+		const stringified_target = stringify_condition(target);
 		word_data.condition = condition;
 		if (word_data.parent >= 0) {
-			condition.push(`~${target}<${word_data.relation}>${word_data_to_condition.call(this, tagged_word_list[tagged_word_list_index_offset + word_data.parent])}`);
+			condition.push(`~${stringified_target}<${word_data.relation}>${word_data_to_condition.call(this, tagged_word_list[tagged_word_list_index_offset + word_data.parent])}`);
 		}
 		word_data.roles.forEach(role => {
-			condition.push(`~${target}<role.type:${role.type}>${word_data_to_condition.call(this, role)}`);
+			condition.push(`~${stringified_target}<role.type:${role.type}>${word_data_to_condition.call(this, role)}`);
 		});
 		word_data.parents.forEach(parent => {
 			if (parent.parent >= 0) {
-				condition.push(`~${target}<parent.relate:${parent.relate}>${word_data_to_condition.call(this, tagged_word_list[tagged_word_list_index_offset + parent.parent])}`);
+				condition.push(`~${stringified_target}<parent.relate:${parent.relate}>${word_data_to_condition.call(this, tagged_word_list[tagged_word_list_index_offset + parent.parent])}`);
 			}
 		});
 		// 反向關係。
@@ -1097,10 +1125,10 @@ function generate_condition_LTP(configuration, options) {
 			// assert: word_data_to_test.id === latest_id + 1
 			latest_id = word_data_to_test.id;
 			if (word_data_to_test.parent === /* word_data.id */ index) {
-				condition.push(`~${target}<←${word_data_to_test.relation}>${word_data_to_condition.call(this, word_data_to_test)}`);
+				condition.push(`~${stringified_target}<←${word_data_to_test.relation}>${word_data_to_condition.call(this, word_data_to_test)}`);
 			}
 		}
-		//CeL.info(`${generate_condition_LTP.name}: Condition for ${word_data[this.KEY_word]}→${target}:`);
+		//CeL.info(`${generate_condition_LTP.name}: Condition for ${word_data[this.KEY_word]}→${stringified_target}:`);
 		Object.assign(condition, {
 			parsed: word_data, target, error_converted_to: converted_to,
 			//should_be_slice, index_of_should_be_slice
@@ -1440,99 +1468,100 @@ function convert_paragraph(paragraph, options) {
 				continue;
 			}
 
-			let start_index = paragraph.indexOf(convert_from_text), end_index;
-			if (start_index === NOT_FOUND)
-				continue;
-
-			if (!tagged_word_list_length_accumulation) {
-				let length = 0;
-				// 初始化。
-				tagged_word_list_length_accumulation = [length];
-				tagged_word_list.forEach(word_data => { tagged_word_list_length_accumulation.push(length += (word_data[KEY_prefix_spaces] ? word_data[KEY_prefix_spaces].length : 0) + word_data[this.KEY_word].length); });
-			}
-			if (!converted_text_length_accumulation) {
-				let length = 0;
-				// 初始化。
-				converted_text_length_accumulation = [length];
-				converted_text.forEach(token => { converted_text_length_accumulation.push(length += token.length); });
-			}
-
-			// 找出轉換後文字對應的位置。
-			tagged_word_list_length_accumulation.search_sorted(start_index, {
-				found(index, is_near) {
-					// 轉換前後字數可能不同。 the diff is usually +0.
-					start_index += converted_text_length_accumulation[index] - tagged_word_list_length_accumulation[index];
+			// 遍歷所有相符的。例如對於主要角色人名、專有名詞、成語成句就需要此種操作。
+			for (let offset = 0; (offset = paragraph.indexOf(convert_from_text, offset)) !== NOT_FOUND;) {
+				if (!tagged_word_list_length_accumulation) {
+					let length = 0;
+					// 初始化。
+					tagged_word_list_length_accumulation = [length];
+					tagged_word_list.forEach(word_data => { tagged_word_list_length_accumulation.push(length += (word_data[KEY_prefix_spaces] ? word_data[KEY_prefix_spaces].length : 0) + word_data[this.KEY_word].length); });
 				}
-			});
+				if (!converted_text_length_accumulation) {
+					let length = 0;
+					// 初始化。
+					converted_text_length_accumulation = [length];
+					converted_text.forEach(token => { converted_text_length_accumulation.push(length += token.length); });
+				}
 
-			// assert: converted_text.join('').slice(start_index).startsWith(should_convert_to_text)
+				// 找出轉換後文字對應的位置。
 
-			let should_be_text = should_convert_to_text;
-			converted_text_length_accumulation.search_sorted(start_index + should_be_text.length, {
-				found(index, is_near) {
-					//console.log([index, is_near]);
-					if (is_near) {
-						should_be_text += converted_text[index].slice(start_index + should_be_text.length - converted_text_length_accumulation[index]);
-						end_index = index + 1;
-					} else {
-						end_index = index;
+				tagged_word_list_length_accumulation.search_sorted(offset, {
+					found(index, is_near) {
+						// 轉換前後字數可能不同。 the diff is usually +0.
+						offset += converted_text_length_accumulation[index] - tagged_word_list_length_accumulation[index];
 					}
-				}
-			});
-			let header_move_front = 0;
-			converted_text_length_accumulation.search_sorted(start_index, {
-				found(index, is_near) {
-					if (is_near) {
-						header_move_front = start_index - converted_text_length_accumulation[index];
-						should_be_text = converted_text[index].slice(0, header_move_front) + should_be_text;
+				});
+
+				// assert: converted_text.join('').slice(offset).startsWith(should_convert_to_text)
+
+				// offset++: 避免下次從原處開始搜尋。
+				let should_be_text = should_convert_to_text, start_index = offset++, end_index;
+				converted_text_length_accumulation.search_sorted(start_index + should_be_text.length, {
+					found(index, is_near) {
+						//console.log([index, is_near]);
+						if (is_near) {
+							should_be_text += converted_text[index].slice(start_index + should_be_text.length - converted_text_length_accumulation[index]);
+							end_index = index + 1;
+						} else {
+							end_index = index;
+						}
 					}
-					// assert: should_be_text.startsWith(converted_text[index]);
-					start_index = index;
+				});
+				let header_move_front = 0;
+				converted_text_length_accumulation.search_sorted(start_index, {
+					found(index, is_near) {
+						if (is_near) {
+							header_move_front = start_index - converted_text_length_accumulation[index];
+							should_be_text = converted_text[index].slice(0, header_move_front) + should_be_text;
+						}
+						// assert: should_be_text.startsWith(converted_text[index]);
+						start_index = index;
+					}
+				});
+				const converted_text_String = converted_text.slice(start_index, end_index).join('');
+				if (convert_to_different_length(converted_text_String, should_be_text)) {
+					continue;
 				}
-			});
-			const converted_text_String = converted_text.slice(start_index, end_index).join('');
-			if (convert_to_different_length(converted_text_String, should_be_text)) {
-				continue;
+
+				if (!CeL.is_Object(should_convert_to)) {
+					// 初始化。
+					generate_condition_for[convert_from_text] = should_convert_to = { should_convert_to_text };
+				}
+				if (!should_convert_to.check_result) {
+					// 初始化。
+					should_convert_to.check_result = { OK: [], NG: [] };
+				}
+				if (converted_text_String === should_be_text) {
+					// 紀錄已處理過的項目。
+					should_convert_to.check_result.OK.push(true);
+					continue;
+				}
+
+				//CeL.info(`檢查: ${convert_from_text}→${should_be_text}`);
+				//console.trace({ tagged_word_list, converted_text, should_be_text, start_index, end_index });
+				const condition_list = this.generate_condition({ tagged_word_list, converted_text, should_be_text, start_index, end_index }, options);
+				//console.trace(condition_list);
+				if (condition_list.length === 0) {
+					// 只有同義詞。
+					should_convert_to.check_result.OK.push(true);
+					continue;
+				}
+
+				should_convert_to.check_result.NG.push(true);
+				this.print_section_report({
+					tagged_word_list,
+					condition_list,
+					convert_from_text,
+					convert_to_text: converted_text_String.slice(header_move_front)
+						// remove word_data[KEY_prefix_spaces]
+						.trimStart(),
+					should_convert_to_text,
+					start_index, end_index
+				}, options);
 			}
 
-			if (!CeL.is_Object(should_convert_to)) {
-				// 初始化。
-				generate_condition_for[convert_from_text] = should_convert_to = { should_convert_to_text };
-			}
-			if (!should_convert_to.check_result) {
-				// 初始化。
-				should_convert_to.check_result = { OK: [], NG: [] };
-			}
-			if (converted_text_String === should_be_text) {
-				// 紀錄已處理過的項目。
-				should_convert_to.check_result.OK.push(true);
-				continue;
-			}
-
-			//CeL.info(`檢查: ${convert_from_text}→${should_be_text}`);
-			//console.trace({ tagged_word_list, converted_text, should_be_text, start_index, end_index });
-			const condition_list = this.generate_condition({ tagged_word_list, converted_text, should_be_text, start_index, end_index }, options);
-			//console.trace(condition_list);
-			if (condition_list.length === 0) {
-				// 只有同義詞。
-				should_convert_to.check_result.OK.push(true);
-				continue;
-			}
-
-			should_convert_to.check_result.NG.push(true);
-			this.print_section_report({
-				tagged_word_list,
-				condition_list,
-				convert_from_text,
-				convert_to_text: converted_text_String.slice(header_move_front)
-					// remove word_data[KEY_prefix_spaces]
-					.trimStart(),
-				should_convert_to_text,
-				start_index, end_index
-			}, options);
 		}
 
-		//TODO: 檢查還有哪些尚未處理。
 	}
 
 	if (options.generate_condition && this.generate_condition) {
