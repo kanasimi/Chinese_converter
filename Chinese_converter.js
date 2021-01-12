@@ -4,6 +4,7 @@ TODO:
 
 整合繁簡轉換各家辭典
 簡化辭典複雜度
+特設辭典
 
 
 https://zhuanlan.zhihu.com/p/95358646
@@ -386,7 +387,7 @@ function report_text_to_check(options) {
 			lost_texts.push(convert_data.should_convert_to_text);
 			continue;
 		}
-		if (check_result.OK.length + check_result.NG.length > 1) {
+		if (check_result.NG.length > 0 || check_result.OK.length /* + check_result.NG.length */ > 1) {
 			multi_matched[convert_from] = check_result.OK.length;
 			if (check_result.NG.length > 0)
 				multi_matched[convert_from] += ` + ${NG_style}${check_result.NG.length} NG${normal_style}`;

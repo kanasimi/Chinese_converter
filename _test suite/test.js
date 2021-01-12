@@ -14,15 +14,6 @@ CLS && type "test_report.txt"
 
 // load module
 const CeCC = require('../Chinese_converter.js');
-const cecc = new CeCC({
-	// using LTP
-	using_LTP: true,
-	LTP_URL: 'http://localhost:5000/',
-
-	// using Stanford CoreNLP
-	//CoreNLP_URL: 'http://localhost:9000/',
-	//CoreNLP_URL: 'https://corenlp.run/',
-});
 
 // --------------------------
 
@@ -82,6 +73,22 @@ function add_test(test_name, conditions) {
 }
 
 // ============================================================================
+
+function new_cecc() {
+	const cecc = new CeCC({
+		// using LTP
+		using_LTP: true,
+		LTP_URL: 'http://localhost:5000/',
+
+		// using Stanford CoreNLP
+		//CoreNLP_URL: 'http://localhost:9000/',
+		//CoreNLP_URL: 'https://corenlp.run/',
+	});
+
+	return cecc;
+}
+
+const cecc = new_cecc();
 
 const module_base_path = CeL.append_path_separator(module.path);
 const articles_directory = CeL.append_path_separator(module_base_path + 'articles');
