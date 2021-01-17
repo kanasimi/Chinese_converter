@@ -307,6 +307,15 @@ if (CeL.env.argv.includes('nowiki')) {
 	}
 
 	function get_parsed_wikitext(page_data, uselang) {
+		const parsed = page_data.parse();
+		parsed.each('tag', tag_token => {
+			if (tag_token.tag === 'ref') {
+				return CeL.wiki.parser.parser_prototype.each.remove_token;
+			}
+		});
+
+		const wikitext = parsed.toString();
+
 		return new Promise((resolve, reject) => {
 			CeL.wiki.query([wiki.API_URL, 'action=parse'], function (data, error) {
 				//console.trace(data);
@@ -318,7 +327,7 @@ if (CeL.env.argv.includes('nowiki')) {
 				title: page_data.title,
 				//prop: 'text|indicators|displaytitle|modules|jsconfigvars|categorieshtml|templates|langlinks|limitreporthtml|parsewarnings',
 				prop: 'text',
-				text: page_data.wikitext,
+				text: wikitext,
 				pst: true,
 				preview: true,
 				disableeditsection: true,

@@ -454,6 +454,7 @@ const PATTERN_do_after_converting = new RegExp('^(?<word>.*?)~(?<do_after_conver
 
 // JSON.stringify(): for "\n"
 function stringify_condition(condition_text) {
+	// .replace(/\r/g, '\\r').replace(/\n/g, '\\n')
 	return JSON.stringify(condition_text).slice(1, -1);
 }
 
@@ -570,15 +571,16 @@ function print_section_report(configuration, options) {
 
 	const tagged_word_list_pieces = start_index >= 0 ? tagged_word_list.slice(start_index, end_index) : tagged_word_list;
 
-	let offset = 0;
+	let offset = convert_from_text.match(/^\s*/)[0].length;
 	CeL.log(`${normal_style_tagged
 		}${CeL.gettext.get_alias(options.convert_to_language === 'TW' ? 'CN' : 'TW').slice(0, 1)
 		}\t${tagged_word_list_pieces.map((word_data, index) => {
-			if (word_data[KEY_prefix_spaces])
-				offset += word_data[KEY_prefix_spaces].length;
+			const prefix_spaces = index > 0 && word_data[KEY_prefix_spaces] || '';
+			if (prefix_spaces)
+				offset += prefix_spaces.length;
 			const start_offset = offset;
 			offset += word_data[this.KEY_word].length;
-			const text = word_data_to_condition.call(this, word_data);
+			const text = stringify_condition(prefix_spaces) + word_data_to_condition.call(this, word_data);
 			if (!index_hash[start_index >= 0 ? start_index + index : index])
 				return text;
 			//console.log([word_data, index_hash[index]]);
@@ -589,6 +591,7 @@ function print_section_report(configuration, options) {
 		}).join('+')
 		}${reset_style}`);
 
+	//console.log(ansi_converted_CN);
 	//CeL.log(`\t${JSON.stringify(convert_from_text)}`);
 	CeL.log(`${(new SGR_style(normal_style_converted_CN_row)).toString()
 		}\t ${ansi_converted_CN.toString().replace(/\r/g, '\\r').replace(/\n/g, '\\n')}${reset_style}`);
@@ -1045,7 +1048,9 @@ function recover_spaces(parsed, paragraph) {
 			continue;
 		}
 
-		throw new Error(`Not found: ${JSON.stringify(word)} in ${paragraph}`);
+		console.log(parsed);
+		console.log([parsed_index, word_data]);
+		throw new Error(`Not found: ${JSON.stringify(word)} in ${JSON.stringify(paragraph)}`);
 	}
 
 	//assert: offset <= paragraph.length
