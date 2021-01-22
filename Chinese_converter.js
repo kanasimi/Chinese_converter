@@ -560,7 +560,7 @@ function print_correction_condition(correction_condition) {
 
 // 展示有問題的項目。
 function print_section_report(configuration, options) {
-	const { tagged_word_list, condition_list, convert_from_text, convert_to_text, should_convert_to_text, message_should_be, show_tagged_word_list,
+	const { tagged_word_list, condition_list, convert_from_text, convert_to_text, should_convert_to_text, show_tagged_word_list,
 		start_index, end_index } = configuration;
 	const { index_hash } = condition_list;
 
@@ -600,7 +600,7 @@ function print_section_report(configuration, options) {
 	CeL.coloring_diff(JSON.stringify(convert_to_text), JSON.stringify(should_convert_to_text), {
 		headers: [
 			`→ ${CeL.gettext.get_alias(options.convert_to_language).slice(0, 1)}\t`,
-			` ${message_should_be || '應為'}\t`
+			` ${options.message_should_be || '應為'}\t`
 		],
 		header_style: { fg: 'cyan' }, print: true
 	});

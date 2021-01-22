@@ -108,92 +108,69 @@ if (latest_test_result)
 else
 	latest_test_result = Object.create(null);
 
+async function test_paragraphs(converte_from_paragraphs, should_be, test_configuration, options) {
+	const { assert, test_title } = test_configuration;
+	const { tagged_word_list_of_paragraphs, converted_paragraphs }
+		= await cecc[options.convert_to_language === 'TW' ? 'to_TW' : 'to_CN'](converte_from_paragraphs, { ...test_configuration.convert_options, get_full_data: true, generate_condition: true, should_be });
+	const test_postfix = options.test_postfix ? ' ' + options.test_postfix : '';
+
+	if (!test_configuration.test_results[test_title]) {
+		test_configuration.test_results[test_title] = {
+			error_count: 0,
+		};
+	}
+	const test_results = test_configuration.test_results[test_title];
+	const test_length = should_be.length;
+
+	if (test_length !== converte_from_paragraphs.length) {
+		// 含有不同數量之字串！
+		CeL.warn(`${test_title}${test_postfix}: 預設解答與欲測試之項目數不符，將不採用解答！若檔案為自動生成，您可以刪除舊檔後，重新生成轉換標的檔案。`);
+		test_results.error_count++;
+	} else if (should_be.correction_conditions) {
+		for (let index = 0; index < test_length; index++) {
+			const should_convert_to_text = should_be[index];
+			const condition_list = should_be.correction_conditions[index];
+			if (condition_list
+				&& !assert([converted_paragraphs[index], should_convert_to_text], test_title + ` #${index + 1}/${test_length}${test_postfix}`)) {
+				test_results.error_count++;
+				//CeL.log(`　 繁\t${JSON.stringify(should_convert_to_text)}`);
+				const convert_from_text = converte_from_paragraphs[index];
+				cecc.print_section_report({
+					tagged_word_list: tagged_word_list_of_paragraphs ? tagged_word_list_of_paragraphs[index] : await cecc.tag_paragraph(convert_from_text),
+					condition_list,
+					convert_from_text,
+					convert_to_text: converted_paragraphs[index],
+					should_convert_to_text,
+					show_tagged_word_list: test_configuration.error_count++ < test_configuration.max_error_tags_showing && test_configuration.max_error_tags_showing,
+				}, options);
+			}
+		}
+	}
+
+	test_results.date = new Date;
+
+	return converted_paragraphs;
+}
+
 async function for_each_test_set(test_configuration) {
-	const { assert, setup_test, finish_test,
+	const { setup_test, finish_test,
 		test_title, text_is_TW,
 		content_paragraphs, answer_paragraphs } = test_configuration;
 
 	const test_name = `${text_is_TW ? '' : '简→'}繁→简→繁：${test_title}`;
 	setup_test(test_name);
 
-	let answer_paragraphs_is_OK;
-	if (answer_paragraphs) {
-		if (answer_paragraphs.length === content_paragraphs.length) {
-			answer_paragraphs_is_OK = true;
-		} else {
-			// 含有不同數量之字串！
-			CeL.warn(`${test_title}: 預設解答與欲測試之項目數不符，將不採用解答！若檔案為自動生成，您可以刪除舊檔後，重新生成轉換標的檔案。`);
-		}
-	}
-
-	let TW_paragraphs, converted_CN, tagged_word_list_of_paragraphs;
+	let TW_paragraphs, converted_CN;
 	if (text_is_TW) {
 		TW_paragraphs = content_paragraphs;
-		converted_CN = await cecc.to_CN(TW_paragraphs, test_configuration.convert_options);
-
-		if (answer_paragraphs_is_OK) {
-			for (let index = 0; index < answer_paragraphs.length; index++) {
-				if (!assert([converted_CN[index], answer_paragraphs[index]], test_title + ` #${index + 1}-TW answer`)) {
-					CeL.info(`　 繁\t${JSON.stringify(TW_paragraphs[index])}`);
-					// 為轉換前後的差異文字著色。
-					CeL.coloring_diff(JSON.stringify(converted_CN[index]), JSON.stringify(answer_paragraphs[index]), { headers: ['→ 简\t', '應為\t'], header_style: { fg: 'cyan' }, print: true });
-				}
-			}
-		}
+		converted_CN = await test_paragraphs(content_paragraphs, answer_paragraphs, test_configuration, { convert_to_language: 'CN', test_postfix: 'TW answer' });
 
 	} else {
-		TW_paragraphs = await cecc.to_TW(content_paragraphs, test_configuration.convert_options);
-		if (answer_paragraphs_is_OK) {
-			for (let index = 0; index < answer_paragraphs.length; index++) {
-				if (!assert([TW_paragraphs[index], answer_paragraphs[index]], test_title + ` #${index + 1}-CN answer`)) {
-					CeL.info(`　 简\t${JSON.stringify(content_paragraphs[index])}`);
-					// 為轉換前後的差異文字著色。
-					CeL.coloring_diff(JSON.stringify(TW_paragraphs[index]), JSON.stringify(answer_paragraphs[index]), { headers: ['→ 繁\t', '應為\t'], header_style: { fg: 'cyan' }, print: true });
-				}
-			}
-		}
-
-		converted_CN = await cecc.to_CN(TW_paragraphs, test_configuration.convert_options);
-		for (let index = 0; index < content_paragraphs.length; index++) {
-			if (!assert([converted_CN[index], content_paragraphs[index]], test_title + ` #${index + 1}-CN`)) {
-				CeL.info(`　 简\t${JSON.stringify(content_paragraphs[index])
-					}\n→ 繁\t${JSON.stringify(TW_paragraphs[index])
-					}`);
-				// 為轉換前後的差異文字著色。
-				CeL.coloring_diff(JSON.stringify(converted_CN[index]), JSON.stringify(content_paragraphs[index]), { headers: ['→ 简\t', ' 原简\t'], header_style: { fg: 'cyan' }, print: true });
-			}
-		}
+		TW_paragraphs = await test_paragraphs(content_paragraphs, answer_paragraphs, test_configuration, { convert_to_language: 'TW', test_postfix: 'CN answer' });
+		converted_CN = await test_paragraphs(TW_paragraphs, content_paragraphs, test_configuration, { convert_to_language: 'CN', test_postfix: 'CN', message_should_be: '原简' });
 	}
 
-	let converted_TW = await cecc.to_TW(converted_CN, { ...test_configuration.convert_options, get_full_data: true, generate_condition: true, should_be: TW_paragraphs });
-	tagged_word_list_of_paragraphs = converted_TW.tagged_word_list_of_paragraphs;
-	converted_TW = converted_TW.converted_paragraphs;
-	let error_count = 0;
-	if (TW_paragraphs.correction_conditions) {
-		for (let index = 0; index < TW_paragraphs.length; index++) {
-			const should_convert_to_text = TW_paragraphs[index];
-			const condition_list = TW_paragraphs.correction_conditions[index];
-			if (condition_list
-				&& !assert([converted_TW[index], should_convert_to_text], test_title + ` #${index + 1}`)) {
-				error_count++;
-				//CeL.log(`　 繁\t${JSON.stringify(should_convert_to_text)}`);
-				const convert_from_text = converted_CN[index];
-				cecc.print_section_report({
-					tagged_word_list: tagged_word_list_of_paragraphs ? tagged_word_list_of_paragraphs[index] : await cecc.tag_paragraph(convert_from_text),
-					condition_list,
-					convert_from_text,
-					convert_to_text: converted_TW[index],
-					should_convert_to_text, message_should_be: '原繁',
-					show_tagged_word_list: test_configuration.error_count++ < test_configuration.max_error_tags_showing && test_configuration.max_error_tags_showing,
-				}, { convert_to_language: 'TW' });
-			}
-		}
-	}
-
-	test_configuration.test_results[test_title] = {
-		date: new Date,
-		error_count,
-	};
+	await test_paragraphs(converted_CN, TW_paragraphs, test_configuration, { convert_to_language: 'TW', message_should_be: '原繁' });
 
 	finish_test(test_name);
 }
