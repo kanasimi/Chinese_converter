@@ -99,6 +99,37 @@ add_test('基本檢核', async (assert, setup_test, finish_test, options) => {
 
 // ------------------------------------------------------------------
 
+function get_zhwiki_session() {
+	CeL.run([
+		// 載入操作維基百科的主要功能。
+		'application.net.wiki',
+		'application.net.wiki.template_functions',
+	]);
+
+	let Wikiapi;
+
+	try {
+		// Load wikiapi module.
+		Wikiapi = require('../../wikiapi/wikiapi.js');
+	} catch (e) {
+		try {
+			// Load wikiapi module.
+			Wikiapi = require('wikiapi');
+		} catch (e) {
+			// TODO: handle exception
+		}
+	}
+
+	// --------------------------
+
+	/** {Object}wiki operator 操作子. */
+	const wiki_session = new Wikiapi('zh');
+
+	return wiki_session;
+}
+
+// ------------------------------------------------------------------
+
 const default_convert_options = cecc.regenerate_converted.default_convert_options;
 
 const latest_test_result_file = default_convert_options.cache_directory + 'latest_test_result.json';
@@ -192,6 +223,241 @@ function record_test(test_configuration, options) {
 
 // ============================================================================
 
+/**
+ * 自動將個別作品測試集添加至一般性測試集的功能。
+ * 
+ * @param {String}insert_to_file	個別作品測試集檔案路徑。
+ * @param {String}insert_from_file	一般性測試集檔案路徑。
+ * @param {Object}[options]	附加參數/設定選擇性/特殊功能與選項。
+ */
+async function insert_watch_target_to_general_test_text(insert_to_file, insert_from_file, options) {
+	if (!(CeL.fso_status(insert_from_file).mtime - CeL.fso_status(insert_to_file).mtime > 0))
+		return;
+	// insert_from_file is newer than insert_to_file
+
+	//console.trace([insert_to_file, insert_from_file, options]);
+	let insert_from_text = CeL.data.pair.remove_comments(CeL.read_file(insert_from_file).toString().between(insert_watch_target_to_general_test_text.name).between('\n')).trim();
+	if (!insert_from_text)
+		return;
+
+	CeL.info(`${insert_watch_target_to_general_test_text.name}: insert text:`);
+	CeL.log(insert_from_text);
+
+	const word_mapper = new Map;
+	const KEY_id_list = options.text_is_TW ? '简words' : '繁words';
+
+	/** {Object}wiki operator 操作子. */
+	const zhwiki = get_zhwiki_session();
+	const page_title = '簡繁轉換一對多列表';
+	const page_data = await zhwiki.page(page_title, { redirects: 1 });
+	page_data.parse().each('Template:簡繁轉換', function (token) {
+		if (token.简 === token.繁) {
+			// e.g., '𥁕'
+			return;
+		}
+
+		//console.log(token.简 + ' ⇄ ' + token.繁);
+		const 繁words = token.繁.chars().unique();
+		const 简words = token.简.chars().unique();
+		const word_data = {
+			简words, 繁words,
+			title: `${简words.join(' ')} → ${繁words.join(' ')} 。`,
+			pattern: new RegExp(`[${简words.join('')}${繁words.join('')}]`),
+		};
+
+		//function register_word(word)
+		简words.concat(繁words).unique().forEach(word => {
+			if (word_mapper.has(word)) {
+				if (word_mapper.get(word).title === word_data.title) {
+					// 跳過完全相同的。
+					return;
+				}
+				if (!简words.includes(word))
+					return;
+				if (word_mapper.get(word)[KEY_id_list].includes(word)) {
+					if (word_mapper.get(word).title.length > word_data.title.length) {
+						// TODO: 應該合併。
+						return;
+					}
+					if (CeL.is_debug())
+						CeL.warn(`${insert_watch_target_to_general_test_text.name}: ${CeL.wiki.title_link_of(page_title)}包含重複字元:\n\t${word_mapper.get(word).title}\n\t${word_data.title}`);
+				}
+			}
+			word_mapper.set(word, word_data);
+		});
+	});
+
+	word_mapper.pattern = new RegExp(Array.from(word_mapper.keys()).join('|'));
+
+	// ---------------------------------------------
+
+	function join_with_new_line() {
+		return this.join('\n');
+	}
+	const general_test_text = Object.assign([], {
+		toString: join_with_new_line,
+		// general_test_text.word_block_mapper.get(word) = {Arrray}block
+		word_block_mapper: new Map,
+	});
+
+	function append_new_block(word_data, line) {
+		// 初始化 last_block。
+		last_block = Object.assign([], {
+			toString: join_with_new_line,
+			word_data,
+			line,
+		});
+		// 正規化起始標記。
+		last_block.push(`// ↓ ${word_data.title}`);
+		general_test_text.push(last_block);
+		// 登記區塊。
+		word_data.简words.concat(word_data.繁words).unique().forEach(word => {
+			if (general_test_text.word_block_mapper.has(word)) {
+				if (general_test_text.word_block_mapper.get(word).word_data === word_data || !word_data[KEY_id_list].includes(word))
+					return;
+				if (general_test_text.word_block_mapper.get(word).word_data[KEY_id_list].includes(word))
+					CeL.warn(`${insert_watch_target_to_general_test_text.name}: 一般性測試集包含重複區塊 for ${word
+						}:\n\t${general_test_text.word_block_mapper.get(word).word_data.title}\t${general_test_text.word_block_mapper.get(word).line
+						}\n→\t${word_data.title}\t${line}`);
+			}
+			general_test_text.word_block_mapper.set(word, last_block);
+		});
+	}
+
+	// parse general_test_text
+	let last_block, is_in_comments;
+	const original_general_test_text = CeL.read_file(insert_to_file).toString();
+	for (let line of original_general_test_text.split('\n')) {
+		line = line.trim();
+		if (line.includes('/*')) {
+			is_in_comments = true;
+		}
+		if (is_in_comments) {
+			// TODO: handle with "/* ... */ ... /*"
+			is_in_comments = line.includes('*/');
+			(last_block || general_test_text).push(line);
+			continue;
+		}
+
+		// 首次執行，標題不包含 "↓" 的情況。
+		//const matched = line.match(/^\/\/\s*(?<mark>↑?)\s*(?<words>.+)/);
+		// 標題全部都包含 "↓" 的情況。
+		const matched = line.match(/^\/\/\s*(?<mark>[↑↓])\s*(?<words>.+)/);
+		if (matched && (last_block || matched.groups.mark !== '↑')) {
+			// parse title
+			let word_data = matched.groups.words.between(null, '→').trim(), has_irrelevant_words;
+			//console.trace([word_data, word_mapper.get(word_data)?.title]);
+			word_data = word_mapper.get(word_data);
+			if (!word_data) {
+				const words = matched.groups.words.replace(/[\s\/→。]/g, '').chars('');
+				words.forEach(word => {
+					if (!word_mapper.has(word)) {
+						CeL.warn(`${insert_watch_target_to_general_test_text.name}: 未登錄於${CeL.wiki.title_link_of(page_title)}的字元 ${word} @ ${line}`);
+						has_irrelevant_words = true;
+					} else if (!word_data || word_data !== word_mapper.get(word) && word_mapper.get(word)[KEY_id_list].includes(word)) {
+						word_data = word_mapper.get(word);
+					} else if (word_data !== word_mapper.get(word)) {
+						CeL.warn(`${insert_watch_target_to_general_test_text.name}: 不相符的字元 @ ${word}: ${word_data.title} !== ${word_mapper.get(word).title}`);
+						has_irrelevant_words = true;
+					}
+				});
+			}
+
+			if (!has_irrelevant_words && word_data) {
+				if (matched.groups.mark === '↑') {
+					if (word_data !== last_block.word_data) {
+						CeL.warn(`${insert_watch_target_to_general_test_text.name}: 結束標記不相符: ${last_block.word_data.title} !== ${word_data.title}`);
+					}
+					last_block = null;
+				} else {
+					append_new_block(word_data, line);
+				}
+				continue;
+			}
+
+			CeL.warn(`${insert_watch_target_to_general_test_text.name}: ${has_irrelevant_words ? '有不相干的文字' : '無法解析標題，當做普通註解'}: ${line}`);
+		}
+
+		if (last_block) {
+			if (!line.startsWith('//') && !last_block.word_data.pattern.test(line)) {
+				CeL.warn(`${insert_watch_target_to_general_test_text.name}: 區塊中的測試語句 ${line} 不包括欲測試字元 ${last_block.word_data.pattern}`);
+			}
+			last_block.push(line);
+		} else {
+			general_test_text.push(line);
+		}
+	}
+
+	function trim_block(block) {
+		while (!block[block.length - 1]) {
+			// 去掉末尾的空行。
+			block.pop();
+		}
+	}
+
+	const pre_generated_text = general_test_text.toString();
+	// TODO: 在插入個別作品測試集前檔案內容完全相同，則最後寫入原先的檔案。
+	//const write_to_file = insert_to_file.replace(/([^.]*)$/, 'generated.$1');
+	const exists_words = Array.from(general_test_text.word_block_mapper.keys());
+	if (CeL.is_debug())
+		CeL.info(`${insert_watch_target_to_general_test_text.name}: 已有之區塊字元: ${exists_words.join('')}`);
+	for (let line of insert_from_text.split('\n')) {
+		line = line.trim();
+		if (!/[。！…」]$/.test(line))
+			line = line.replace(/[，；]*$/, '。');
+		if (pre_generated_text.includes(line)) {
+			// 避免重複添加測試語句。
+			continue;
+		}
+
+		// 先從現有的區塊找尋是否有符合的 word。
+		let word;
+		if (!exists_words.some(_word => {
+			if (line.includes(_word)) {
+				word = _word;
+				return true;
+			}
+		}) && (word = line.match(word_mapper.pattern))) {
+			word = word[0];
+		}
+		if (word) {
+			if (general_test_text.word_block_mapper.has(word)) {
+				const block = general_test_text.word_block_mapper.get(word);
+				trim_block(block);
+				block.push(line);
+			} else {
+				const word_data = word_mapper.get(word);
+				CeL.warn(`${insert_watch_target_to_general_test_text.name}: 創建新區塊 ${word_data.title}: ${line}`);
+				append_new_block(word_data, line);
+			}
+
+		} else {
+			CeL.warn(`${insert_watch_target_to_general_test_text.name}: watch_target 中的測試語句 ${line} 不包括欲測試字元`);
+		}
+	}
+
+	for (let index = 0; index < general_test_text.length; index++) {
+		const block = general_test_text[index];
+		if (Array.isArray(block)) {
+			trim_block(block);
+			// 正規化結束標記。
+			block.push(`// ↑ ${block.word_data.title}`, '', '');
+		} else if (!block && index > 0 && Array.isArray(general_test_text[index - 1])) {
+			general_test_text.splice(index--, 1);
+		}
+	}
+
+	const generated_general_test_text = general_test_text.toString();
+	if (original_general_test_text === generated_general_test_text) {
+		CeL.info(`${insert_watch_target_to_general_test_text.name}: Nothing changed.`);
+	} else {
+		CeL.write_file(/*write_to_file*/insert_to_file, generated_general_test_text,
+			{ backup: { directory_name: 'backup' } });
+	}
+}
+
+// ----------------------------------------------
+
 add_test('正確率檢核', async (assert, setup_test, finish_test, options) => {
 	const file_list = CeL.storage.read_directory(articles_directory);
 	//console.trace([articles_directory, file_list]);
@@ -218,6 +484,10 @@ add_test('正確率檢核', async (assert, setup_test, finish_test, options) => 
 		const file_path = articles_directory + file_name;
 		const answer_file_path = CeCC.to_converted_file_path(file_path);
 		const text_is_TW = file_name_language[1] === 'TW';
+
+		if (file_name.startsWith('watch_target.') && text_is_TW)
+			await insert_watch_target_to_general_test_text(`${articles_directory}general.${file_name_language[1]}.txt`, articles_directory + file_name, { text_is_TW });
+
 		if (await cecc.not_new_article_to_check(file_name, {
 			...options, text_is_TW,
 			latest_test_result,
@@ -248,29 +518,8 @@ if (CeL.env.argv.includes('nowiki')) {
 } else if (require('os').freemem() < /* 6GB RAM */ 6 * (2 ** 10) ** 3) {
 	CeL.warn(`RAM 過小 (${CeL.to_KiB(require('os').freemem())})，跳過 wikipedia 測試！`);
 } else {
-	CeL.run([
-		// 載入操作維基百科的主要功能。
-		'application.net.wiki',
-	]);
-
-	let Wikiapi;
-
-	try {
-		// Load wikiapi module.
-		Wikiapi = require('../../wikiapi/wikiapi.js');
-	} catch (e) {
-		try {
-			// Load wikiapi module.
-			Wikiapi = require('wikiapi');
-		} catch (e) {
-			// TODO: handle exception
-		}
-	}
-
-	// --------------------------
-
 	/** {Object}wiki operator 操作子. */
-	const wiki = new Wikiapi('zh');
+	const zhwiki = get_zhwiki_session();
 
 	// 抽取 HTML 文字。
 	function extract_HTML_text(html) {
@@ -294,7 +543,7 @@ if (CeL.env.argv.includes('nowiki')) {
 		const wikitext = parsed.toString();
 
 		return new Promise((resolve, reject) => {
-			CeL.wiki.query([wiki.API_URL, 'action=parse'], function (data, error) {
+			CeL.wiki.query([zhwiki.API_URL, 'action=parse'], function (data, error) {
 				//console.trace(data);
 				if (error)
 					reject(error);
@@ -326,7 +575,7 @@ if (CeL.env.argv.includes('nowiki')) {
 		};
 
 		for (const page_title of page_title_list) {
-			const page_data = await wiki.page(page_title, { redirects: 1 });
+			const page_data = await zhwiki.page(page_title, { redirects: 1 });
 			//console.log(page_data.wikitext);
 
 			await for_each_test_set(Object.assign(test_configuration, {

@@ -276,6 +276,7 @@ async function not_new_article_to_check(convert_from_text__file_name, options) {
 	}
 }
 
+
 const KEY_files_loaded = Symbol('files loaded');
 
 function load_text_to_check(should_be_text__file_name, options) {
