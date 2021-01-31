@@ -812,6 +812,7 @@ function load_synonym_dictionary() {
 
 // ----------------------------------------------------------------------------
 
+// @inner 須配合 generate_condition_LTP()。
 function condition_filter_LTP(single_condition, word_data, options) {
 	//console.trace(options);
 	if (single_condition.filter_name in this.filters[options.convert_to_language])
@@ -1066,7 +1067,7 @@ function recover_spaces(parsed, paragraph) {
 	//console.trace(parsed);
 }
 
-// @inner 自動生成辭典用的候選條件式。
+// @inner 自動生成辭典用的候選條件式。須配合 condition_filter_LTP()。
 function generate_condition_LTP(configuration, options) {
 	const synonyms_Map = this.synonyms_of_language[options.convert_to_language];
 	const { tagged_word_list, converted_text, should_be_text } = configuration;
@@ -1131,7 +1132,8 @@ function generate_condition_LTP(configuration, options) {
 			}
 			// assert: word_data_to_test.id === latest_id + 1
 			latest_id = word_data_to_test.id;
-			if (word_data_to_test.parent === /* word_data.id */ index) {
+			// tagged_word_list 可能是 recover_original_paragraphs() 多次查詢拼合起來的。`word_data_to_test.parent` 實際指向的應該是 `word_data`。
+			if (word_data_to_test.parent === word_data.id) {
 				condition.push(`~${stringified_target}<←${word_data_to_test.relation}>${word_data_to_condition.call(this, word_data_to_test)}`);
 			}
 		}
@@ -1683,7 +1685,7 @@ function return_converted_paragraphs(options, converted_paragraphs) {
 // (?:[。？！]|……)[\r\n]*|
 function get_paragraphs_of_text(text) {
 	if (!text)
-		return '';
+		return;
 
 	const paragraphs = CeL.data.pair.remove_comments(text.toString())
 		.split('\n')
@@ -1691,7 +1693,7 @@ function get_paragraphs_of_text(text) {
 
 	if (paragraphs.length > 0)
 		return paragraphs;
-	return '';
+	return;
 }
 
 function get_paragraphs_of_file(file_name) {

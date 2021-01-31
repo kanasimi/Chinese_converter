@@ -226,7 +226,7 @@ function record_test(test_configuration, options) {
 const default_write_file_options = { backup: { directory_name: 'backup' } };
 
 // /[^\n]+\n/ or /.*[\r\n]+/: /./.test('\r') === false
-const PATTERN_insert_mark = new RegExp(`\\n\\/\\/.*?${insert_watch_target_to_general_test_text.name}.*[\r\n]+`);
+const PATTERN_insert_mark = new RegExp(`[\\r\\n]+\\/\\/.*?${insert_watch_target_to_general_test_text.name}.*[\r\n]+`);
 
 /**
  * 自動將個別作品測試集添加至一般性測試集的功能。
