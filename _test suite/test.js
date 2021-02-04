@@ -226,7 +226,7 @@ function record_test(test_configuration, options) {
 const default_write_file_options = { backup: { directory_name: 'backup' } };
 
 // /[^\n]+\n/ or /.*[\r\n]+/: /./.test('\r') === false
-const PATTERN_insert_mark = new RegExp(`[\\r\\n]+\\/\\/.*?${insert_watch_target_to_general_test_text.name}.*[\r\n]+`);
+const PATTERN_insert_mark = new RegExp(`[\\r\\n]+\\/\\/.*?${insert_watch_target_to_general_test_text.name}.*([\r\n]+)`);
 
 /**
  * 自動將個別作品測試集添加至一般性測試集的功能。
@@ -242,11 +242,11 @@ async function insert_watch_target_to_general_test_text(insert_to_file, insert_f
 
 	//console.trace([insert_to_file, insert_from_file, options]);
 	const watch_target_text = CeL.read_file(insert_from_file).toString();
-	const matched_mark = watch_target_text.match(PATTERN_insert_mark);
+	const mark_matched = watch_target_text.match(PATTERN_insert_mark);
 	//console.log([PATTERN_insert_mark, matched_mark, watch_target_text]);
-	if (!matched_mark)
+	if (!mark_matched)
 		return;
-	const insert_from_text = CeL.data.pair.remove_comments(watch_target_text.slice(matched_mark.index + matched_mark[0].length)).trim();
+	const insert_from_text = CeL.data.pair.remove_comments(watch_target_text.slice(mark_matched.index + mark_matched[0].length)).trim();
 	if (!insert_from_text)
 		return;
 
@@ -464,7 +464,7 @@ async function insert_watch_target_to_general_test_text(insert_to_file, insert_f
 		CeL.write_file(/*write_to_file*/insert_to_file, generated_general_test_text, default_write_file_options);
 		CeL.write_file(insert_from_file,
 			// move mark to tail of watch target file
-			watch_target_text.replace(PATTERN_insert_mark, '') + matched_mark[0], default_write_file_options);
+			watch_target_text.replace(PATTERN_insert_mark, '$1').trimEnd() + mark_matched[0], default_write_file_options);
 	}
 }
 
