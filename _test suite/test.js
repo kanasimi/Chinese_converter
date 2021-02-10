@@ -414,7 +414,7 @@ async function insert_watch_target_to_general_test_text(insert_to_file, insert_f
 	for (let line of insert_from_text.split('\n')) {
 		line = line.trim();
 		if (!/[。！…」]$/.test(line))
-			line = line.replace(/[，；]*$/, '。');
+			line = line.replace(/[，；：]*$/, '。');
 		if (pre_generated_text.includes(line)) {
 			// 避免重複添加測試語句。
 			continue;
