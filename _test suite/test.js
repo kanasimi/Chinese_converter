@@ -480,6 +480,8 @@ add_test('正確率檢核', async (assert, setup_test, finish_test, options) => 
 		error_count: 0, max_error_tags_showing: 40,
 	};
 
+	//CeL.set_debug(9);
+	//console.trace(process.memoryUsage());
 	for (const file_name of file_list) {
 		if (file_name.includes('.bak.'))
 			continue;

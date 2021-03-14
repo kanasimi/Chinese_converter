@@ -143,8 +143,7 @@ class Chinese_converter {
 			load_dictionary.call(this, dictionary_file_path, { language });
 		}
 
-		// 會在每次轉換都測試是否有相符之文字。
-		this.text_to_check_files.forEach(from_file_name => this.load_text_to_check(from_file_name));
+		this.load_default_text_to_check();
 	}
 
 	/**
@@ -318,14 +317,19 @@ function load_text_to_check(should_be_text__file_name, options) {
 
 	const convert_to_text__data = get_convert_to_text__file_status.call(this, should_be_text__file_name, options);
 	const should_be_text__file_path = convert_to_text__data.convert_from_text__file_path;
-	if (!this.generate_condition_for_language || options?.reset) {
+	if (!this.generate_condition_for_language
+		|| options?.reset && !this.generate_condition_for_language.only_default) {
 		//console.trace('初始化。');
-		this.generate_condition_for_language = { [KEY_files_loaded]: [] };
+		this.generate_condition_for_language = { [KEY_files_loaded]: [], only_default: true };
+		if (!options?.is_default)
+			this.load_default_text_to_check();
 	}
 	if (this.generate_condition_for_language[KEY_files_loaded].includes(should_be_text__file_path)) {
 		CeL.log(`${load_text_to_check.name}: The file is already loaded, skip ${should_be_text__file_path}`);
 		return;
 	}
+	if (!options?.is_default)
+		delete this.generate_condition_for_language.only_default;
 	this.generate_condition_for_language[KEY_files_loaded].push(should_be_text__file_path);
 	const should_be_texts = get_paragraphs_of_file(should_be_text__file_path);
 	if (!should_be_texts)
@@ -357,16 +361,25 @@ function load_text_to_check(should_be_text__file_name, options) {
 			return;
 		}
 
-		CeL.info(`${load_text_to_check.name}: 自動檢核 ${should_be_texts.length}個${options?.export?.work_title ? `《${options.export.work_title}》` : ''}${CeL.gettext.get_alias(check_language === 'TW' ? 'CN' : 'TW')}→${CeL.gettext.get_alias(check_language)} 之字串。`);
+		//console.log(this.generate_condition_for_language);
 		// this.generate_condition_for_language[convert_to_language] = { convert_from_text: should_convert_to_text, ... }
 		const generate_condition_for = this.generate_condition_for_language[check_language]
 			|| (this.generate_condition_for_language[check_language] = Object.create(null));
 		should_be_texts.forEach((should_convert_to_text, index) => {
 			generate_condition_for[source_texts[index]] = { should_convert_to_text, ...options?.export };
 		});
+		const totle_count = Object.keys(generate_condition_for).length;
+		CeL.info(`${load_text_to_check.name}: 自動檢核 ${should_be_texts.length}個${options?.export?.work_title ? `《${options.export.work_title}》` : '通用 '
+			}${CeL.gettext.get_alias(check_language === 'TW' ? 'CN' : 'TW')}→${CeL.gettext.get_alias(check_language)
+			} 之字串。${totle_count === should_be_texts.length ? '' : `總共檢核 ${totle_count}個。`}`);
 		//console.trace(this.generate_condition_for_language);
 		return this.generate_condition_for_language;
 	}
+}
+
+// 會在每次轉換都測試是否有相符之文字。
+function load_default_text_to_check() {
+	this.text_to_check_files.forEach(from_file_name => this.load_text_to_check(from_file_name, { is_default: true }));
 }
 
 // 顯示用函數。
@@ -378,11 +391,16 @@ function report_text_to_check(options) {
 	const normal_style = (new SGR_style('fg=green;bg=black')).toString(), NG_style = (new SGR_style('fg=red;bg=white')).toString(), reset_style = (new SGR_style({ reset: true })).toString();
 
 	const generate_condition_for = this.generate_condition_for_language[options.convert_to_language];
+	//console.trace(generate_condition_for);
 	// lost_texts: 用來記錄、顯示還有哪些尚未處理。
 	const lost_texts = [], multi_matched = Object.create(null);
 	let OK_count = 0, NG_count = 0;
 	for (const convert_from in generate_condition_for) {
 		const convert_data = generate_condition_for[convert_from];
+		if (!convert_data.work_title) {
+			// e.g., 常出錯詞語 @ this.text_to_check_files
+			continue;
+		}
 		const { check_result } = convert_data;
 		if (!check_result) {
 			lost_texts.push(convert_data.should_convert_to_text);
@@ -612,7 +630,7 @@ function print_section_report(configuration, options) {
 }
 
 function convert_to_different_length(converted_text_String, should_be_text) {
-	if (converted_text_String.length !== should_be_text.length) {
+	if (converted_text_String.chars().length !== should_be_text.chars().length) {
 		// 轉換前後。
 		CeL.error('預設解答與轉換後之文字長度不符，跳過此項！');
 		// 為差異文字著色。
@@ -1382,7 +1400,8 @@ function convert_paragraph(paragraph, options) {
 		);
 	}
 
-	if (cache_directory && !options.tagged_word_list.is_cache) {
+	// options.cache_file_path maybe undefined!
+	if (options.cache_file_path && cache_directory && !options.tagged_word_list.is_cache) {
 		CeL.create_directory(cache_directory);
 		//console.trace(options);
 		//console.trace(`Write tagged data to ${options.cache_file_path}`);
@@ -1471,14 +1490,18 @@ function convert_paragraph(paragraph, options) {
 		let tagged_word_list_length_accumulation, converted_text_length_accumulation;
 		for (let [convert_from_text, should_convert_to] of Object.entries(generate_condition_for)) {
 			const should_convert_to_text = CeL.is_Object(should_convert_to) ? should_convert_to.should_convert_to_text : should_convert_to;
-			if (convert_from_text.length !== should_convert_to_text.length) {
-				CeL.error(`預設解答與轉換前之文字長度不符，跳過解答: ${should_convert_to_text}`);
+			// 勣 → '𪟝'.length === 2
+			if (convert_from_text.chars().length !== should_convert_to_text.chars().length) {
+				CeL.error(`預設解答與轉換前之文字長度不符，跳過解答:\n\t${convert_from_text}\n→\t${should_convert_to_text}`);
 				delete generate_condition_for[convert_from_text];
 				continue;
 			}
 
 			// 遍歷所有相符的。例如對於主要角色人名、專有名詞、成語成句就需要此種操作。
-			for (let offset = 0; (offset = paragraph.indexOf(convert_from_text, offset)) !== NOT_FOUND;) {
+			for (let offset = 0; (offset = paragraph.indexOf(convert_from_text, offset)) !== NOT_FOUND;
+				// 避免下次從原處開始搜尋。
+				offset += convert_from_text.length) {
+				//console.log([paragraph, convert_from_text, offset]);
 				if (!tagged_word_list_length_accumulation) {
 					let length = 0;
 					// 初始化。
@@ -1494,17 +1517,20 @@ function convert_paragraph(paragraph, options) {
 
 				// 找出轉換後文字對應的位置。
 
+				/** {Number}start index of converted_text */
+				let start_index = offset;
 				tagged_word_list_length_accumulation.search_sorted(offset, {
 					found(index, is_near) {
 						// 轉換前後字數可能不同。 the diff is usually +0.
-						offset += converted_text_length_accumulation[index] - tagged_word_list_length_accumulation[index];
+						start_index += converted_text_length_accumulation[index] - tagged_word_list_length_accumulation[index];
+						// for (paragraph === '李世𪟝正式吹响了出征高句丽的号角。' && convert_from_text === '出征'),
+						// start_index += -1: '𪟝'.length === 2
 					}
 				});
 
-				// assert: converted_text.join('').slice(offset).startsWith(should_convert_to_text)
+				//console.assert(converted_text.join('').slice(start_index).startsWith(should_convert_to_text));
 
-				// offset++: 避免下次從原處開始搜尋。
-				let should_be_text = should_convert_to_text, start_index = offset++, end_index;
+				let should_be_text = should_convert_to_text, end_index;
 				converted_text_length_accumulation.search_sorted(start_index + should_be_text.length, {
 					found(index, is_near) {
 						//console.log([index, is_near]);
@@ -1541,7 +1567,7 @@ function convert_paragraph(paragraph, options) {
 					should_convert_to.check_result = { OK: [], NG: [] };
 				}
 				if (converted_text_String === should_be_text) {
-					// 紀錄已處理過的項目。
+					//console.trace('紀錄已處理過的項目。');
 					should_convert_to.check_result.OK.push(true);
 					continue;
 				}
@@ -1551,7 +1577,7 @@ function convert_paragraph(paragraph, options) {
 				const condition_list = this.generate_condition({ tagged_word_list, converted_text, should_be_text, start_index, end_index }, options);
 				//console.trace(condition_list);
 				if (condition_list.length === 0) {
-					// 只有同義詞。
+					//console.trace('只有同義詞。');
 					should_convert_to.check_result.OK.push(true);
 					continue;
 				}
@@ -1738,7 +1764,7 @@ Object.assign(Chinese_converter.prototype, {
 	print_section_report,
 
 	regenerate_converted, not_new_article_to_check,
-	load_text_to_check, report_text_to_check,
+	load_text_to_check, load_default_text_to_check, report_text_to_check,
 });
 
 module.exports = Chinese_converter;
