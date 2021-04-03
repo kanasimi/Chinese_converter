@@ -115,6 +115,7 @@ class Chinese_converter {
 		} else if (options?.using_LTP) {
 			this.KEY_word = 'text';
 			this.KEY_PoS_tag = 'pos';
+			this.TAG_punctuation = 'wp';
 			this.condition_filter = condition_filter_LTP;
 			this.parser_name = 'LTP';
 			this.filters = get_dictionary_file_paths.call(this, 'filters');
@@ -588,7 +589,36 @@ function print_section_report(configuration, options) {
 	const normal_style_converted_CN_row = 'fg=green;bg=black';
 	const ansi_converted_CN = new CeL.interact.console.SGR(convert_from_text);
 
-	const tagged_word_list_pieces = start_index >= 0 ? tagged_word_list.slice(start_index, end_index) : tagged_word_list;
+	let backward = 0, forward = 0;
+	if (start_index >= 0 && should_convert_to_text.chars().length <= 4) {
+		// 當截取的詞彙太短，自動擴張成一整句。
+		// assert: 0 <= start_index < end_index
+		let index;
+		// 向前找尋標點符號。
+		for (index = start_index; index > 0; index--) {
+			const word_data = tagged_word_list[index];
+			if (word_data[this.KEY_PoS_tag] === this.TAG_punctuation) {
+				if (index < start_index && /[，；：。？！…]$/.test(word_data[this.KEY_word]))
+					index++;
+				break;
+			}
+		}
+		backward = start_index - index;
+		// assert: 0 <= backward <= start_index
+
+		// start from next tagged_word_list[], at least move 1 step.
+		// 向後找尋標點符號。
+		for (index = end_index; index < tagged_word_list.length; index++) {
+			const word_data = tagged_word_list[index];
+			if (word_data[this.KEY_PoS_tag] === this.TAG_punctuation) {
+				break;
+			}
+		}
+		forward = index - end_index;
+		// console.trace([start_index, backward, end_index, forward]);
+	}
+
+	const tagged_word_list_pieces = start_index >= 0 ? tagged_word_list.slice(start_index - backward, end_index + forward) : tagged_word_list;
 
 	let offset = convert_from_text.match(/^\s*/)[0].length;
 	CeL.log(`${normal_style_tagged
@@ -600,6 +630,9 @@ function print_section_report(configuration, options) {
 			const start_offset = offset;
 			offset += word_data[this.KEY_word].length;
 			const text = stringify_condition(prefix_spaces) + word_data_to_condition.call(this, word_data);
+			if (backward && (index -= backward) < 0) {
+				return text;
+			}
 			if (!index_hash[start_index >= 0 ? start_index + index : index])
 				return text;
 			//console.log([word_data, index_hash[index]]);
@@ -1361,6 +1394,27 @@ function beautify_tagged_word_list(tagged_word_list) {
 	return JSON.stringify(tagged_word_list).replace(/,{"id":/g, ',\n{"id":');
 }
 
+function load_general_word_list_cache_file(/*cache_file_for_short_sentences*/cache_file_path, options) {
+	if (!this.general_word_list_cache)
+		this.general_word_list_cache = Object.create(null);
+	if (!this.general_word_list_cache_files_loaded)
+		this.general_word_list_cache_files_loaded = [];
+
+	if (this.general_word_list_cache_files_loaded.includes(cache_file_path))
+		return;
+
+	let cache_data = CeL.read_file(cache_file_path);
+	if (!cache_data)
+		return;
+
+	CeL.info(`${load_general_word_list_cache_file.name}: ${cache_file_path}`);
+	cache_data = JSON.parse(cache_data.toString());
+	// assert: cache_data = { paragraph: {Object}tagged_word_list, ...};
+	Object.assign(this.general_word_list_cache, cache_data);
+	//console.trace(this.general_word_list_cache);
+	this.general_word_list_cache_files_loaded.push(cache_file_path);
+}
+
 /**
  * 轉換段落文字。
  * @param {String}paragraph 段落文字
@@ -1372,7 +1426,21 @@ function convert_paragraph(paragraph, options) {
 		cache_directory = CeL.append_path_separator(cache_directory);
 		//console.trace(cache_directory);
 
-		if (!options.tagged_word_list
+		if (options.cache_file_for_short_sentences) {
+			if (options.cache_file_for_short_sentences === true)
+				options.cache_file_for_short_sentences = '!short_sentences_word_list.json';
+			load_general_word_list_cache_file.call(this, cache_directory + options.cache_file_for_short_sentences, options);
+		}
+
+		if (this.general_word_list_cache && this.general_word_list_cache[paragraph]) {
+			// 重新造一個 options 以避免污染。
+			options = {
+				...options,
+				tagged_word_list: this.general_word_list_cache[paragraph]
+			};
+			//options.tagged_word_list.is_cache = true;
+
+		} else if (!options.tagged_word_list
 			// 超過此長度才 cache。
 			&& (!options.min_cache_length || paragraph.length >= options.min_cache_length)
 		) {
@@ -1400,12 +1468,25 @@ function convert_paragraph(paragraph, options) {
 		);
 	}
 
+	// ---------------------------------------------
+	// Write cache to file
+
 	// options.cache_file_path maybe undefined!
-	if (options.cache_file_path && cache_directory && !options.tagged_word_list.is_cache) {
-		CeL.create_directory(cache_directory);
-		//console.trace(options);
-		//console.trace(`Write tagged data to ${options.cache_file_path}`);
-		CeL.write_file(options.cache_file_path, beautify_tagged_word_list(tagged_word_list));
+	if (cache_directory) {
+		if (options.cache_file_path) {
+			if (!options.tagged_word_list.is_cache) {
+				CeL.create_directory(cache_directory);
+				//console.trace(options);
+				//console.trace(`Write tagged data to ${options.cache_file_path}`);
+				CeL.write_file(options.cache_file_path, beautify_tagged_word_list(tagged_word_list));
+			}
+
+		} else if (options.cache_file_for_short_sentences) {
+			if (!this.general_word_list_cache[paragraph]) {
+				this.general_word_list_cache[paragraph] = tagged_word_list;
+				CeL.write_file(cache_directory + options.cache_file_for_short_sentences, this.general_word_list_cache);
+			}
+		}
 	}
 
 	// ---------------------------------------------
@@ -1492,7 +1573,7 @@ function convert_paragraph(paragraph, options) {
 			const should_convert_to_text = CeL.is_Object(should_convert_to) ? should_convert_to.should_convert_to_text : should_convert_to;
 			// 勣 → '𪟝'.length === 2
 			if (convert_from_text.chars().length !== should_convert_to_text.chars().length) {
-				CeL.error(`預設解答與轉換前之文字長度不符，跳過解答:\n\t${convert_from_text}\n→\t${should_convert_to_text}`);
+				CeL.error(`預設解答與轉換前之文字長度不符，刪除解答:\n\t${convert_from_text}\n→\t${should_convert_to_text}`);
 				delete generate_condition_for[convert_from_text];
 				continue;
 			}
@@ -1533,7 +1614,9 @@ function convert_paragraph(paragraph, options) {
 				let should_be_text = should_convert_to_text, end_index;
 				converted_text_length_accumulation.search_sorted(start_index + should_be_text.length, {
 					found(index, is_near) {
-						//console.log([index, is_near]);
+						//console.log(paragraph);
+						//console.log([start_index, should_be_text.length, converted_text_length_accumulation]);
+						//console.log([is_near, index, converted_text]);
 						if (is_near) {
 							should_be_text += converted_text[index].slice(start_index + should_be_text.length - converted_text_length_accumulation[index]);
 							end_index = index + 1;
