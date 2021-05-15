@@ -511,7 +511,7 @@ function parse_condition(full_condition_text, options) {
 		if (do_after_converting) {
 			do_after_converting = do_after_converting.groups;
 			matched.word = do_after_converting.word;
-			do_after_converting = do_after_converting.do_after_converting.toRegExp({ allow_replacement: true });
+			do_after_converting = do_after_converting.do_after_converting.to_RegExp({ allow_replacement: true });
 			condition_data.do_after_converting = do_after_converting;
 		}
 		if (matched.word) {
@@ -529,7 +529,7 @@ function parse_condition(full_condition_text, options) {
 			} else {
 				//const replace_pattern = matched.word.match();
 				condition_data[this.KEY_word] = CeL.PATTERN_RegExp.test(matched.word) || CeL.PATTERN_RegExp_replacement.test(matched.word)
-					? matched.word.toRegExp({ allow_replacement: true })
+					? matched.word.to_RegExp({ allow_replacement: true })
 					// allow '\n' in filter.
 					: matched.word.replace(/\\n/g, '\n').replace(/\\t/g, '\t');
 			}
@@ -593,10 +593,10 @@ function print_section_report(configuration, options) {
 	if (start_index >= 0 && should_convert_to_text.chars().length <= 4) {
 		// 當截取的詞彙太短，自動擴張成一整句。
 		// assert: 0 <= start_index < end_index
-		let index;
+		let index = start_index;
 		// 向前找尋標點符號。
-		for (index = start_index; index > 0; index--) {
-			const word_data = tagged_word_list[index];
+		while (index > 0) {
+			const word_data = tagged_word_list[--index];
 			if (word_data[this.KEY_PoS_tag] === this.TAG_punctuation) {
 				if (index < start_index && /[，；：。？！…]$/.test(word_data[this.KEY_word]))
 					index++;
@@ -608,8 +608,9 @@ function print_section_report(configuration, options) {
 
 		// start from next tagged_word_list[], at least move 1 step.
 		// 向後找尋標點符號。
-		for (index = end_index; index < tagged_word_list.length; index++) {
-			const word_data = tagged_word_list[index];
+		index = end_index;
+		while (index < tagged_word_list.length) {
+			const word_data = tagged_word_list[index++];
 			if (word_data[this.KEY_PoS_tag] === this.TAG_punctuation) {
 				break;
 			}
@@ -839,7 +840,7 @@ function load_synonym_dictionary() {
 			if (synonyms.length === 0) {
 				if (CeL.PATTERN_RegExp_replacement.test(正字正詞)) {
 					// {RegExp}同義詞pattern
-					synonyms_Map[KEY_synonym_pattern].push(正字正詞.toRegExp({ allow_replacement: true }));
+					synonyms_Map[KEY_synonym_pattern].push(正字正詞.to_RegExp({ allow_replacement: true }));
 				} else {
 					CeL.error(`${load_synonym_dictionary.name}: No synonym settle: ${正字正詞}`)
 				}

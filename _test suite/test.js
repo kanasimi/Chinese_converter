@@ -260,7 +260,9 @@ async function insert_watch_target_to_general_test_text(insert_to_file, insert_f
 	const zhwiki = get_zhwiki_session();
 	const page_title = '簡繁轉換一對多列表';
 	const page_data = await zhwiki.page(page_title, { redirects: 1 });
-	page_data.parse().each('Template:簡繁轉換', function (token) {
+	//console.trace(page_data.parse());
+	page_data.parse().each('Template:簡繁轉換', token => {
+		//console.log(token);
 		if (token.简 === token.繁) {
 			// e.g., '𥁕'
 			return;
@@ -274,6 +276,7 @@ async function insert_watch_target_to_general_test_text(insert_to_file, insert_f
 			title: `${简words.join(' ')} → ${繁words.join(' ')} 。`,
 			pattern: new RegExp(`[${简words.join('')}${繁words.join('')}]`),
 		};
+		//console.log(word_data);
 
 		//function register_word(word)
 		简words.concat(繁words).unique().forEach(word => {
@@ -557,7 +560,7 @@ if (CeL.env.argv.includes('nowiki')) {
 		const wikitext = parsed.toString();
 
 		return new Promise((resolve, reject) => {
-			CeL.wiki.query([zhwiki.API_URL, 'action=parse'], function (data, error) {
+			CeL.wiki.query([zhwiki.API_URL, 'action=parse'], (data, error) => {
 				//console.trace(data);
 				if (error)
 					reject(error);
