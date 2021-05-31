@@ -480,8 +480,10 @@ function stringify_condition(condition_text) {
 
 function word_data_to_condition(word_data, options) {
 	const tag = word_data[this.KEY_PoS_tag];
-	return (tag ? tag + ':' : '') + (typeof word_data[this.KEY_word] === 'string' &&
-		stringify_condition(word_data[this.KEY_word]) || word_data[this.KEY_word] || '');
+	return (tag ? tag + ':' : '')
+		+ (options?.including_prefix_spaces && word_data[KEY_prefix_spaces] ? stringify_condition(word_data[KEY_prefix_spaces]) : '')
+		+ (typeof word_data[this.KEY_word] === 'string' &&
+			stringify_condition(word_data[this.KEY_word]) || word_data[this.KEY_word] || '');
 }
 
 // parse rule
@@ -571,6 +573,9 @@ function print_correction_condition(correction_condition) {
 	//console.trace(correction_condition);
 	const to_word_data = correction_condition.parsed[KEY_matched_condition];
 	if (to_word_data) {
+		//console.log(correction_condition);
+		//console.log(correction_condition.parsed.parents);
+		//console.trace(to_word_data);
 		CeL.warn(`Matched condition 匹配的條件式: ${to_word_data.matched_condition ? `${to_word_data.matched_condition} → ` : ''}${to_word_data.full_condition_text}`);
 	}
 	// 自動提供可符合答案之候選條件式。
@@ -630,6 +635,8 @@ function print_section_report(configuration, options) {
 				offset += prefix_spaces.length;
 			const start_offset = offset;
 			offset += word_data[this.KEY_word].length;
+			// condition filter 預設會排除 prefix spaces，因此將 prefix_spaces 另外列出。
+			// @see match_single_condition()
 			const text = stringify_condition(prefix_spaces) + word_data_to_condition.call(this, word_data);
 			if (backward && (index -= backward) < 0) {
 				return text;
@@ -948,7 +955,11 @@ function match_single_condition(single_condition, word_data, options) {
 	if (filter
 		// .is_target 時， [this.KEY_word] 可能是欲改成的字串，此時不做篩選。
 		&& (!single_condition.is_target || CeL.is_RegExp(filter))
-		&& !single_condition.not_match ^ CeL.fit_filter(filter, word_data[this.KEY_word])) {
+		&& !single_condition.not_match ^ (CeL.fit_filter(filter, word_data[this.KEY_word])
+			// 接受 condition filter 包含 prefix spaces 的情況。
+			//|| word_data[KEY_prefix_spaces] && typeof word_data[this.KEY_word] === 'string' && CeL.fit_filter(filter, word_data[KEY_prefix_spaces] + word_data[this.KEY_word])
+		)
+	) {
 		//console.trace([single_condition, filter, CeL.fit_filter(filter, word_data[this.KEY_word])]);
 		return;
 	}
@@ -1135,7 +1146,7 @@ function generate_condition_LTP(configuration, options) {
 	for (let index = start_index; index < end_index; index++) {
 		const word_data = tagged_word_list[index];
 		const converted_to = converted_text[index];
-		const index_of_should_be_slice = offset;
+		//const index_of_should_be_slice = offset;
 		const should_be_slice = should_be_text.substr(offset, converted_to.length);
 		offset += converted_to.length;
 		//console.trace([should_be_slice, word_data]);
@@ -1170,8 +1181,15 @@ function generate_condition_LTP(configuration, options) {
 			condition.push(`~${stringified_target}<role.type:${role.type}>${word_data_to_condition.call(this, role)}`);
 		});
 		word_data.parents.forEach(parent => {
-			if (parent.parent >= 0) {
-				condition.push(`~${stringified_target}<parent.relate:${parent.relate}>${word_data_to_condition.call(this, tagged_word_list[tagged_word_list_index_offset + parent.parent])}`);
+			const parent_condition = word_data_to_condition.call(this, parent);
+			if (parent_condition) {
+				// assert: parent === tagged_word_list[tagged_word_list_index_offset + parent.id]
+				condition.push(`~${stringified_target}<parent.relate:${parent.relate}>${parent_condition}`);
+				//console.log(word_data);
+				//console.trace(parent);
+			} else {
+				// 可能有 `{ parent: 103, relate: 'eSUCC' }` 之類。
+				//console.trace(parent);
 			}
 		});
 		// 反向關係。
@@ -1186,6 +1204,7 @@ function generate_condition_LTP(configuration, options) {
 			latest_id = word_data_to_test.id;
 			// tagged_word_list 可能是 recover_original_paragraphs() 多次查詢拼合起來的。`word_data_to_test.parent` 實際指向的應該是 `word_data`。
 			if (word_data_to_test.parent === word_data.id) {
+				//console.trace(word_data_to_test);
 				condition.push(`~${stringified_target}<←${word_data_to_test.relation}>${word_data_to_condition.call(this, word_data_to_test)}`);
 			}
 		}
@@ -1516,8 +1535,10 @@ function convert_paragraph(paragraph, options) {
 			}
 			let word = word_data[this.KEY_word], had_forced_converted;
 			all_matched_conditions.forEach(/*matched_condition*/to_word_data => {
-				if (options.generate_condition || generate_condition_for)
+				if (options.generate_condition || generate_condition_for) {
+					//console.trace(to_word_data);
 					word_data[KEY_matched_condition] = to_word_data;
+				}
 
 				if (to_word_data.filter_name in this.filters[options.convert_to_language]) {
 					return this.filters[options.convert_to_language][to_word_data.filter_name].call(this, { word_data, index_of_tagged_word_list, tagged_word_list, matched_condition_data, options });
