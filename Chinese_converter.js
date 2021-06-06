@@ -1226,10 +1226,11 @@ function recover_original_paragraphs(parsed, options) {
 	if (!token_count_array)
 		return parsed;
 
-	// 警告: 這種合併可能造成不可靠的 .id, .offset, .parent 等！在 condition_filter_LTP() 中以 tagged_word_list_index_offset 處理此問題。
+	// 警告: 這種合併 merge / combine 可能造成不可靠的 .id, .offset, .parent 等！在 condition_filter_LTP() 中以 tagged_word_list_index_offset 處理此問題。
 	return token_count_array.map((length, index) => {
 		let parsed_index = index === 0 ? 0 : token_count_array[index - 1];
 		const result_token = parsed[parsed_index];
+		//Object.freeze(result_token.parents);
 		while (++parsed_index < length) {
 			result_token.append(parsed[parsed_index]);
 		}
@@ -1504,7 +1505,19 @@ function convert_paragraph(paragraph, options) {
 		} else if (options.cache_file_for_short_sentences) {
 			if (!this.general_word_list_cache[paragraph]) {
 				this.general_word_list_cache[paragraph] = tagged_word_list;
-				CeL.write_file(cache_directory + options.cache_file_for_short_sentences, this.general_word_list_cache);
+				try {
+					CeL.write_file(cache_directory + options.cache_file_for_short_sentences, this.general_word_list_cache);
+				} catch (e) {
+					for (const [key, value] of Object.entries(this.general_word_list_cache)) {
+						try {
+							JSON.stringify(value);
+						} catch (e) {
+							console.error(e);
+							console.log([key, value]);
+						}
+					}
+					throw e;
+				}
 			}
 		}
 	}
