@@ -145,6 +145,12 @@ async function test_paragraphs(converte_from_paragraphs, should_be, test_configu
 		= await cecc[options.convert_to_language === 'TW' ? 'to_TW' : 'to_CN'](converte_from_paragraphs, { ...test_configuration.convert_options, get_full_data: true, generate_condition: true, should_be });
 	const test_postfix = options.test_postfix ? ' ' + options.test_postfix : '';
 
+	if (!should_be) {
+		CeL.warn(`${test_title}${test_postfix ? ' -' + test_postfix : test_postfix}: No "should_be" setted!`);
+		//console.trace([test_title, test_postfix]);
+		return;
+	}
+
 	if (!test_configuration.test_results[test_title]) {
 		test_configuration.test_results[test_title] = {
 			error_count: 0,
@@ -155,7 +161,7 @@ async function test_paragraphs(converte_from_paragraphs, should_be, test_configu
 
 	if (test_length !== converte_from_paragraphs.length) {
 		// 含有不同數量之字串！
-		CeL.warn(`${test_title}${test_postfix}: 預設解答與欲測試之項目數不符，將不採用解答！若檔案為自動生成，您可以刪除舊檔後，重新生成轉換標的檔案。`);
+		CeL.warn(`${test_title}${test_postfix ? ' -' + test_postfix : test_postfix}: 預設解答與欲測試之項目數不符，將不採用解答！若檔案為自動生成，您可以刪除舊檔後，重新生成轉換標的檔案。`);
 		test_results.error_count++;
 	} else if (should_be.correction_conditions) {
 		for (let index = 0; index < test_length; index++) {
@@ -503,7 +509,7 @@ add_test('正確率檢核', async (assert, setup_test, finish_test, options) => 
 		const text_is_TW = file_name_language[1] === 'TW';
 
 		if (file_name.startsWith('watch_target.') && text_is_TW)
-			await insert_watch_target_to_general_test_text(`${articles_directory}general.${file_name_language[1]}.txt`, articles_directory + file_name, { text_is_TW });
+			await insert_watch_target_to_general_test_text(`${articles_directory}general.${file_name_language[1]}.txt`, file_path, { text_is_TW });
 
 		if (await cecc.not_new_article_to_check(file_name, {
 			...options, text_is_TW,

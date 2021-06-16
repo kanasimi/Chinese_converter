@@ -1472,11 +1472,15 @@ function convert_paragraph(paragraph, options) {
 			};
 			let cache_data = CeL.read_file(options.cache_file_path);
 			if (cache_data) {
-				cache_data = JSON.parse(cache_data.toString());
-				//console.trace(options);
-				//console.trace(`Using cache file: ${options.cache_file_path}`);
-				options.tagged_word_list = cache_data;
-				options.tagged_word_list.is_cache = true;
+				try {
+					cache_data = JSON.parse(cache_data.toString());
+					//console.trace(options);
+					//console.trace(`Using cache file: ${options.cache_file_path}`);
+					options.tagged_word_list = cache_data;
+					options.tagged_word_list.is_cache = true;
+				} catch (e) {
+					CeL.error(`${convert_paragraph.name}: Skip ${options.cache_file_path}: ${e}`);
+				}
 			}
 		}
 	}
