@@ -502,6 +502,9 @@ add_test('正確率檢核', async (assert, setup_test, finish_test, options) => 
 		const convert_options = {
 			...default_convert_options,
 			cache_directory: CeL.append_path_separator(default_convert_options.cache_directory + CeL.to_file_name(file_name)),
+			cache_file_for_short_sentences: true,
+			// 超過此長度才創建個別的 cache 檔案，否則會放在 .cache_file_for_short_sentences。
+			min_cache_length: 20
 		};
 
 		const file_path = articles_directory + file_name;
