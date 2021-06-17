@@ -374,7 +374,7 @@ function load_text_to_check(should_be_text__file_name, options) {
 		const totle_count = Object.keys(generate_condition_for).length;
 		CeL.info(`${load_text_to_check.name}: 自動檢核 ${should_be_texts.length}個${options?.export?.work_title ? `《${options.export.work_title}》` : '通用 '
 			}${CeL.gettext.get_alias(check_language === 'TW' ? 'CN' : 'TW')}→${CeL.gettext.get_alias(check_language)
-			} 之字串。${totle_count === should_be_texts.length ? '' : `總共檢核 ${totle_count}個。`}`);
+			} 之字串。${totle_count === should_be_texts.length ? '' : `總共檢核 ${totle_count}個。`} From ${should_be_text__file_path}`);
 		//console.trace(this.generate_condition_for_language);
 		return this.generate_condition_for_language;
 	}
@@ -1462,7 +1462,8 @@ function convert_paragraph(paragraph, options) {
 			// 重新造一個 options 以避免污染。
 			options = {
 				...options,
-				tagged_word_list: this.general_word_list_cache[paragraph]
+				// deep clone. 避免後續 this.general_word_list_cache 內容被更動。
+				tagged_word_list: Object.clone(this.general_word_list_cache[paragraph], true)
 			};
 			//options.tagged_word_list.is_cache = true;
 
@@ -1513,28 +1514,9 @@ function convert_paragraph(paragraph, options) {
 
 		} else if (options.cache_file_for_short_sentences) {
 			if (!this.general_word_list_cache[paragraph]) {
-				this.general_word_list_cache[paragraph] = JSON.parse(JSON.stringify(tagged_word_list));
-				try {
-					const cache_data_String = JSON.stringify(this.general_word_list_cache);
-					CeL.write_file(cache_directory + options.cache_file_for_short_sentences, cache_data_String);
-				} catch (e) {
-					// TypeError: Converting circular structure to JSON
-
-					//console.error(e);
-					false && tagged_word_list.forEach((word_data, index) => {
-						try {
-							JSON.stringify(word_data);
-						} catch (e) {
-							console.log([paragraph, index]);
-							console.log(word_data);
-							console.error(e);
-						}
-					});
-					//throw e;
-					CeL.debug(`Skip cache ${paragraph}: ${e}`, 1, convert_paragraph.name);
-					// 回復上一個沒問題的 this.general_word_list_cache。
-					delete this.general_word_list_cache[paragraph];
-				}
+				// deep clone. 避免後續 this.general_word_list_cache 內容被更動。
+				this.general_word_list_cache[paragraph] = Object.clone(tagged_word_list, true);
+				CeL.write_file(cache_directory + options.cache_file_for_short_sentences, this.general_word_list_cache);
 			}
 		}
 	}

@@ -319,15 +319,21 @@ async function insert_watch_target_to_general_test_text(insert_to_file, insert_f
 		word_block_mapper: new Map,
 	});
 
+	let last_block;
+	/**
+	 * 創建新區塊。
+	 * @param {Object} word_data	- 要增添的區塊之文字資料。
+	 * @param {String} line			- 要增加的行文字。
+	 */
 	function append_new_block(word_data, line) {
 		// 初始化 last_block。
 		last_block = Object.assign([], {
 			toString: join_with_new_line,
 			word_data,
-			line,
 		});
 		// 正規化起始標記。
 		last_block.push(`// ↓ ${word_data.title}`);
+		last_block.push(line);
 		general_test_text.push(last_block);
 		// 登記區塊。
 		word_data.简words.concat(word_data.繁words).unique().forEach(word => {
@@ -344,7 +350,7 @@ async function insert_watch_target_to_general_test_text(insert_to_file, insert_f
 	}
 
 	// parse general_test_text
-	let last_block, is_in_comments;
+	let is_in_comments;
 	const original_general_test_text = CeL.read_file(insert_to_file).toString();
 	for (let line of original_general_test_text.split('\n')) {
 		line = line.trim();
@@ -389,6 +395,7 @@ async function insert_watch_target_to_general_test_text(insert_to_file, insert_f
 					}
 					last_block = null;
 				} else {
+					//console.trace(word_data);
 					append_new_block(word_data, line);
 				}
 				continue;
@@ -447,6 +454,7 @@ async function insert_watch_target_to_general_test_text(insert_to_file, insert_f
 			} else {
 				const word_data = word_mapper.get(word);
 				CeL.warn(`${insert_watch_target_to_general_test_text.name}: 創建新區塊 ${word_data.title}: ${line}`);
+				//console.trace(word_data);
 				append_new_block(word_data, line);
 			}
 
