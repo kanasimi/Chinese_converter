@@ -320,6 +320,7 @@ async function insert_watch_target_to_general_test_text(insert_to_file, insert_f
 	});
 
 	let last_block;
+	const PATTERN_block_mark = /^\/\/\s*(?<mark>[↑↓])\s*(?<words>.+)/;
 	/**
 	 * 創建新區塊。
 	 * @param {Object} word_data	- 要增添的區塊之文字資料。
@@ -333,7 +334,8 @@ async function insert_watch_target_to_general_test_text(insert_to_file, insert_f
 		});
 		// 正規化起始標記。
 		last_block.push(`// ↓ ${word_data.title}`);
-		last_block.push(line);
+		if (!PATTERN_block_mark.test(line))
+			last_block.push(line);
 		general_test_text.push(last_block);
 		// 登記區塊。
 		word_data.简words.concat(word_data.繁words).unique().forEach(word => {
@@ -367,7 +369,7 @@ async function insert_watch_target_to_general_test_text(insert_to_file, insert_f
 		// 首次執行，標題不包含 "↓" 的情況。
 		//const matched = line.match(/^\/\/\s*(?<mark>↑?)\s*(?<words>.+)/);
 		// 標題全部都包含 "↓" 的情況。
-		const matched = line.match(/^\/\/\s*(?<mark>[↑↓])\s*(?<words>.+)/);
+		const matched = line.match(PATTERN_block_mark);
 		if (matched && (last_block || matched.groups.mark !== '↑')) {
 			// parse title
 			let word_data = matched.groups.words.between(null, '→').trim(), has_irrelevant_words;
@@ -406,7 +408,7 @@ async function insert_watch_target_to_general_test_text(insert_to_file, insert_f
 
 		if (last_block) {
 			if (!line.startsWith('//') && !last_block.word_data.pattern.test(line)) {
-				CeL.warn(`${insert_watch_target_to_general_test_text.name}: 區塊中的測試語句 ${line} 不包括欲測試字元 ${last_block.word_data.pattern}`);
+				CeL.warn(`${insert_watch_target_to_general_test_text.name}: 區塊中的測試語句 ${JSON.stringify(line)} 不包括欲測試字元 ${last_block.word_data.pattern}`);
 			}
 			last_block.push(line);
 		} else {
