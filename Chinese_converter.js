@@ -472,7 +472,7 @@ word:
 // [ condition, is target, not match, tag (PoS), word / pattern, is optional / repeat range ]
 const PATTERN_condition = /^(?<is_target>~)?(?<not_match>!)?(?:(?<tag>[^:+<>]+):)?(?<word>.*?)(?<is_optional>\?)?$/;
 // [ all, word, do_after_converting ]
-const PATTERN_do_after_converting = new RegExp('^(?<word>.*?)~(?<do_after_converting>' + CeL.PATTERN_RegExp_replacement.source.slice(1, -1) + ')$');
+const PATTERN_do_after_converting = new RegExp('^(?<word>.*?)~(?<do_after_converting>' + CeL.PATTERN_RegExp_replacement.source.slice(1, -1) + ')?$');
 
 // JSON.stringify(): for "\n"
 function stringify_condition(condition_text) {
@@ -515,8 +515,8 @@ function parse_condition(full_condition_text, options) {
 		if (do_after_converting) {
 			do_after_converting = do_after_converting.groups;
 			matched.word = do_after_converting.word;
-			do_after_converting = do_after_converting.do_after_converting.to_RegExp({ allow_replacement: true });
-			condition_data.do_after_converting = do_after_converting;
+			if (do_after_converting = do_after_converting.do_after_converting?.to_RegExp({ allow_replacement: true }))
+				condition_data.do_after_converting = do_after_converting;
 		}
 		if (matched.word) {
 			let filter = matched.word.match(/^(?<word>.*?)<(?<filter_name>[^<>]+)>(?<filter_target>.*?)$/);
@@ -1175,19 +1175,20 @@ function generate_condition_LTP(configuration, options) {
 		}
 
 		const condition = [word_data_to_condition.call(this, word_data)];
-		const stringified_target = stringify_condition(target);
+		//const stringified_target = stringify_condition(target);
+		const base_condition = '~' + stringify_condition(target);
 		word_data.condition = condition;
 		if (word_data.parent >= 0) {
-			condition.push(`~${stringified_target}<${word_data.relation}>${word_data_to_condition.call(this, tagged_word_list[tagged_word_list_index_offset + word_data.parent])}`);
+			condition.push(`${base_condition}<${word_data.relation}>${word_data_to_condition.call(this, tagged_word_list[tagged_word_list_index_offset + word_data.parent])}`);
 		}
 		word_data.roles.forEach(role => {
-			condition.push(`~${stringified_target}<role.type:${role.type}>${word_data_to_condition.call(this, role)}`);
+			condition.push(`${base_condition}<role.type:${role.type}>${word_data_to_condition.call(this, role)}`);
 		});
 		word_data.parents.forEach(parent => {
 			const parent_condition = word_data_to_condition.call(this, parent);
 			if (parent_condition) {
 				// assert: parent === tagged_word_list[tagged_word_list_index_offset + parent.id]
-				condition.push(`~${stringified_target}<parent.relate:${parent.relate}>${parent_condition}`);
+				condition.push(`${base_condition}<parent.relate:${parent.relate}>${parent_condition}`);
 				//console.log(word_data);
 				//console.trace(parent);
 			} else {
@@ -1208,15 +1209,20 @@ function generate_condition_LTP(configuration, options) {
 			// tagged_word_list 可能是 recover_original_paragraphs() 多次查詢拼合起來的。`word_data_to_test.parent` 實際指向的應該是 `word_data`。
 			if (word_data_to_test.parent === word_data.id) {
 				//console.trace(word_data_to_test);
-				condition.push(`~${stringified_target}<←${word_data_to_test.relation}>${word_data_to_condition.call(this, word_data_to_test)}`);
+				condition.push(`${base_condition}<←${word_data_to_test.relation}>${word_data_to_condition.call(this, word_data_to_test)}`);
 			}
 		}
-		//CeL.info(`${generate_condition_LTP.name}: Condition for ${word_data[this.KEY_word]}→${stringified_target}:`);
+		if (condition.length === 1) {
+			// 完全沒有相符的，只好給一個避免空窗。 e.g., n:干脆面
+			condition.push(base_condition);
+		}
+		//CeL.info(`${generate_condition_LTP.name}: Condition for ${word_data[this.KEY_word]}→${base_condition}:`);
 		Object.assign(condition, {
 			parsed: word_data, target, error_converted_to: converted_to,
 			//should_be_slice, index_of_should_be_slice
 		});
 		//CeL.log(condition.join('\t'));
+		//console.trace(condition);
 		condition_list.push(condition);
 		index_hash[index] = condition;
 	}
