@@ -439,8 +439,10 @@ function report_text_to_check(options) {
 
 // ----------------------------------------------------------------------------
 
+const condition_delimiter = '+';
+
 /*
-conditions will be split by "+":
+conditions will be split by `condition_delimiter`:
 
 word
 PoS:word
@@ -500,13 +502,32 @@ function parse_condition(full_condition_text, options) {
 			condition_data.matched_condition = options.matched_condition;
 	}
 
-	const condition = full_condition_text.split('+').map((token, index) => {
-		const matched = token.match(PATTERN_condition).groups;
+	const condition = [];
+	const full_condition_splited = full_condition_text.split(condition_delimiter);
+	for (let index = 0; index < full_condition_splited.length; index++) {
+		let token = full_condition_splited[index];
+		let matched = token.match(PATTERN_condition).groups;
+		if (/^\/(\\\/|[^\/])+$/.test(matched.word)) {
+			// 處理 RegExp pattern 中包含 condition_delimiter 的情況。
+			// e.g., ~里+/^许.+河$/
+			for (let combined_token = token, next_index = index; next_index < full_condition_splited.length;) {
+				const next_token = full_condition_splited[++next_index];
+				combined_token += condition_delimiter + next_token;
+				const _matched = combined_token.match(PATTERN_condition).groups;
+				if (CeL.PATTERN_RegExp.test(_matched.word) || CeL.PATTERN_RegExp_replacement.test(_matched.word)) {
+					token = combined_token;
+					matched = _matched;
+					index = next_index;
+					//console.trace([token, matched]);
+				}
+			}
+		}
+
 		const condition_data = { condition_text: token };
 		if (matched.is_target && !options?.no_target) {
 			set_as_target(condition_data);
 			if (target_index >= 0)
-				CeL.warn(`${parse_condition.name}: Multiple target: ${full_condition_text}`);
+				CeL.warn(`${parse_condition.name}: Multiple targets: ${full_condition_text}`);
 			else
 				target_index = index;
 		}
@@ -534,8 +555,8 @@ function parse_condition(full_condition_text, options) {
 				//const replace_pattern = matched.word.match();
 				condition_data[this.KEY_word] = CeL.PATTERN_RegExp.test(matched.word) || CeL.PATTERN_RegExp_replacement.test(matched.word)
 					? matched.word.to_RegExp({ allow_replacement: true })
-					// allow '\n' in filter.
-					: matched.word.replace(/\\n/g, '\n').replace(/\\t/g, '\t');
+					// allow '\n', '\t' in filter.
+					: matched.word.replace(/\\\w/g, char => JSON.parse(`"${char}"`));
 			}
 		}
 
@@ -547,8 +568,8 @@ function parse_condition(full_condition_text, options) {
 			condition_data.is_optional = true;
 
 		//console.trace(condition_data);
-		return condition_data;
-	});
+		condition.push(condition_data);
+	}
 
 	if (!(target_index >= 0) && !options?.no_target) {
 		// 當僅僅只有單一 token 時，預設即為當前標的。
@@ -588,7 +609,7 @@ function print_correction_condition(correction_condition) {
 // 展示有問題的項目。
 function print_section_report(configuration, options) {
 	const { tagged_word_list, condition_list, convert_from_text, convert_to_text, should_convert_to_text, show_tagged_word_list,
-		start_index, end_index } = configuration;
+		start_index, end_index, distance_token_header_to_metched } = configuration;
 	const { index_hash } = condition_list;
 
 	const SGR_style = CeL.interact.console.SGR_style;
@@ -623,34 +644,52 @@ function print_section_report(configuration, options) {
 			}
 		}
 		forward = index - end_index;
-		// console.trace([start_index, backward, end_index, forward]);
+		//console.trace([start_index, backward, end_index, forward]);
 	}
 
 	const tagged_word_list_pieces = start_index >= 0 ? tagged_word_list.slice(start_index - backward, end_index + forward) : tagged_word_list;
 
 	let offset = convert_from_text.match(/^\s*/)[0].length;
+	//console.trace([convert_from_text, offset, distance_token_header_to_metched, start_index, backward]);
 	CeL.log(`${normal_style_tagged
 		}${CeL.gettext.get_alias(options.convert_to_language === 'TW' ? 'CN' : 'TW').slice(0, 1)
 		}\t${tagged_word_list_pieces.map((word_data, index) => {
 			const prefix_spaces = index > 0 && word_data[KEY_prefix_spaces] || '';
-			if (prefix_spaces)
-				offset += prefix_spaces.length;
-			const start_offset = offset;
-			offset += word_data[this.KEY_word].length;
 			// condition filter 預設會排除 prefix spaces，因此將 prefix_spaces 另外列出。
 			// @see match_single_condition()
 			const text = stringify_condition(prefix_spaces) + word_data_to_condition.call(this, word_data);
 			if (backward && (index -= backward) < 0) {
 				return text;
 			}
-			if (!index_hash[start_index >= 0 ? start_index + index : index])
+
+			if (prefix_spaces)
+				offset += prefix_spaces.length;
+			const start_offset = offset;
+			offset += word_data[this.KEY_word].length;
+			if (index === 0) {
+				// assert: convert_from_text.trimStart().startsWith(word_data_to_condition.call(this, word_data).slice(distance_token_header_to_metched));
+				if (distance_token_header_to_metched) {
+					//console.trace([distance_token_header_to_metched, prefix_spaces.length, word_data]);
+					// assert: distance_token_header_to_metched >= prefix_spaces.length
+					offset -= distance_token_header_to_metched - (word_data[KEY_prefix_spaces] || '').length;
+				}
+			}
+			if (!index_hash[start_index >= 0 ? start_index + index : index]) {
 				return text;
-			//console.log([word_data, index_hash[index]]);
-			ansi_converted_CN.style_at(start_offset, marked_style_row);
+			}
+
+			//console.trace([word_data, index_hash[index], start_offset, offset, ansi_converted_CN.style]);
+			if (ansi_converted_CN.style_at(start_offset, true)) {
+				// assert: 不間斷連續匹配到。先前已設定過 .style_at(start_offset, normal_style_converted_CN_row)
+				// assert: ansi_converted_CN.style_at(start_offset, true).toString() === normal_style_converted_CN_row.toString()
+				ansi_converted_CN.style_at(start_offset, null);
+			} else {
+				ansi_converted_CN.style_at(start_offset, marked_style_row);
+			}
 			ansi_converted_CN.style_at(offset, normal_style_converted_CN_row);
-			//console.trace([start_offset, offset, convert_from_text.slice(word_data.offset, word_data.offset + word_data[this.KEY_word].length)]);
+			//console.trace([start_offset, offset, convert_from_text.slice(start_offset, offset), text, convert_from_text.slice(word_data.offset, word_data.offset + word_data[this.KEY_word].length)]);
 			return marked_style + text + normal_style_tagged;
-		}).join('+')
+		}).join(condition_delimiter)
 		}${reset_style}`);
 
 	//console.log(ansi_converted_CN);
@@ -1665,12 +1704,16 @@ function convert_paragraph(paragraph, options) {
 						}
 					}
 				});
-				let header_move_front = 0;
+				/** {Number}在converted_text上，從本token開頭到匹配的文字中間的位移距離。token包括prefix_spaces。 */
+				let distance_token_header_to_metched = 0;
+				// 避免中間切斷，移到本token之首。
 				converted_text_length_accumulation.search_sorted(start_index, {
 					found(index, is_near) {
 						if (is_near) {
-							header_move_front = start_index - converted_text_length_accumulation[index];
-							should_be_text = converted_text[index].slice(0, header_move_front) + should_be_text;
+							distance_token_header_to_metched = start_index - converted_text_length_accumulation[index];
+							// assert: distance_token_header_to_metched > 0
+							//console.trace([start_index, converted_text_length_accumulation[index], converted_text[index].slice(0, distance_token_header_to_metched), should_be_text]);
+							should_be_text = converted_text[index].slice(0, distance_token_header_to_metched) + should_be_text;
 						}
 						// assert: should_be_text.startsWith(converted_text[index]);
 						start_index = index;
@@ -1710,11 +1753,11 @@ function convert_paragraph(paragraph, options) {
 					tagged_word_list,
 					condition_list,
 					convert_from_text,
-					convert_to_text: converted_text_String.slice(header_move_front)
+					convert_to_text: converted_text_String.slice(distance_token_header_to_metched)
 						// remove word_data[KEY_prefix_spaces]
 						.trimStart(),
 					should_convert_to_text,
-					start_index, end_index
+					start_index, end_index, distance_token_header_to_metched
 				}, options);
 			}
 
