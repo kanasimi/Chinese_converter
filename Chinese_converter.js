@@ -626,7 +626,7 @@ function print_section_report(configuration, options) {
 		while (index > 0) {
 			const word_data = tagged_word_list[--index];
 			if (word_data[this.KEY_PoS_tag] === this.TAG_punctuation) {
-				if (index < start_index && /[，；：。？！…]$/.test(word_data[this.KEY_word]))
+				if (index < start_index && /[、，；：。？！…]$/.test(word_data[this.KEY_word]))
 					index++;
 				break;
 			}
