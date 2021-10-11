@@ -143,6 +143,22 @@ class Chinese_converter {
 				= this.dictionaries_directory + this.dictionary_file_paths[language];
 			load_dictionary.call(this, dictionary_file_path, { language });
 		}
+		if (CeL.is_debug()) {
+			// 這些是比較耗時的轉換。
+			for (const [language, convertion_pairs] of Object.entries(this.convertion_pairs)) {
+				CeL.info(`convertion pairs for ${language}:`);
+				function show_convertion_pairs(_pairs, tag = 'general') {
+					const size = _pairs.size;
+					if (size > 0) {
+						CeL.log(`\t${tag || 'general'}\t${size} convertion(s)${size < 9 ? '\t' + Array.from(_pairs.keys()).join('\t') : ''}`);
+					}
+				}
+				show_convertion_pairs(convertion_pairs.get(KEY_general_pattern_filter));
+				for (const [tag, _pairs] of Object.entries(convertion_pairs.get(KEY_tag_pattern_filter))) {
+					show_convertion_pairs(_pairs, tag);
+				}
+			}
+		}
 
 		this.load_default_text_to_check();
 	}
@@ -712,7 +728,7 @@ function print_section_report(configuration, options) {
 }
 
 function convert_to_different_length(converted_text_String, should_be_text) {
-	if (converted_text_String.chars().length !== should_be_text.chars().length) {
+	if (converted_text_String.chars().length !== should_be_text?.chars().length) {
 		// 轉換前後。
 		CeL.error('預設解答與轉換後之文字長度不符，跳過此項！');
 		// 為差異文字著色。
@@ -879,7 +895,7 @@ function load_synonym_dictionary() {
 		if (!synonym_data)
 			continue;
 
-		synonym_data = CeL.data.pair.remove_comments(synonym_data.toString().replace(/\r/g, ''));
+		synonym_data = CeL.data.Pair.remove_comments(synonym_data.toString().replace(/\r/g, ''));
 		synonym_data.split('\n').forEach(line => {
 			if (!line)
 				return;
@@ -1879,7 +1895,7 @@ function get_paragraphs_of_text(text) {
 	if (!text)
 		return;
 
-	const paragraphs = CeL.data.pair.remove_comments(text.toString())
+	const paragraphs = CeL.data.Pair.remove_comments(text.toString())
 		.split('\n')
 		.map(text => text.trim()).filter(text => !!text);
 

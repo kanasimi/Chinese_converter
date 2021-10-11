@@ -252,7 +252,7 @@ async function insert_watch_target_to_general_test_text(insert_to_file, insert_f
 	//console.log([PATTERN_insert_mark, matched_mark, watch_target_text]);
 	if (!mark_matched)
 		return;
-	const insert_from_text = CeL.data.pair.remove_comments(watch_target_text.slice(mark_matched.index + mark_matched[0].length)).trim();
+	const insert_from_text = CeL.data.Pair.remove_comments(watch_target_text.slice(mark_matched.index + mark_matched[0].length)).trim();
 	if (!insert_from_text)
 		return;
 
@@ -569,10 +569,17 @@ if (CeL.env.argv.includes('nowiki')) {
 	}
 
 	function get_parsed_wikitext(page_data, uselang) {
+		const remove_token = CeL.wiki.parser.parser_prototype.each.remove_token;
 		const parsed = page_data.parse();
-		parsed.each('tag', tag_token => {
-			if (tag_token.tag === 'ref') {
-				return CeL.wiki.parser.parser_prototype.each.remove_token;
+		parsed.each(token => {
+			if (!token) return;
+			// 去掉其中文字不會被繁簡轉換的 token。
+			if (token.type === 'tag' && token.tag === 'ref') {
+				return remove_token;
+			}
+			// e.g., {{Cite book}}, {{Citejournal}}
+			if (token.type === 'transclusion' && /^Cite[ a-z]/.test(token.name)) {
+				return remove_token;
 			}
 		});
 
