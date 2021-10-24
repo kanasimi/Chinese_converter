@@ -520,12 +520,12 @@ function parse_condition(full_condition_text, options) {
 
 	const condition = [];
 	const full_condition_splited = full_condition_text.split(condition_delimiter);
-	for (let index = 0; index < full_condition_splited.length; index++) {
+	for (let index = 0, accumulated_target_index_diff = 0; index < full_condition_splited.length; index++) {
 		let token = full_condition_splited[index];
 		let matched = token.match(PATTERN_condition).groups;
 		if (/^\/(\\\/|[^\/])+$/.test(matched.word)) {
 			// 處理 RegExp pattern 中包含 condition_delimiter 的情況。
-			// e.g., ~里+/^许.+河$/
+			// e.g., ~里+/^许.+河$/	v:卷+m:/^[\\d〇一二三四五六七八九零十]+$/+~裡
 			for (let combined_token = token, next_index = index; next_index < full_condition_splited.length;) {
 				const next_token = full_condition_splited[++next_index];
 				combined_token += condition_delimiter + next_token;
@@ -533,10 +533,12 @@ function parse_condition(full_condition_text, options) {
 				if (CeL.PATTERN_RegExp.test(_matched.word) || CeL.PATTERN_RegExp_replacement.test(_matched.word)) {
 					token = combined_token;
 					matched = _matched;
+					accumulated_target_index_diff += next_index - index;
 					index = next_index;
 					//console.trace([token, matched]);
 				}
 			}
+			//console.trace([index, target_index, accumulated_target_index_diff, token, matched]);
 		}
 
 		const condition_data = { condition_text: token };
@@ -545,7 +547,7 @@ function parse_condition(full_condition_text, options) {
 			if (target_index >= 0)
 				CeL.warn(`${parse_condition.name}: Multiple targets: ${full_condition_text}`);
 			else
-				target_index = index;
+				target_index = index - accumulated_target_index_diff;
 		}
 
 		let do_after_converting = matched.word && matched.word.match(PATTERN_do_after_converting);
@@ -991,7 +993,7 @@ function condition_filter_LTP(single_condition, word_data, options) {
 }
 
 function match_single_condition(single_condition, word_data, options) {
-	//console.trace([single_condition, word_data, options]);
+	//if (!single_condition) console.trace([single_condition, word_data, options]);
 
 	if (single_condition[KEY_filter_name]) {
 		return this.condition_filter && this.condition_filter(single_condition, word_data, options);
@@ -1032,6 +1034,8 @@ function match_condition(options) {
 		return match_single_condition.call(this, conditions, word_data, options) && conditions;
 
 	const target_index = conditions.target_index || 0;
+	//console.assert(conditions[target_index]);
+	//if (!conditions[target_index]) console.trace(conditions);
 
 	// 檢查當前 part。
 	if (!match_single_condition.call(this, conditions[target_index], word_data, options))
