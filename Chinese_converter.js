@@ -478,7 +478,7 @@ word:
 文字
 /search_pattern/flags
 /search_pattern/replace_to/flags
-// "~/pattern/replace_to/flags$" 表示先進行繁簡轉換再執行此處的替代，僅僅適用於標的文字(is_target)
+// "~/改成了錯誤的繁體pattern/正確的繁體replace_to/flags$" 表示先進行繁簡轉換再執行此處的替代，僅僅適用於標的文字(is_target)
 ~/pattern/replace_to/flags
 文字~/pattern/replace_to/flags
 /search_pattern/flags~/pattern/replace_to/flags
@@ -1132,6 +1132,7 @@ function get_all_possible_matched_condition(options) {
 const web_request_queues = new Map;
 // 控制流量，依照順序傳輸，別一次全部衝上去。
 function add_new_web_request(host, promise) {
+	//console.trace(web_request_queues);
 	if (web_request_queues.has(host)) {
 		//console.log([web_request_queues_count, web_request_queues, promise]);
 		//web_request_queues_count.set(host, web_request_queues_count.get(host) + 1);
@@ -1223,12 +1224,11 @@ function generate_condition_LTP(configuration, options) {
 		}
 
 		const synonym_pattern_list = synonyms_Map[KEY_synonym_pattern];
-		if (synonym_pattern_list.some(synonym_pattern => {
-			if (synonym_pattern.test(target)
-				// assert: pattern has .replace_to
-				&& synonym_pattern.replace(target) === converted_to.trimStart())
-				return true;
-		})) {
+		if (synonym_pattern_list.some(synonym_pattern =>
+			synonym_pattern.test(target)
+			// assert: pattern has .replace_to
+			&& synonym_pattern.replace(target) === converted_to.trimStart()
+		)) {
 			// 為可接受之同義詞，可跳過。
 			continue;
 		}
@@ -1240,9 +1240,9 @@ function generate_condition_LTP(configuration, options) {
 		if (word_data.parent >= 0) {
 			condition.push(`${base_condition}<${word_data.relation}>${word_data_to_condition.call(this, tagged_word_list[tagged_word_list_index_offset + word_data.parent])}`);
 		}
-		word_data.roles.forEach(role => {
-			condition.push(`${base_condition}<role.type:${role.type}>${word_data_to_condition.call(this, role)}`);
-		});
+		word_data.roles.forEach(role =>
+			condition.push(`${base_condition}<role.type:${role.type}>${word_data_to_condition.call(this, role)}`)
+		);
 		word_data.parents.forEach(parent => {
 			const parent_condition = word_data_to_condition.call(this, parent);
 			if (parent_condition) {
@@ -1340,8 +1340,15 @@ function get_LTP_data(options) {
 	//console.trace(options);
 	const parsed_array = [];
 	let promise;
-	options.paragraphs_before_convert.forEach((paragraph, paragraph_index) => {
+	options.paragraphs_before_convert.forEach((paragraph, paragraph_index, list) => {
+		if (typeof paragraph !== 'string' || !paragraph) {
+			// Should not go to here!
+			CeL.error(`${get_LTP_data.name}: Did not set text: ${paragraph_index + 1}/${list.length}`);
+			return;
+		}
+
 		promise = add_new_web_request(this.LTP_URL, new Promise((resolve, reject) => {
+			CeL.log_temporary(`${get_LTP_data.name}: ${list.length > 1 ? `${paragraph_index + 1}/${list.length} ` : ''}Query LTP server for ${paragraph.length} chars text.`);
 			CeL.get_URL(this.LTP_URL, (XMLHttp, error) => {
 				if (error) {
 					reject(error);
@@ -1353,7 +1360,7 @@ function get_LTP_data(options) {
 			}, null, { text: paragraph }, {
 				error_retry: 4,
 				headers: {
-					'Content-Type': 'Content-type: application/json; charset=utf-8'
+					'Content-Type': 'application/json; charset=utf-8'
 				}
 			})
 		}));
@@ -1377,10 +1384,10 @@ function tag_paragraph_LTP(paragraphs, options) {
 	//console.trace([this.LTP_URL, options]);
 
 	// LTP 一次只能處理大約500字左右，因此必須適度切分。
-	//https://github.com/HIT-SCIR/ltp/issues/407#issuecomment-686864300
-	//bert 类的transformers都有512个最大字符长度的限制，然后我们的web demo运行的是base模型
-	//https://github.com/HIT-SCIR/ltp/issues/388
-	//实际上也是510，但是在输入时进行tokenize时，对于数字和英文会产生子词，所以使用字符数估计长度并不准确，另外这段话可以先进行分句操作来避免报错。
+	// https://github.com/HIT-SCIR/ltp/issues/407#issuecomment-686864300
+	// bert 类的transformers都有512个最大字符长度的限制，然后我们的web demo运行的是base模型
+	// https://github.com/HIT-SCIR/ltp/issues/388
+	// 实际上也是510，但是在输入时进行tokenize时，对于数字和英文会产生子词，所以使用字符数估计长度并不准确，另外这段话可以先进行分句操作来避免报错。
 	if (!options.is_Array) {
 		paragraphs = [paragraphs];
 	}
@@ -1412,6 +1419,7 @@ function tag_paragraph_LTP(paragraphs, options) {
 		options.paragraphs_before_convert = paragraphs;
 	}
 
+	//console.trace(this.LTP_URL);
 	if (this.LTP_URL) {
 		return get_LTP_data.call(this, options);
 	}
@@ -1450,6 +1458,7 @@ function tag_paragraph_via_CoreNLP(paragraph, options) {
 		this.CoreNLP_URL.searchParams.set('properties', JSON.stringify(this.CoreNLP_URL_properties));
 		this.CoreNLP_URL.searchParams.set('pipelineLanguage', 'zh');
 		//console.trace(this.CoreNLP_URL.toString());
+		CeL.log_temporary(`${tag_paragraph_via_CoreNLP.name}: Query CoreNLP server for ${paragraph.length} chars text.`);
 		CeL.get_URL(this.CoreNLP_URL, (XMLHttp, error) => {
 			if (error) {
 				reject(error);
@@ -1686,13 +1695,13 @@ function convert_paragraph(paragraph, options) {
 					let length = 0;
 					// 初始化。
 					tagged_word_list_length_accumulation = [length];
-					tagged_word_list.forEach(word_data => { tagged_word_list_length_accumulation.push(length += (word_data[KEY_prefix_spaces] ? word_data[KEY_prefix_spaces].length : 0) + word_data[this.KEY_word].length); });
+					tagged_word_list.forEach(word_data => tagged_word_list_length_accumulation.push(length += (word_data[KEY_prefix_spaces] ? word_data[KEY_prefix_spaces].length : 0) + word_data[this.KEY_word].length));
 				}
 				if (!converted_text_length_accumulation) {
 					let length = 0;
 					// 初始化。
 					converted_text_length_accumulation = [length];
-					converted_text.forEach(token => { converted_text_length_accumulation.push(length += token.length); });
+					converted_text.forEach(token => converted_text_length_accumulation.push(length += token.length));
 				}
 
 				// 找出轉換後文字對應的位置。
@@ -1900,8 +1909,15 @@ function get_paragraphs_of_text(text) {
 		return;
 
 	const paragraphs = CeL.data.Pair.remove_comments(text.toString())
+		// .split(/[\n\s]+/)
 		.split('\n')
-		.map(text => text.trim()).filter(text => !!text);
+
+		//.map(text => text.trim()).filter(text => !!text)
+		.reduce((filtered, text) => {
+			if (text = text.trim()) filtered.push(text);
+			return filtered;
+		}, [])
+		;
 
 	if (paragraphs.length > 0)
 		return paragraphs;

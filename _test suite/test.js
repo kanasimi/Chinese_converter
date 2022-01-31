@@ -440,12 +440,10 @@ async function insert_watch_target_to_general_test_text(insert_to_file, insert_f
 
 		// 先從現有的區塊找尋是否有符合的 word。
 		let word;
-		if (!exists_words.some(_word => {
-			if (line.includes(_word)) {
-				word = _word;
-				return true;
-			}
-		}) && (word = line.match(word_mapper.pattern))) {
+		if (!exists_words.some(_word =>
+			line.includes(_word)
+			&& (word = _word)
+		) && (word = line.match(word_mapper.pattern))) {
 			word = word[0];
 		}
 		if (word) {
