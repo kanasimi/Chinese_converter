@@ -252,7 +252,7 @@ async function insert_watch_target_to_general_test_text(insert_to_file, insert_f
 	//console.log([PATTERN_insert_mark, matched_mark, watch_target_text]);
 	if (!mark_matched)
 		return;
-	const insert_from_text = CeL.data.Pair.remove_comments(watch_target_text.slice(mark_matched.index + mark_matched[0].length)).trim();
+	const insert_from_text = CeL.data.Convert_Pairs.remove_comments(watch_target_text.slice(mark_matched.index + mark_matched[0].length)).trim();
 	if (!insert_from_text)
 		return;
 

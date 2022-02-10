@@ -41,6 +41,9 @@ CeL.run(['application.debug',
 	// Add color to console messages. 添加主控端報告的顏色。
 	'interact.console',
 
+	// CeL.data.Convert_Pairs.remove_comments()
+	'data.Convert_Pairs',
+
 	// for CeL_CN_to_TW()
 	'extension.zh_conversion',
 
@@ -897,7 +900,7 @@ function load_synonym_dictionary() {
 		if (!synonym_data)
 			continue;
 
-		synonym_data = CeL.data.Pair.remove_comments(synonym_data.toString().replace(/\r/g, ''));
+		synonym_data = CeL.data.Convert_Pairs.remove_comments(synonym_data.toString().replace(/\r/g, ''));
 		synonym_data.split('\n').forEach(line => {
 			if (!line)
 				return;
@@ -1908,7 +1911,7 @@ function get_paragraphs_of_text(text) {
 	if (!text)
 		return;
 
-	const paragraphs = CeL.data.Pair.remove_comments(text.toString())
+	const paragraphs = CeL.data.Convert_Pairs.remove_comments(text.toString())
 		// .split(/[\n\s]+/)
 		.split('\n')
 
