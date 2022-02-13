@@ -1,10 +1,8 @@
 ﻿/*
 
 TODO:
-
-整合繁簡轉換各家辭典
-簡化辭典複雜度
-特設辭典
+簡化辭典複雜度: 分割個別作品的字典為特設辭典。
+把所有沒匹配到的詞合起來，一起採用 CeL_CN_to_TW() 或 CeL_TW_to_CN()。
 
 
 https://zhuanlan.zhihu.com/p/95358646
@@ -353,7 +351,7 @@ function load_text_to_check(should_be_text__file_name, options) {
 	if (!options?.is_default)
 		delete this.generate_condition_for_language.only_default;
 	this.generate_condition_for_language[KEY_files_loaded].push(should_be_text__file_path);
-	const should_be_texts = get_paragraphs_of_file(should_be_text__file_path);
+	const should_be_texts = get_paragraphs_of_file(should_be_text__file_path, { with_configurations: true });
 	if (!should_be_texts)
 		return;
 
@@ -388,8 +386,17 @@ function load_text_to_check(should_be_text__file_name, options) {
 		const generate_condition_for = this.generate_condition_for_language[check_language]
 			|| (this.generate_condition_for_language[check_language] = Object.create(null));
 		should_be_texts.forEach((should_convert_to_text, index) => {
-			generate_condition_for[source_texts[index]] = { should_convert_to_text, ...options?.export };
+			const configuration = should_be_texts.configurations[should_convert_to_text];
+			//if (configuration) console.trace(configuration);
+			let text = source_texts[index];
+			if (configuration?.原文 && configuration.原文 !== text) {
+				// assert: Should not go to here.
+				configuration.converted = text;
+				text = configuration.原文;
+			}
+			generate_condition_for[text] = { should_convert_to_text, ...options?.export, ...configuration };
 		});
+		//console.trace(generate_condition_for);
 		const totle_count = Object.keys(generate_condition_for).length;
 		CeL.info(`${load_text_to_check.name}: 自動檢核 ${should_be_texts.length}個${options?.export?.work_title ? `《${options.export.work_title}》` : '通用 '
 			}${CeL.gettext.get_alias(check_language === 'TW' ? 'CN' : 'TW')}→${CeL.gettext.get_alias(check_language)
@@ -1606,7 +1613,8 @@ function convert_paragraph(paragraph, options) {
 		: this.TW_to_CN || forced_convert_to_CN
 	).bind(this);
 	const word_convert_mode = !options.forced_convert_mode || options.forced_convert_mode === 'word';
-	const word_mode_options = { mode: 'word_first', ...options };
+	// node.js: 直接開 `conversion.convert(text)` 速度相同，且還包含 .special_keys_Map 的轉換，較完整。
+	const word_mode_options = options /* { mode: 'word_first', ...options } */;
 
 	const generate_condition_for = options.generate_condition_for || this.generate_condition_for_language && this.generate_condition_for_language[options.convert_to_language];
 
@@ -1907,28 +1915,71 @@ function return_converted_paragraphs(options, converted_paragraphs) {
 
 // 注意：LTP 於末尾有無句號、數個句子是合併或拆分解析，會有不同解析結果。
 // (?:[。？！]|……)[\r\n]*|
-function get_paragraphs_of_text(text) {
+function get_paragraphs_of_text(text, options) {
 	if (!text)
 		return;
 
-	const paragraphs = CeL.data.Convert_Pairs.remove_comments(text.toString())
+	text = text.toString();
+	const with_configurations = !!options?.with_configurations;
+	if (with_configurations) {
+		text = text
+			// @see CeL.data.Convert_Pairs.remove_comments(text)
+			.replace(/\/\*[\s\S]*?\*\//g, '');
+	} else {
+		text = CeL.data.Convert_Pairs.remove_comments(text);
+	}
+
+	text = text.trim();
+	if (!text) return;
+
+	const configurations = with_configurations && Object.create(null);
+	let this_config;
+
+	const paragraphs = text
 		// .split(/[\n\s]+/)
 		.split('\n')
 
 		//.map(text => text.trim()).filter(text => !!text)
-		.reduce((filtered, text) => {
+		.reduce(with_configurations ? (filtered, text) => {
+			if (text = text.trim()) {
+				// 可用 `// {"原文":"..."}` 來設定下一行文句的屬性。
+				if (text.startsWith('//')) {
+					//console.trace([text]);
+					try {
+						// 2 === '//'.length
+						this_config = JSON.parse(text.slice(2));
+					} catch {
+						this_config = null;
+					}
+					return filtered;
+				}
+
+				text = text.replace(/\/\/.*/, '').trim();
+				filtered.push(text);
+				if (this_config) {
+					//console.trace([text, this_config]);
+					configurations[text] = this_config;
+				}
+			}
+			this_config = null;
+			return filtered;
+
+		} : (filtered, text) => {
 			if (text = text.trim()) filtered.push(text);
 			return filtered;
 		}, [])
 		;
 
-	if (paragraphs.length > 0)
+	//console.trace([paragraphs, configurations]);
+	if (paragraphs.length > 0) {
+		if (with_configurations)
+			paragraphs.configurations = configurations;
 		return paragraphs;
-	return;
+	}
 }
 
-function get_paragraphs_of_file(file_name) {
-	return get_paragraphs_of_text(CeL.read_file(file_name));
+function get_paragraphs_of_file(file_name, options) {
+	return get_paragraphs_of_text(CeL.read_file(file_name), options);
 }
 
 // 前期轉換函數: 將網頁原始碼轉成分詞用的文字。

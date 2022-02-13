@@ -96,6 +96,10 @@ npm install cecc
    npm test ignore_cache
    ```
 
+## Mechanism 文字替換機制
+1. 若有符合[附帶詞性字典檔](https://github.com/kanasimi/Chinese_converter/tree/master/dictionaries)的文字，則依之變換。其他未符合的交由 [CeL.extension.zh_conversion](https://github.com/kanasimi/CeJS/blob/master/extension/zh_conversion.js) 處理。
+2. zh_conversion 基本上採用 [OpenCC 的辭典](https://github.com/BYVoid/OpenCC/tree/master/data/dictionary)，並以 [generate_additional_table.js](https://github.com/kanasimi/CeJS/blob/master/extension/zh_conversion/generate_additional_table.js) 合併新同文堂和 ConvertZZ 的字典檔成 additional.to_TW.auto-generated.txt 與 additional.to_CN.auto-generated.txt。依照 [CeL.extension.zh_conversion](https://github.com/kanasimi/CeJS/blob/master/extension/zh_conversion.js) 中 Converter.options 之字典檔順序，每個序列由長至短轉換。實際文字替換轉換作業在 [CeL.data.Convert_Pairs](https://github.com/kanasimi/CeJS/blob/master/data/Convert_Pairs.js) 中的 <code>function convert_using_pair_Map_by_length(text)</code>。
+
 ## 辭典修訂流程
 ### 一次正常的單句式辭典修訂流程
 1. 閱讀轉換過的文字，發現轉換錯誤。
