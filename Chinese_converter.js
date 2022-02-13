@@ -1612,17 +1612,32 @@ function convert_paragraph(paragraph, options) {
 		? this.CN_to_TW || forced_convert_to_TW
 		: this.TW_to_CN || forced_convert_to_CN
 	).bind(this);
-	const word_convert_mode = !options.forced_convert_mode || options.forced_convert_mode === 'word';
+
+	// default or true: 結合未符合分詞字典規則之詞一併轉換。
+	// 'word': 每個解析出的詞單獨作 zh_conversion。
+	const word_convert_mode = options.forced_convert_mode === undefined ? true : (options.forced_convert_mode === true || options.forced_convert_mode === 'word') && options.forced_convert_mode;
+	// 檢查字典檔的規則。debug 用，會拖累效能。
+	const { check_dictionary } = options;
 	// node.js: 直接開 `conversion.convert(text)` 速度相同，且還包含 .special_keys_Map 的轉換，較完整。
 	const word_mode_options = options /* { mode: 'word_first', ...options } */;
 
 	const generate_condition_for = options.generate_condition_for || this.generate_condition_for_language && this.generate_condition_for_language[options.convert_to_language];
 
-	let converted_text = tagged_word_list.map((word_data, index_of_tagged_word_list) => {
+	let converted_text = [], waiting_queue = [];
+	tagged_word_list.forEach((word_data, index_of_tagged_word_list) => {
 		// assert: word_data === tagged_word_list[index_of_tagged_word_list]
 		const matched_condition_data = get_all_possible_matched_condition.call(this, { ...options, word_data, convertion_pairs, index_of_tagged_word_list, tagged_word_list });
+		// 維持與輸入相同格式: 用於補全失落的空白字元。
+		const prefix_spaces = word_data[KEY_prefix_spaces];
 		if (!matched_condition_data) {
-			return word_convert_mode ? forced_convert(word_data[this.KEY_word], index_of_tagged_word_list, tagged_word_list, word_mode_options) : word_data[this.KEY_word];
+			if (word_convert_mode === true) {
+				waiting_queue.push(prefix_spaces ? prefix_spaces + word_data[this.KEY_word] : word_data[this.KEY_word]);
+				return;
+			}
+			// assert: word_convert_mode === 'word' || !word_convert_mode
+			const processed_word = word_convert_mode ? forced_convert(word_data[this.KEY_word], index_of_tagged_word_list, tagged_word_list, word_mode_options) : word_data[this.KEY_word];
+			converted_text.push(prefix_spaces ? prefix_spaces + processed_word : processed_word);
+			return;
 		}
 
 		const { all_matched_conditions } = matched_condition_data;
@@ -1663,16 +1678,34 @@ function convert_paragraph(paragraph, options) {
 				}
 			});
 
-			return word;
+			if (check_dictionary) {
+				// TODO: 檢查這條 rule 是否有必要: 按照正常 zh_conversion 轉換若能獲得相同結果，則無必要。
+				;
+			}
+
+			if (waiting_queue.length > 0) {
+				const converted_word_list = forced_convert(waiting_queue, index_of_tagged_word_list, tagged_word_list, word_mode_options);
+				//console.log([waiting_queue.join('').length, converted_word_list.join('').length]);
+				//console.log([waiting_queue.join(''), converted_word_list.join('')]);
+				converted_text.append(converted_word_list);
+				waiting_queue = [];
+			}
+			converted_text.push(prefix_spaces ? prefix_spaces + word : word);
+			return;
 		}
 
-		return word_convert_mode ? forced_convert(word_data[this.KEY_word], index_of_tagged_word_list, tagged_word_list, word_mode_options) : word_data[this.KEY_word];
+		if (word_convert_mode === true) {
+			waiting_queue.push(prefix_spaces ? prefix_spaces + word_data[this.KEY_word] : word_data[this.KEY_word]);
+			return;
+		}
+		// assert: word_convert_mode === 'word' || !word_convert_mode
+		const processed_word = word_convert_mode ? forced_convert(word_data[this.KEY_word], index_of_tagged_word_list, tagged_word_list, word_mode_options) : word_data[this.KEY_word];
+		converted_text.push(prefix_spaces ? prefix_spaces + processed_word : processed_word);
 	});
-	// 維持與輸入相同格式: 補全失落的空白字元。
-	tagged_word_list.forEach((word_data, index) => {
-		if (word_data[KEY_prefix_spaces])
-			converted_text[index] = word_data[KEY_prefix_spaces] + converted_text[index];
-	});
+	if (waiting_queue.length > 0) {
+		converted_text.append(forced_convert(waiting_queue, tagged_word_list.length, tagged_word_list, word_mode_options));
+		waiting_queue = null;
+	}
 
 	// 事後轉換函數。
 	//console.trace([this.convertion_pairs, options]);
