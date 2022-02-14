@@ -678,6 +678,7 @@ function print_section_report(configuration, options) {
 	const tagged_word_list_pieces = start_index >= 0 ? tagged_word_list.slice(start_index - backward, end_index + forward) : tagged_word_list;
 
 	let offset = convert_from_text.match(/^\s*/)[0].length;
+	const original_word_list = [];
 	//console.trace([convert_from_text, offset, distance_token_header_to_metched, start_index, backward]);
 	CeL.log(`${normal_style_tagged
 		}${CeL.gettext.get_alias(options.convert_to_language === 'TW' ? 'CN' : 'TW').slice(0, 1)
@@ -686,6 +687,7 @@ function print_section_report(configuration, options) {
 			// condition filter 預設會排除 prefix spaces，因此將 prefix_spaces 另外列出。
 			// @see match_single_condition()
 			const text = stringify_condition(prefix_spaces) + word_data_to_condition.call(this, word_data);
+			original_word_list.push(prefix_spaces + word_data[this.KEY_word]);
 			if (backward && (index -= backward) < 0) {
 				return text;
 			}
@@ -719,6 +721,11 @@ function print_section_report(configuration, options) {
 			return marked_style + text + normal_style_tagged;
 		}).join(condition_delimiter)
 		}${reset_style}`);
+
+	if (original_word_list.join('').length - should_convert_to_text.chars().length > 2) {
+		// 全句
+		CeL.log(`\t原文⇒${reset_style}${JSON.stringify(original_word_list.join(''))}`);
+	}
 
 	//console.log(ansi_converted_CN);
 	//CeL.log(`\t${JSON.stringify(convert_from_text)}`);
@@ -1492,10 +1499,12 @@ function forced_convert_to_TW(paragraph, index, tagged_word_list, options) {
 	// 採用的辭典見 https://github.com/kanasimi/CeJS/blob/master/extension/zh_conversion/corrections.txt 。
 	return CeL_CN_to_TW(paragraph, options);
 }
+forced_convert_to_TW.base_function = CeL_CN_to_TW;
 
 function forced_convert_to_CN(paragraph, index, tagged_word_list, options) {
 	return CeL_TW_to_CN(paragraph, options);
 }
+forced_convert_to_CN.base_function = CeL_CN_to_TW;
 
 // 詞性標注結果換行，方便查詢檢視。
 function beautify_tagged_word_list(tagged_word_list) {
@@ -1608,14 +1617,20 @@ function convert_paragraph(paragraph, options) {
 	// ---------------------------------------------
 
 	const convertion_pairs = this.convertion_pairs[options.convert_to_language];
-	const forced_convert = (options.convert_to_language === 'TW'
-		? this.CN_to_TW || forced_convert_to_TW
-		: this.TW_to_CN || forced_convert_to_CN
-	).bind(this);
+	const [forced_convert, max_convert_word_length] = (() => {
+		let converter = options.convert_to_language === 'TW'
+			? this.CN_to_TW || forced_convert_to_TW
+			: this.TW_to_CN || forced_convert_to_CN;
+		// initialization
+		converter('');
+		//console.trace(converter.base_function.max_convert_word_length);
+		return [converter.bind(this), converter.base_function.max_convert_word_length || 20];
+	})();
 
-	// default or true: 結合未符合分詞字典規則之詞一併轉換。
-	// 'word': 每個解析出的詞單獨作 zh_conversion。
-	const word_convert_mode = options.forced_convert_mode === undefined ? true : (options.forced_convert_mode === true || options.forced_convert_mode === 'word') && options.forced_convert_mode;
+	// default (undefined) or 'word': 每個解析出的詞單獨作 zh_conversion。
+	// 'combine': 結合未符合分詞字典規則之詞一併轉換。converter 必須有提供輸入陣列的功能。
+	// false: 按照原始輸入，不作 zh_conversion。
+	const word_convert_mode = options.forced_convert_mode === undefined ? true : options.forced_convert_mode;
 	// 檢查字典檔的規則。debug 用，會拖累效能。
 	const { check_dictionary } = options;
 	// node.js: 直接開 `conversion.convert(text)` 速度相同，且還包含 .special_keys_Map 的轉換，較完整。
@@ -1630,7 +1645,7 @@ function convert_paragraph(paragraph, options) {
 		// 維持與輸入相同格式: 用於補全失落的空白字元。
 		const prefix_spaces = word_data[KEY_prefix_spaces];
 		if (!matched_condition_data) {
-			if (word_convert_mode === true) {
+			if (word_convert_mode === 'combine') {
 				waiting_queue.push(prefix_spaces ? prefix_spaces + word_data[this.KEY_word] : word_data[this.KEY_word]);
 				return;
 			}
@@ -1678,23 +1693,53 @@ function convert_paragraph(paragraph, options) {
 				}
 			});
 
+			if (prefix_spaces)
+				word = prefix_spaces + word;
+
+			let converted_word_list;
+			if (waiting_queue.length > 0) {
+				converted_word_list = forced_convert(waiting_queue, index_of_tagged_word_list, tagged_word_list, word_mode_options);
+				//console.log([waiting_queue.join('').length, converted_word_list.join('').length]);
+				//console.trace([waiting_queue.join(''), converted_word_list.join('')]);
+				converted_text.append(converted_word_list);
+			}
+
 			if (check_dictionary) {
-				// TODO: 檢查這條 rule 是否有必要: 按照正常 zh_conversion 轉換若能獲得相同結果，則無必要。
-				;
+				// 檢查這條 rule 是否有必要。
+				if (converted_word_list) {
+					converted_word_list.push(word);
+				} else {
+					converted_word_list = [word];
+				}
+				// 在上一個 rule 有作用的情況下，無須向前回溯。但這可能依情況有變，因此必須重複執行至所有冗餘  rule 皆處理過。
+				waiting_queue.push(prefix_spaces ? prefix_spaces + word_data[this.KEY_word] : word_data[this.KEY_word]);
+				for (let append_index = index_of_tagged_word_list, length_left = max_convert_word_length - word.length; length_left > 0 && ++append_index < tagged_word_list.length;) {
+					const word_to_append = tagged_word_list[append_index][this.KEY_word];
+					length_left -= word_to_append.length;
+					waiting_queue.push(word_to_append);
+				}
+
+				let converted_word_list_without_rule = forced_convert(waiting_queue, index_of_tagged_word_list, tagged_word_list, word_mode_options);
+				// 最後切到這個長度，剛好包含本 rule 的作用點。
+				converted_word_list_without_rule = converted_word_list_without_rule.slice(0, converted_word_list.length);
+				// 按照正常 zh_conversion 轉換若能獲得相同結果，則無必要。
+				if (converted_word_list.join('') === converted_word_list_without_rule.join('')) {
+					const to_word_data = word_data[KEY_matched_condition];
+					CeL.info(`It seems the rule is unnecessary: ${to_word_data.matched_condition ? `${to_word_data.matched_condition} → ` : ''}${to_word_data.full_condition_text}`);
+					//console.trace(word_data);
+				}
 			}
 
 			if (waiting_queue.length > 0) {
-				const converted_word_list = forced_convert(waiting_queue, index_of_tagged_word_list, tagged_word_list, word_mode_options);
-				//console.log([waiting_queue.join('').length, converted_word_list.join('').length]);
-				//console.log([waiting_queue.join(''), converted_word_list.join('')]);
-				converted_text.append(converted_word_list);
+				// reset
 				waiting_queue = [];
 			}
-			converted_text.push(prefix_spaces ? prefix_spaces + word : word);
+
+			converted_text.push(word);
 			return;
 		}
 
-		if (word_convert_mode === true) {
+		if (word_convert_mode === 'combine') {
 			waiting_queue.push(prefix_spaces ? prefix_spaces + word_data[this.KEY_word] : word_data[this.KEY_word]);
 			return;
 		}
@@ -1703,7 +1748,10 @@ function convert_paragraph(paragraph, options) {
 		converted_text.push(prefix_spaces ? prefix_spaces + processed_word : processed_word);
 	});
 	if (waiting_queue.length > 0) {
-		converted_text.append(forced_convert(waiting_queue, tagged_word_list.length, tagged_word_list, word_mode_options));
+		const converted_word_list = forced_convert(waiting_queue, tagged_word_list.length, tagged_word_list, word_mode_options);
+		//console.log([waiting_queue.join('').length, converted_word_list.join('').length]);
+		//console.trace([waiting_queue.join(''), converted_word_list.join('')]);
+		converted_text.append(converted_word_list);
 		waiting_queue = null;
 	}
 
