@@ -143,6 +143,7 @@ async function test_paragraphs(converte_from_paragraphs, should_be, test_configu
 	const { assert, test_title } = test_configuration;
 	const { tagged_word_list_of_paragraphs, converted_paragraphs }
 		= await cecc[options.convert_to_language === 'TW' ? 'to_TW' : 'to_CN'](converte_from_paragraphs, { ...test_configuration.convert_options, get_full_data: true, generate_condition: true, should_be });
+	//console.trace([tagged_word_list_of_paragraphs, test_configuration, converte_from_paragraphs]);
 	const test_postfix = options.test_postfix ? ' ' + options.test_postfix : '';
 
 	if (!should_be) {
@@ -163,17 +164,27 @@ async function test_paragraphs(converte_from_paragraphs, should_be, test_configu
 		// 含有不同數量之字串！
 		CeL.warn(`${test_title}${test_postfix ? ' -' + test_postfix : test_postfix}: 預設解答與欲測試之項目數不符，將不採用解答！若檔案為自動生成，您可以刪除舊檔後，重新生成轉換標的檔案。`);
 		test_results.error_count++;
+
 	} else if (should_be.correction_conditions) {
 		for (let index = 0; index < test_length; index++) {
-			const should_convert_to_text = should_be[index];
 			const condition_list = should_be.correction_conditions[index];
-			if (condition_list
-				&& !assert([converted_paragraphs[index], should_convert_to_text], test_title + ` #${index + 1}/${test_length}${test_postfix}`)) {
+			if (!condition_list)
+				continue;
+			const should_convert_to_text = should_be[index];
+			//if (converte_from_paragraphs.configurations) console.trace([converte_from_paragraphs.configurations, converte_from_paragraphs[index], converte_from_paragraphs.configurations[converte_from_paragraphs[index]]]);
+			if (converted_paragraphs[index] !== should_convert_to_text && converte_from_paragraphs.configurations && converte_from_paragraphs.configurations[converte_from_paragraphs[index]]) {
+				//console.trace([converted_paragraphs[index], should_convert_to_text, converte_from_paragraphs.configurations[converte_from_paragraphs[index]]]);
+				CeL.log(`${test_paragraphs.name}: ${JSON.stringify(converte_from_paragraphs[index])} 轉換成→${JSON.stringify(converted_paragraphs[index])}。但由於已設定原文=${JSON.stringify(converte_from_paragraphs.configurations[converte_from_paragraphs[index]].原文)}，因此跳過這項測試。`);
+				continue;
+			}
+			if (!assert([converted_paragraphs[index], should_convert_to_text], test_title + ` #${index + 1}/${test_length}${test_postfix}`)) {
 				test_results.error_count++;
 				//CeL.log(`　 繁\t${JSON.stringify(should_convert_to_text)}`);
 				const convert_from_text = converte_from_paragraphs[index];
+				//console.trace(should_be.correction_conditions[index]);
+				//console.trace(converte_from_paragraphs.configurations);
 				cecc.print_section_report({
-					tagged_word_list: tagged_word_list_of_paragraphs ? tagged_word_list_of_paragraphs[index] : await cecc.tag_paragraph(convert_from_text),
+					tagged_word_list: tagged_word_list_of_paragraphs ? tagged_word_list_of_paragraphs[index] : await cecc.tag_paragraph(convert_from_text, test_configuration.convert_options),
 					condition_list,
 					convert_from_text,
 					convert_to_text: converted_paragraphs[index],
@@ -497,6 +508,9 @@ add_test('正確率檢核', async (assert, setup_test, finish_test, options) => 
 		error_count: 0, max_error_tags_showing: 40,
 	};
 
+	//console.trace(cecc.dictionary_file_paths);
+	const dictionary_file_contents = Object.create(null);
+
 	//CeL.set_debug(9);
 	//console.trace(process.memoryUsage());
 	for (const file_name of file_list) {
@@ -518,7 +532,7 @@ add_test('正確率檢核', async (assert, setup_test, finish_test, options) => 
 			forced_convert_mode: 'combine',
 
 			// 檢查字典檔的規則。debug 用，會拖累效能。
-			// check_dictionary : true,
+			check_dictionary: CeL.is_debug(),
 
 			// 超過此長度才創建個別的 cache 檔案，否則會放在 .cache_file_for_short_sentences。
 			min_cache_length: 20
@@ -527,6 +541,11 @@ add_test('正確率檢核', async (assert, setup_test, finish_test, options) => 
 		const file_path = articles_directory + file_name;
 		const answer_file_path = CeCC.to_converted_file_path(file_path);
 		const text_is_TW = file_name_language[1] === 'TW';
+
+		if (!dictionary_file_contents[file_name_language[1]]) {
+			dictionary_file_contents[file_name_language[1]] = CeL.read_file(cecc.dictionary_file_paths[file_name_language[1]]).toString();
+		}
+		const dictionary_file_content = dictionary_file_contents[file_name_language[1]];
 
 		if (file_name.startsWith('watch_target.') && text_is_TW)
 			await insert_watch_target_to_general_test_text(`${articles_directory}general.${file_name_language[1]}.txt`, file_path, { text_is_TW });
@@ -542,11 +561,40 @@ add_test('正確率檢核', async (assert, setup_test, finish_test, options) => 
 			continue;
 		}
 
+		const content_paragraphs = CeCC.get_paragraphs_of_file(file_path, { with_configurations: true });
+		const answer_paragraphs = CeCC.get_paragraphs_of_file(answer_file_path);
+		// @see function setup_generate_condition_for() @ Chinese_converter.js
+		if (content_paragraphs?.configurations) {
+			answer_paragraphs.forEach((answer_paragraph, index) => {
+				const content_paragraph = content_paragraphs[index];
+				if (content_paragraph in content_paragraphs.configurations) {
+					const configuration = content_paragraphs.configurations[content_paragraph];
+					//console.log([content_paragraph, configuration, answer_paragraph]);
+					if (configuration.原文) {
+						if (configuration.原文 === answer_paragraph) {
+							CeL.log(`轉換前後文字相同，無需設定"原文" ${JSON.stringify(content_paragraph)}: ${JSON.stringify(configuration)}`);
+						} else {
+							answer_paragraphs[index] = configuration.原文;
+						}
+					}
+				}
+
+				const converted_text_without_rule = text_is_TW ? CeL.CN_to_TW(answer_paragraphs[index]) : CeL.TW_to_CN(answer_paragraphs[index]);
+				//console.trace([converted_text_without_rule, content_paragraph]);
+				if (content_paragraph === converted_text_without_rule) {
+					// 測試所有字典檔，看看是否有無需 CeCC 就能正確轉換的。
+					CeL.debug('單純採用 zh_conversion 可獲得正確結果。若無上下文連接問題，應可去除這條檢測之相關規則: ' + JSON.stringify(answer_paragraphs[index]) + '→' + JSON.stringify(content_paragraph),
+						// 字典檔中若是包含這個字串，則代表寫進了這條字串相關的規則。
+						dictionary_file_content.includes(answer_paragraphs[index]) ? 0 : 1);
+				}
+			});
+		}
+
 		await for_each_test_set(Object.assign(test_configuration, {
 			test_title: file_name, text_is_TW,
 			convert_options,
-			content_paragraphs: CeCC.get_paragraphs_of_file(file_path),
-			answer_paragraphs: CeCC.get_paragraphs_of_file(answer_file_path),
+			content_paragraphs,
+			answer_paragraphs,
 		}));
 	}
 

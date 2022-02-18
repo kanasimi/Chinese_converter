@@ -102,7 +102,25 @@ class Chinese_converter {
 			options.using_LTP = options.using_LTP || true;
 		}
 
-		if (options?.CoreNLP_URL) {
+		if (options?.using_LTP) {
+			// 最高正確率
+			this.KEY_word = 'text';
+			this.KEY_PoS_tag = 'pos';
+			this.TAG_punctuation = 'wp';
+			this.condition_filter = condition_filter_LTP;
+			this.parser_name = 'LTP';
+			this.filters = get_dictionary_file_paths.call(this, 'filters');
+			for (const language in this.filters) {
+				const dictionary_file_path = this.dictionaries_directory + this.filters[language];
+				this.filters[language] = require(dictionary_file_path);
+			}
+			this.generate_condition = generate_condition_LTP;
+			load_synonym_dictionary.call(this);
+			this.tag_paragraph = tag_paragraph_LTP;
+			// .batch_get_tag 批量查詢詞性標記之條件: 1.可接受批量{Array}。 2.單次查詢消耗太大。
+			this.batch_get_tag = !this.LTP_URL;
+
+		} else if (options?.CoreNLP_URL) {
 			// using Stanford CoreNLP
 			this.KEY_PoS_tag = 'pos';
 			this.CoreNLP_URL = new URL(options.CoreNLP_URL);
@@ -113,24 +131,8 @@ class Chinese_converter {
 			};
 			this.tag_paragraph = tag_paragraph_via_CoreNLP;
 
-		} else if (options?.using_LTP) {
-			this.KEY_word = 'text';
-			this.KEY_PoS_tag = 'pos';
-			this.TAG_punctuation = 'wp';
-			this.condition_filter = condition_filter_LTP;
-			this.parser_name = 'LTP';
-			this.filters = get_dictionary_file_paths.call(this, 'filters');
-			for (const language in this.filters) {
-				this.filters[language] = require(this.dictionaries_directory + this.filters[language]);
-			}
-			this.generate_condition = generate_condition_LTP;
-			load_synonym_dictionary.call(this);
-			this.tag_paragraph = tag_paragraph_LTP;
-			// .batch_get_tag 批量查詢詞性標記之條件: 1.可接受批量{Array}。 2.單次查詢消耗太大。
-			this.batch_get_tag = !this.LTP_URL;
-
 		} else {
-			// default: nodejieba
+			// fallback to default: nodejieba
 			this.nodejieba_CN = require("nodejieba");
 			this.nodejieba_CN.load({ dict: this.dictionaries_directory + 'commons.txt' });
 			this.parser_name = 'jieba';
@@ -318,7 +320,7 @@ function load_text_to_check(should_be_text__file_name, options) {
 				options.export = Object.create(null);
 			if (!options.export.work_title)
 				options.export.work_title = should_be_text__file_name.work_title;
-			//e.g., "watch_target.第一序列.TW.txt"
+			// e.g., "watch_target.第一序列.TW.txt"
 			should_be_text__file_name = `watch_target.${should_be_text__file_name.work_title}.${should_be_text__file_name.convert_to_language}.${DEFAULT_TEST_FILE_EXTENSION}`;
 			//console.trace(should_be_text__file_name);
 		} else {
@@ -387,13 +389,19 @@ function load_text_to_check(should_be_text__file_name, options) {
 			|| (this.generate_condition_for_language[check_language] = Object.create(null));
 		should_be_texts.forEach((should_convert_to_text, index) => {
 			const configuration = should_be_texts.configurations[should_convert_to_text];
-			//if (configuration) console.trace(configuration);
 			let text = source_texts[index];
-			if (configuration?.原文 && configuration.原文 !== text) {
-				// assert: Should not go to here.
-				configuration.converted = text;
-				text = configuration.原文;
+			if (false && configuration) {
+				console.trace([text, should_convert_to_text, configuration]);
 			}
+			if (configuration?.原文) {
+				if (configuration.原文 === text) {
+					CeL.info(`${setup_generate_condition_for.name}: 轉換前後文字相同，無需設定"原文" ${JSON.stringify(text)}: ${JSON.stringify(configuration)}`);
+				} else {
+					configuration.original_text_converted = text;
+					text = configuration.原文;
+				}
+			}
+			//console.trace([check_language === 'TW' ? CeL_CN_to_TW(text) : CeL_TW_to_CN(text), should_convert_to_text]);
 			generate_condition_for[text] = { should_convert_to_text, ...options?.export, ...configuration };
 		});
 		//console.trace(generate_condition_for);
@@ -1364,6 +1372,11 @@ function get_LTP_data(options) {
 			return;
 		}
 
+		if (parsed_array[paragraph_index] = options.cached_tagged_word_list_Map?.get(paragraph)) {
+			// Using cache and process next paragraph.
+			return;
+		}
+
 		promise = add_new_web_request(this.LTP_URL, new Promise((resolve, reject) => {
 			CeL.log_temporary(`${get_LTP_data.name}: ${list.length > 1 ? `${paragraph_index + 1}/${list.length} ` : ''}Query LTP server for ${paragraph.length} chars text.`);
 			CeL.get_URL(this.LTP_URL, (XMLHttp, error) => {
@@ -1383,7 +1396,8 @@ function get_LTP_data(options) {
 		}));
 	});
 
-	return promise && promise.then(parse_LTP_result.bind(this, parsed_array, options));
+	return promise && promise.then(parse_LTP_result.bind(this, parsed_array, options))
+		|| parse_LTP_result.bind(this, parsed_array, options);
 }
 
 // @see resources/ltp_parse.py
@@ -1393,6 +1407,24 @@ const LTP_paragraph_MAX_LENGTH = 500;
 
 function preserve_tail(tail) {
 	return tail.match(/^["'’”」：\s]*/)[0];
+}
+
+function fill_cached_tagged_word_list_Map(paragraphs, options, cached_tagged_word_list_Map) {
+	if (!cached_tagged_word_list_Map)
+		return;
+
+	const cached_tagged_word_list = [];
+	if (paragraphs.every((paragraph, index) => {
+		const _options = set__options_tagged_word_list__via_cache.call(this, paragraph, options)[0];
+		const tagged_word_list = _options.tagged_word_list;
+		if (tagged_word_list) {
+			cached_tagged_word_list_Map.set(paragraph, tagged_word_list);
+			cached_tagged_word_list[index] = tagged_word_list;
+			return true;
+		}
+	})) {
+		return options.isArray ? cached_tagged_word_list : cached_tagged_word_list[0];
+	}
 }
 
 function tag_paragraph_LTP(paragraphs, options) {
@@ -1409,10 +1441,16 @@ function tag_paragraph_LTP(paragraphs, options) {
 		paragraphs = [paragraphs];
 	}
 
+	const cached_tagged_word_list_Map = new Map;
+	let cached_tagged_word_list = fill_cached_tagged_word_list_Map.call(this, paragraphs, options, cached_tagged_word_list_Map);
+	if (cached_tagged_word_list) {
+		return cached_tagged_word_list;
+	}
+
 	// @see https://github.com/HIT-SCIR/ltp/blob/master/ltp/utils/sent_split.py
 	if (paragraphs.some(paragraph => paragraph.length > LTP_paragraph_MAX_LENGTH)) {
-		const paragraphs_before_convert = options.paragraphs_before_convert = [];
-		const token_count_array = options.token_count_array = [];
+		const paragraphs_before_convert = [];
+		const token_count_array = [];
 		paragraphs.forEach(paragraph => {
 			while (paragraph.length > LTP_paragraph_MAX_LENGTH) {
 				const piece = paragraph.slice(0, LTP_paragraph_MAX_LENGTH);
@@ -1432,12 +1470,23 @@ function tag_paragraph_LTP(paragraphs, options) {
 			}
 			token_count_array.push(paragraphs_before_convert.length);
 		});
+
+		cached_tagged_word_list = fill_cached_tagged_word_list_Map.call(this, paragraphs_before_convert, options, cached_tagged_word_list_Map);
+		if (cached_tagged_word_list) {
+			return cached_tagged_word_list;
+		}
+
+		Object.assign(options, { token_count_array, paragraphs_before_convert });
+
 	} else {
 		options.paragraphs_before_convert = paragraphs;
 	}
 
+	Object.assign(options, { cached_tagged_word_list_Map });
+
 	//console.trace(this.LTP_URL);
 	if (this.LTP_URL) {
+		//console.trace([paragraphs, options]);
 		return get_LTP_data.call(this, options);
 	}
 
@@ -1532,57 +1581,67 @@ function load_general_word_list_cache_file(/*cache_file_for_short_sentences*/cac
 	this.general_word_list_cache_files_loaded.push(cache_file_path);
 }
 
+function set__options_tagged_word_list__via_cache(paragraph, options) {
+	let { cache_directory } = options;
+	if (!cache_directory) {
+		return [options, cache_directory];
+	}
+
+	//console.trace([cache_directory, CeL.append_path_separator(cache_directory)]);
+	cache_directory = CeL.append_path_separator(cache_directory);
+	//console.trace(cache_directory);
+
+	if (options.cache_file_for_short_sentences) {
+		if (options.cache_file_for_short_sentences === true)
+			options.cache_file_for_short_sentences = '!short_sentences_word_list.json';
+		load_general_word_list_cache_file.call(this, cache_directory + options.cache_file_for_short_sentences, options, this.latest_cache_directory !== cache_directory);
+	}
+	this.latest_cache_directory = cache_directory;
+
+	if (this.general_word_list_cache && this.general_word_list_cache[paragraph]) {
+		// 重新造一個 options 以避免污染。
+		options = {
+			...options,
+			// deep clone. 避免後續 this.general_word_list_cache 內容被更動。
+			tagged_word_list: Object.clone(this.general_word_list_cache[paragraph], true)
+		};
+		//options.tagged_word_list.is_cache = true;
+
+	} else if (!options.tagged_word_list
+		// 超過此長度才創建個別的 cache 檔案，否則會放在 .cache_file_for_short_sentences。
+		&& (!options.min_cache_length || paragraph.length >= options.min_cache_length)
+	) {
+		// 可自附 options.tagged_word_list，或者會由 set__options_tagged_word_list__via_cache() 依 cache_directory 下的資料填入。
+
+		// 重新造一個 options 以避免污染。
+		options = {
+			...options,
+			cache_file_path: cache_directory + CeL.to_file_name(paragraph.slice(0, 40) + '.' + paragraph.hashCode() + '.json')
+		};
+		let cache_data = CeL.read_file(options.cache_file_path);
+		if (cache_data) {
+			try {
+				cache_data = JSON.parse(cache_data.toString());
+				//console.trace(options);
+				//console.trace(`Using cache file: ${options.cache_file_path}`);
+				options.tagged_word_list = cache_data;
+				options.tagged_word_list.is_cache = true;
+			} catch (e) {
+				CeL.error(`${set__options_tagged_word_list__via_cache.name}: Skip ${options.cache_file_path}: ${e}`);
+			}
+		}
+	}
+	return [options, cache_directory];
+}
+
 /**
  * 轉換段落文字。
  * @param {String}paragraph 段落文字
  * @param {Object}[options]
  */
 function convert_paragraph(paragraph, options) {
-	let { cache_directory } = options;
-	if (cache_directory) {
-		//console.trace([cache_directory, CeL.append_path_separator(cache_directory)]);
-		cache_directory = CeL.append_path_separator(cache_directory);
-		//console.trace(cache_directory);
-
-		if (options.cache_file_for_short_sentences) {
-			if (options.cache_file_for_short_sentences === true)
-				options.cache_file_for_short_sentences = '!short_sentences_word_list.json';
-			load_general_word_list_cache_file.call(this, cache_directory + options.cache_file_for_short_sentences, options, this.latest_cache_directory !== cache_directory);
-		}
-		this.latest_cache_directory = cache_directory;
-
-		if (this.general_word_list_cache && this.general_word_list_cache[paragraph]) {
-			// 重新造一個 options 以避免污染。
-			options = {
-				...options,
-				// deep clone. 避免後續 this.general_word_list_cache 內容被更動。
-				tagged_word_list: Object.clone(this.general_word_list_cache[paragraph], true)
-			};
-			//options.tagged_word_list.is_cache = true;
-
-		} else if (!options.tagged_word_list
-			// 超過此長度才創建個別的 cache 檔案，否則會放在 .cache_file_for_short_sentences。
-			&& (!options.min_cache_length || paragraph.length >= options.min_cache_length)
-		) {
-			// 重新造一個 options 以避免污染。
-			options = {
-				...options,
-				cache_file_path: cache_directory + CeL.to_file_name(paragraph.slice(0, 40) + '.' + paragraph.hashCode() + '.json')
-			};
-			let cache_data = CeL.read_file(options.cache_file_path);
-			if (cache_data) {
-				try {
-					cache_data = JSON.parse(cache_data.toString());
-					//console.trace(options);
-					//console.trace(`Using cache file: ${options.cache_file_path}`);
-					options.tagged_word_list = cache_data;
-					options.tagged_word_list.is_cache = true;
-				} catch (e) {
-					CeL.error(`${convert_paragraph.name}: Skip ${options.cache_file_path}: ${e}`);
-				}
-			}
-		}
-	}
+	let cache_directory;
+	[options, cache_directory] = set__options_tagged_word_list__via_cache.call(this, paragraph, options);
 
 	const tagged_word_list = options.tagged_word_list || this.tag_paragraph(paragraph, options);
 	if (CeL.is_thenable(tagged_word_list)) {
@@ -1705,7 +1764,7 @@ function convert_paragraph(paragraph, options) {
 			}
 
 			if (check_dictionary) {
-				// 檢查這條 rule 是否有必要。
+				// 檢查這條 rule 是否有必要。在更改 zh_conversion 辭典時可使用。
 				if (converted_word_list) {
 					converted_word_list.push(word);
 				} else {
@@ -1728,6 +1787,8 @@ function convert_paragraph(paragraph, options) {
 					CeL.info(`It seems the rule is unnecessary: ${to_word_data.matched_condition ? `${to_word_data.matched_condition} → ` : ''}${to_word_data.full_condition_text}`);
 					//console.trace(word_data);
 				}
+
+				// TODO: 可以檢查單字個別轉換與完整連貫文本轉換的差異。
 			}
 
 			if (waiting_queue.length > 0) {
@@ -2023,7 +2084,7 @@ function get_paragraphs_of_text(text, options) {
 		//.map(text => text.trim()).filter(text => !!text)
 		.reduce(with_configurations ? (filtered, text) => {
 			if (text = text.trim()) {
-				// 可用 `// {"原文":"..."}` 來設定下一行文句的屬性。
+				// 可用 `// {"原文":"___"}` 來設定下一行文句的屬性。
 				if (text.startsWith('//')) {
 					//console.trace([text]);
 					try {
