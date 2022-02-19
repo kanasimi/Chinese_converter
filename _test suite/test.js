@@ -582,10 +582,10 @@ add_test('正確率檢核', async (assert, setup_test, finish_test, options) => 
 				const converted_text_without_rule = text_is_TW ? CeL.CN_to_TW(answer_paragraphs[index]) : CeL.TW_to_CN(answer_paragraphs[index]);
 				//console.trace([converted_text_without_rule, content_paragraph]);
 				if (content_paragraph === converted_text_without_rule) {
-					// 測試所有字典檔，看看是否有無需 CeCC 就能正確轉換的。
-					CeL.debug('單純採用 zh_conversion 可獲得正確結果。若無上下文連接問題，應可去除這條檢測之相關規則: ' + JSON.stringify(answer_paragraphs[index]) + '→' + JSON.stringify(content_paragraph),
+					// 測試所有字典檔，看看是否有無需 CeCC 就能正確轉換的規則。
+					CeL.debug('單純採用 zh_conversion 可獲得正確結果。若無上下文干擾問題，應可去除這條檢測之相關規則: ' + JSON.stringify(answer_paragraphs[index]) + '→' + JSON.stringify(content_paragraph),
 						// 字典檔中若是包含這個字串，則代表寫進了這條字串相關的規則。
-						dictionary_file_content.includes(answer_paragraphs[index]) ? 0 : 1);
+						dictionary_file_content.includes(answer_paragraphs[index].replace(/[\s「『【]+$/, '').replace(/[\s、，；：。？！…」』】]+$/, '')) ? 0 : 1);
 				}
 			});
 		}

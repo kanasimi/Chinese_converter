@@ -61,7 +61,7 @@ REM Waiting for some minutes...
 ```
 
 ### Install cecc
-And then install cecc:
+Install [Node.js](https://nodejs.org/), and then install cecc:
 
 ```bash
 npm install cecc
