@@ -513,7 +513,7 @@ const PATTERN_do_after_converting = new RegExp('^(?<word>.*?)~(?<do_after_conver
 // JSON.stringify(): for "\n"
 function stringify_condition(condition_text) {
 	// .replace(/\r/g, '\\r').replace(/\n/g, '\\n')
-	return JSON.stringify(condition_text).slice(1, -1);
+	return JSON.stringify(condition_text).slice(1, -1).replace(/\\"/g, '"');
 }
 
 function word_data_to_condition(word_data, options) {

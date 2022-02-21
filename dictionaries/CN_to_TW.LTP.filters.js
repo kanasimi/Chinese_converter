@@ -2,6 +2,7 @@
 'use strict';
 
 
+// 2022/2/15	改採 CeL.zh_conversion。現無作用。
 function 修正引號(configuration) {
 	const { converted_text } = configuration;
 	converted_text.forEach((text, index) => {
