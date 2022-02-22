@@ -2,7 +2,7 @@
 
 TODO:
 簡化辭典複雜度: 分割個別作品的字典為特設辭典。
-把所有沒匹配到的詞合起來，一起採用 CeL_CN_to_TW() 或 CeL_TW_to_CN()。
+依照前後詞彙再建立 Map()，避免條件式串列過長。這可能得考慮如何合併詞性標註錯誤時的條件式。
 
 
 https://zhuanlan.zhihu.com/p/95358646
@@ -1129,7 +1129,16 @@ function get_matched_condition(options) {
 	return { all_convert_to_conditions };
 }
 
-// 先測試整個詞相同的情況，再測試 {RegExp}。先測試包含詞性標注的條件式，再測試泛用情況（不論詞性）。
+/*
+辭典檔應用順序：先測試整個詞相同的情況，再測試 {RegExp}。先測試包含詞性標注的條件式，再測試泛用情況（不論詞性）。
+所有條件式皆依照字典檔中的出現順序依序檢測。
+
+1.	詞性相同 + 詞彙相同
+2.	僅詞彙相同
+3.	檢測所有詞性相同的 {RegExp}
+4.	檢測所有泛用的 {RegExp}
+
+*/
 const get_all_possible_matched_condition_options = [
 	{ try_tag: true },
 	,
@@ -1705,6 +1714,7 @@ function convert_paragraph(paragraph, options) {
 		const prefix_spaces = word_data[KEY_prefix_spaces];
 		if (!matched_condition_data) {
 			if (word_convert_mode === 'combine') {
+				// 把所有沒匹配到的詞合起來，一起採用 CeL.zh_conversion.CeL_CN_to_TW() 或 CeL_TW_to_CN()。
 				waiting_queue.push(prefix_spaces ? prefix_spaces + word_data[this.KEY_word] : word_data[this.KEY_word]);
 				return;
 			}
