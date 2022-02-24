@@ -1,7 +1,7 @@
 ﻿/*
 
 TODO:
-簡化辭典複雜度: 分割個別作品的字典為特設辭典。
+簡化辭典複雜度: 分割個別作品的辭典為特設辭典。
 依照前後詞彙再建立 Map()，避免條件式串列過長。這可能得考慮如何合併詞性標註錯誤時的條件式。
 
 
@@ -541,11 +541,18 @@ function parse_condition(full_condition_text, options) {
 	for (let index = 0, accumulated_target_index_diff = 0; index < full_condition_splited.length; index++) {
 		let token = full_condition_splited[index];
 		let matched = token.match(PATTERN_condition).groups;
+		if (/^\//.test(matched.tag) && /\(\?$/.test(matched.tag)) {
+			// e.g., "/^(?:a)$/"
+			matched.word = matched.tag + ':' + matched.word;
+			matched.tag = undefined;
+			//console.trace(matched);
+		}
 		if (/^\/(\\\/|[^\/])+$/.test(matched.word)) {
 			// 處理 RegExp pattern 中包含 condition_delimiter 的情況。
 			// e.g., ~里+/^许.+河$/	v:卷+m:/^[\\d〇一二三四五六七八九零十]+$/+~裡
-			for (let combined_token = token, next_index = index; next_index < full_condition_splited.length;) {
-				const next_token = full_condition_splited[++next_index];
+			const full_condition_splited_expanded = Array.isArray(options.full_condition_splited) ? full_condition_splited.concat(options.full_condition_splited.slice(options.index + 1)) : full_condition_splited;
+			for (let combined_token = token, next_index = index; next_index < full_condition_splited_expanded.length;) {
+				const next_token = full_condition_splited_expanded[++next_index];
 				combined_token += condition_delimiter + next_token;
 				const _matched = combined_token.match(PATTERN_condition).groups;
 				if (CeL.PATTERN_RegExp.test(_matched.word) || CeL.PATTERN_RegExp_replacement.test(_matched.word)) {
@@ -556,10 +563,15 @@ function parse_condition(full_condition_text, options) {
 					//console.trace([token, matched]);
 				}
 			}
+			if (index >= full_condition_splited.length) {
+				// e.g., ~干<role.type:A1>/那.+何事$/
+				options.combined_token_count = index - full_condition_splited.length + 1;
+			}
+			//console.log([full_condition_splited_expanded, full_condition_splited, options.full_condition_splited?.slice(options.index + 1), options]);
 			//console.trace([index, target_index, accumulated_target_index_diff, token, matched]);
 		}
 
-		const condition_data = { condition_text: token };
+		const condition_data = Object.create(null);
 		if (matched.is_target && !options?.no_target) {
 			set_as_target(condition_data);
 			if (target_index >= 0)
@@ -581,12 +593,18 @@ function parse_condition(full_condition_text, options) {
 				if (!this.condition_filter)
 					throw new Error('No .condition_filter set but set filter: ' + matched.word);
 				filter = filter.groups;
+				const _options = { no_target: true, full_condition_splited, index };
 				Object.assign(condition_data, {
 					[this.KEY_word]: filter.word,
 					[KEY_filter_name]: filter.filter_name,
-					filter_target: parse_condition.call(this, filter.filter_target, { no_target: true })
+					filter_target: parse_condition.call(this, filter.filter_target, _options)
 				});
 				//console.trace(condition_data);
+				if (_options.combined_token_count > 0) {
+					token = full_condition_splited.slice(index, index + _options.combined_token_count + 1).join(condition_delimiter);
+					accumulated_target_index_diff += _options.combined_token_count;
+					index += _options.combined_token_count;
+				}
 			} else {
 				//const replace_pattern = matched.word.match();
 				condition_data[this.KEY_word] = CeL.PATTERN_RegExp.test(matched.word) || CeL.PATTERN_RegExp_replacement.test(matched.word)
@@ -595,6 +613,8 @@ function parse_condition(full_condition_text, options) {
 					: matched.word.replace(/\\\w/g, char => JSON.parse(`"${char}"`));
 			}
 		}
+
+		condition_data.condition_text = token;
 
 		if (matched.not_match)
 			condition_data.not_match = matched.not_match;
@@ -754,20 +774,32 @@ function print_section_report(configuration, options) {
 	}
 }
 
-function convert_to_different_length(converted_text_String, should_be_text) {
-	if (converted_text_String.chars().length !== should_be_text?.chars().length) {
-		// 轉換前後。
-		CeL.error('預設解答與轉換後之文字長度不符，跳過此項！');
-		// 為差異文字著色。
-		CeL.coloring_diff(converted_text_String, should_be_text, {
-			headers: [
-				`轉換後:\t`,
-				`解答:\t`,
-			],
-			header_style: { fg: 'yellow' }, print: true
-		});
-		return true;
+/** {Boolean}跳過長度不同的測試。 e.g., 地區習慣用詞轉換 */
+const skip_tests_convert_to_different_length = true;
+function check_convert_to_different_length(converted_text_String, should_be_text, no_warning, is_convert_from) {
+	if (converted_text_String.chars().length === should_be_text?.chars().length) {
+		return;
 	}
+
+	if (no_warning) {
+		;
+	} else if (skip_tests_convert_to_different_length) {
+		// 轉換前後。
+		CeL.warn(`${check_convert_to_different_length.name}: 預設解答與轉換後之文字長度不符！`);
+	} else {
+		// ，刪除解答
+		CeL.error(`${check_convert_to_different_length.name}: 預設解答與轉換後之文字長度不符，跳過此項！`);
+	}
+	// 為差異文字著色。
+	CeL.coloring_diff(converted_text_String, should_be_text, {
+		headers: [
+			(is_convert_from ? '轉換前:' : '轉換後:') + '\t',
+			`解答:\t`,
+		],
+		header_style: { fg: 'yellow' }, print: true
+	});
+	// return true: Skip this test.
+	return !skip_tests_convert_to_different_length;
 }
 
 // ------------------------------------------------------------------
@@ -962,6 +994,7 @@ function condition_filter_LTP(single_condition, word_data, options) {
 		return true;
 
 	//console.trace([single_condition, word_data, options]);
+	//console.trace(options.convertion_pairs.get(KEY_tag_filter).v.get('干'));
 
 	const { tagged_word_list } = options;
 	// assert: word_data === tagged_word_list[options.index_of_tagged_word_list]
@@ -1131,7 +1164,7 @@ function get_matched_condition(options) {
 
 /*
 辭典檔應用順序：先測試整個詞相同的情況，再測試 {RegExp}。先測試包含詞性標注的條件式，再測試泛用情況（不論詞性）。
-所有條件式皆依照字典檔中的出現順序依序檢測。
+所有條件式皆依照辭典檔中的出現順序依序檢測。
 
 1.	詞性相同 + 詞彙相同
 2.	僅詞彙相同
@@ -1696,10 +1729,10 @@ function convert_paragraph(paragraph, options) {
 	})();
 
 	// default (undefined) or 'word': 每個解析出的詞單獨作 zh_conversion。
-	// 'combine': 結合未符合分詞字典規則之詞一併轉換。converter 必須有提供輸入陣列的功能。
+	// 'combine': 結合未符合分詞辭典規則之詞一併轉換。converter 必須有提供輸入陣列的功能。
 	// false: 按照原始輸入，不作 zh_conversion。
 	const word_convert_mode = options.forced_convert_mode === undefined ? true : options.forced_convert_mode;
-	// 檢查字典檔的規則。debug 用，會拖累效能。
+	// 檢查辭典檔的規則。debug 用，會拖累效能。
 	const { check_dictionary } = options;
 	// node.js: 直接開 `conversion.convert(text)` 速度相同，且還包含 .special_keys_Map 的轉換，較完整。
 	const word_mode_options = options /* { mode: 'word_first', ...options } */;
@@ -1841,12 +1874,24 @@ function convert_paragraph(paragraph, options) {
 		// 長度累加紀錄。
 		let tagged_word_list_length_accumulation, converted_text_length_accumulation;
 		for (let [convert_from_text, should_convert_to] of Object.entries(generate_condition_for)) {
-			const should_convert_to_text = CeL.is_Object(should_convert_to) ? should_convert_to.should_convert_to_text : should_convert_to;
+			const should_convert_to_is_Object = CeL.is_Object(should_convert_to);
+			const should_convert_to_text = should_convert_to_is_Object ? should_convert_to.should_convert_to_text : should_convert_to;
 			// 勣 → '𪟝'.length === 2
 			if (convert_from_text.chars().length !== should_convert_to_text.chars().length) {
-				CeL.error(`預設解答與轉換前之文字長度不符，刪除解答:\n\t${convert_from_text}\n→\t${should_convert_to_text}`);
-				delete generate_condition_for[convert_from_text];
-				continue;
+				if (!skip_tests_convert_to_different_length) {
+					CeL.error(`${convert_paragraph.name}: 預設解答與轉換前之文字長度不符，刪除解答：`);
+					check_convert_to_different_length(convert_from_text, should_convert_to_text, true, true);
+					delete generate_condition_for[convert_from_text];
+					continue;
+				}
+
+				if (!should_convert_to_is_Object || !should_convert_to.warned_convert_to_different_length) {
+					// 設定已經警告過轉換長度不同。
+					if (should_convert_to_is_Object)
+						should_convert_to.warned_convert_to_different_length = true;
+					CeL.warn(`${convert_paragraph.name}: 預設解答與轉換前之文字長度不符：`);
+					check_convert_to_different_length(convert_from_text, should_convert_to_text, true, true);
+				}
 			}
 
 			// 遍歷所有相符的。例如對於主要角色人名、專有名詞、成語成句就需要此種操作。
@@ -1912,11 +1957,11 @@ function convert_paragraph(paragraph, options) {
 					}
 				});
 				const converted_text_String = converted_text.slice(start_index, end_index).join('');
-				if (convert_to_different_length(converted_text_String, should_be_text)) {
+				if (check_convert_to_different_length(converted_text_String, should_be_text)) {
 					continue;
 				}
 
-				if (!CeL.is_Object(should_convert_to)) {
+				if (!should_convert_to_is_Object) {
 					// 初始化。
 					generate_condition_for[convert_from_text] = should_convert_to = { should_convert_to_text };
 				}
@@ -1962,7 +2007,7 @@ function convert_paragraph(paragraph, options) {
 			//should_be_text: should_convert_to_text
 			const should_be_text = options.should_be[options.paragraph_index];
 			const converted_text_String = converted_text.join('');
-			if (convert_to_different_length(converted_text_String, should_be_text)) {
+			if (check_convert_to_different_length(converted_text_String, should_be_text)) {
 				;
 
 			} else if (converted_text_String !== should_be_text) {

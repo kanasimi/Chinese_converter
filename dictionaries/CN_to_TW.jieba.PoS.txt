@@ -28,7 +28,7 @@ https://github.com/yanyiwu/nodejieba/issues/171
 related: https://github.com/fxsjy/jieba/issues/832
 
 http://blog.pulipuli.info/2017/11/fasttag-identify-part-of-speech-in.html
-> Jieba在詞性上最大的問題在於一個詞僅能有個詞性，且這個詞性是字典給什麼就是什麼，
+> Jieba在詞性上最大的問題在於一個詞僅能有個詞性，且這個詞性是辭典給什麼就是什麼，
 
 理想的方法是依句型分析、句子的結構樹判斷所有可能的詞性，挑出可能性最大的。
 related: 中文句結構樹資料庫 http://treebank.sinica.edu.tw/

@@ -14,8 +14,20 @@
 在人工智慧讀通文義、繁簡轉換前，應用[自然語言處理](https://zh.wikipedia.org/wiki/%E8%87%AA%E7%84%B6%E8%AF%AD%E8%A8%80%E5%A4%84%E7%90%86)中文分詞、標注詞性、判斷語境之後再做轉換，[應比單純詞彙比對更準確](https://www.ccjk.com/word%E4%B8%AD%E6%96%87%E7%AE%80%E7%B9%81%E8%BD%AC%E6%8D%A2%E5%AD%98%E5%9C%A8%E7%9A%84%E9%97%AE%E9%A2%98%E4%B8%8E%E8%A7%A3%E5%86%B3%E5%AF%B9%E7%AD%96-%E8%BD%AC%E8%BD%BD/)。辭典應可如維基百科般由眾人編輯，且記錄改變原由，加進 test suit。
 
 ## Concepts
-1. 先中文分詞（附帶詞義、詞性標注）+自動判斷句子、段落的語境（配合[維基百科專有名詞轉換](https://zh.wikipedia.org/wiki/Wikipedia:%E5%AD%97%E8%A9%9E%E8%BD%89%E6%8F%9B%E8%99%95%E7%90%86/%E5%85%AC%E5%85%B1%E8%BD%89%E6%8F%9B%E7%B5%84)）
-2. 再繁簡轉換（輕量化繁簡轉換辭典負擔）
+CeL.zh_conversion 採用與 OpenCC 和新同文堂相同的技術，從前至後，於每個字元位置檢查符合辭典檔中詞彙的最長詞彙，一旦符合就置換並跳到下一個詞彙。
+
+這種方法在遇到某些字詞必須與前一個字詞連動時，就可能漏失掉。例如「干」預設會轉成「幹」。（轉換標的通常是用途雜亂，最難找出規則又出現的字詞。）因此當辭典檔中有「芒果」卻沒有「芒果乾」時，遇到「芒果干」就可能換成「芒果幹」。
+我們可以藉由把這些需要連動的詞彙全部加入辭典檔來完善轉換結果，additional.to_TW.txt 與 CN_to_TW.LTP.PoS.txt 中就有許多例子。但這造成辭典檔複雜龐大，就本例來說，我們畢竟不可能把所有動植物，如蘋果乾、響尾蛇乾全加進去。
+而且每次加入新的詞彙也得考慮是否會影響到上下文。例如加入「上千」將造成「算得上千钧一发」因為先符合了「上千」，「钧一发」本身不在辭典檔中，將造成轉換錯誤。
+
+此外這種做法最大的問題是不能依上下文判斷。例如「这颗梨子干你什么事」、「我拿水蜜桃干他朋友什么事」就不容易正確轉換。而有些詞像「排泄」、「排洩」有兩種可能性，也必須依上下文來判斷。
+
+本工具正是採用先中文分詞（附帶詞義、詞性標注），再以 CeL.zh_conversion 繁簡轉換的方法，來輕量化繁簡轉換辭典，同時達到較為精確的繁簡轉換。
+
+歡迎提供句子以做測試，也歡迎提交辭典檔規則。
+
+理想情況，尚可加上自動判斷句子、段落的語境（配合[維基百科專有名詞轉換](https://zh.wikipedia.org/wiki/Wikipedia:%E5%AD%97%E8%A9%9E%E8%BD%89%E6%8F%9B%E8%99%95%E7%90%86/%E5%85%AC%E5%85%B1%E8%BD%89%E6%8F%9B%E7%B5%84)）。
+
 
 ## Process
 繁簡轉換流程： 
@@ -69,7 +81,7 @@ npm install cecc
 
 ## Usage
 1. 直接下載 [LTP server 原始碼](https://github.com/HIT-SCIR/ltp/blob/master/tools/server.py)並改 <code>'small'</code> 為 <code>'base'</code>。
-2. 啟動 LTP server，預設為 http://localhost:5000/ 。您可能需要 6 GB 記憶體來啟動 server。第一次執行需要下載超過 500 MiB 的字典檔。
+2. 啟動 LTP server，預設為 http://localhost:5000/ 。您可能需要 6 GB 記憶體來啟動 server。第一次執行需要下載超過 500 MiB 的辭典檔。
 
 3. Try codes:
    ```javascript
@@ -89,8 +101,8 @@ npm install cecc
    ```
 
 ## Mechanism 文字替換機制
-1. 若有符合[附帶詞性字典檔](https://github.com/kanasimi/Chinese_converter/tree/master/dictionaries)的文字，則依之變換。其他未符合的交由 [CeL.extension.zh_conversion](https://github.com/kanasimi/CeJS/blob/master/extension/zh_conversion.js) 處理。
-2. zh_conversion 基本上採用 [OpenCC 的辭典](https://github.com/BYVoid/OpenCC/tree/master/data/dictionary)，並以 [generate_additional_table.js](https://github.com/kanasimi/CeJS/blob/master/extension/zh_conversion/generate_additional_table.js) 合併新同文堂和 ConvertZZ 的字典檔成 additional.to_TW.auto-generated.txt 與 additional.to_CN.auto-generated.txt。依照 [CeL.extension.zh_conversion](https://github.com/kanasimi/CeJS/blob/master/extension/zh_conversion.js) 中 Converter.options 之字典檔順序，每個序列由長至短轉換。實際文字替換轉換作業在 [CeL.data.Convert_Pairs](https://github.com/kanasimi/CeJS/blob/master/data/Convert_Pairs.js) 中的 <code>function convert_using_pair_Map_by_length(text)</code>。
+1. 若有符合[附帶詞性辭典檔](https://github.com/kanasimi/Chinese_converter/tree/master/dictionaries)的文字，則依之變換。其他未符合的交由 [CeL.extension.zh_conversion](https://github.com/kanasimi/CeJS/blob/master/extension/zh_conversion.js) 處理。
+2. zh_conversion 基本上採用 [OpenCC 的辭典](https://github.com/BYVoid/OpenCC/tree/master/data/dictionary)，並以 [generate_additional_table.js](https://github.com/kanasimi/CeJS/blob/master/extension/zh_conversion/generate_additional_table.js) 合併新同文堂和 ConvertZZ 的辭典檔成 additional.to_TW.auto-generated.txt 與 additional.to_CN.auto-generated.txt。依照 [CeL.extension.zh_conversion](https://github.com/kanasimi/CeJS/blob/master/extension/zh_conversion.js) 中 Converter.options 之辭典檔順序，每個序列由長至短轉換。實際文字替換轉換作業在 [CeL.data.Convert_Pairs](https://github.com/kanasimi/CeJS/blob/master/data/Convert_Pairs.js) 中的 <code>function convert_using_pair_Map_by_length(text)</code>。
 
 ## 辭典修訂流程
 ### 一次正常的單句式辭典修訂流程

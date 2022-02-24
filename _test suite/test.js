@@ -527,11 +527,11 @@ add_test('正確率檢核', async (assert, setup_test, finish_test, options) => 
 			cache_file_for_short_sentences: true,
 
 			// default (undefined) or 'word': 每個解析出的詞單獨作 zh_conversion。
-			// 'combine': 結合未符合分詞字典規則之詞一併轉換。converter 必須有提供輸入陣列的功能。
+			// 'combine': 結合未符合分詞辭典規則之詞一併轉換。converter 必須有提供輸入陣列的功能。
 			// false: 按照原始輸入，不作 zh_conversion。
 			forced_convert_mode: 'combine',
 
-			// 檢查字典檔的規則。debug 用，會拖累效能。
+			// 檢查辭典檔的規則。debug 用，會拖累效能。
 			check_dictionary: CeL.is_debug(),
 
 			// 超過此長度才創建個別的 cache 檔案，否則會放在 .cache_file_for_short_sentences。
@@ -585,9 +585,9 @@ add_test('正確率檢核', async (assert, setup_test, finish_test, options) => 
 				const converted_text_without_rule = text_is_TW ? CeL.CN_to_TW(answer_paragraphs[index]) : CeL.TW_to_CN(answer_paragraphs[index]);
 				//console.trace([converted_text_without_rule, content_paragraph]);
 				if (content_paragraph === converted_text_without_rule) {
-					// 測試所有字典檔，看看是否有無需 CeCC 就能正確轉換的規則。
+					// 測試所有辭典檔，看看是否有無需 CeCC 就能正確轉換的規則。
 					CeL.debug('單純採用 zh_conversion 可獲得正確結果。若無上下文干擾問題，應可去除這條檢測之相關規則: ' + JSON.stringify(answer_paragraphs[index]) + '→' + JSON.stringify(content_paragraph),
-						// 字典檔中若是包含這個字串，則代表寫進了這條字串相關的規則。
+						// 辭典檔中若是包含這個字串，則代表寫進了這條字串相關的規則。
 						dictionary_file_content.includes(answer_paragraphs[index].replace(/[\s「『【]+$/, '').replace(/[\s、，；：。？！…」』】]+$/, '')) ? 0 : 1);
 				}
 			});
