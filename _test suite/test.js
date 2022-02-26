@@ -508,8 +508,9 @@ add_test('正確率檢核', async (assert, setup_test, finish_test, options) => 
 		error_count: 0, max_error_tags_showing: 40,
 	};
 
+	const check_dictionary = true&&0;
 	//console.trace(cecc.dictionary_file_paths);
-	const dictionary_file_contents = Object.create(null);
+	const dictionary_file_contents = check_dictionary && Object.create(null);
 
 	//CeL.set_debug(9);
 	//console.trace(process.memoryUsage());
@@ -542,7 +543,7 @@ add_test('正確率檢核', async (assert, setup_test, finish_test, options) => 
 		const answer_file_path = CeCC.to_converted_file_path(file_path);
 		const text_is_TW = file_name_language[1] === 'TW';
 
-		if (options.check_dictionary && !dictionary_file_contents[file_name_language[1]]) {
+		if (check_dictionary && !dictionary_file_contents[file_name_language[1]]) {
 			dictionary_file_contents[file_name_language[1]] = CeL.read_file(cecc.dictionary_file_paths[file_name_language[1]]).toString();
 		}
 		const dictionary_file_content = dictionary_file_contents[file_name_language[1]];
@@ -579,7 +580,7 @@ add_test('正確率檢核', async (assert, setup_test, finish_test, options) => 
 					}
 				}
 
-				if (!options.check_dictionary)
+				if (!check_dictionary)
 					return;
 
 				const converted_text_without_rule = text_is_TW ? CeL.CN_to_TW(answer_paragraphs[index]) : CeL.TW_to_CN(answer_paragraphs[index]);
