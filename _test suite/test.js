@@ -508,7 +508,7 @@ add_test('正確率檢核', async (assert, setup_test, finish_test, options) => 
 		error_count: 0, max_error_tags_showing: 40,
 	};
 
-	const check_dictionary = true&&0;
+	const check_dictionary = true;
 	//console.trace(cecc.dictionary_file_paths);
 	const dictionary_file_contents = check_dictionary && Object.create(null);
 
@@ -566,13 +566,13 @@ add_test('正確率檢核', async (assert, setup_test, finish_test, options) => 
 		const answer_paragraphs = CeCC.get_paragraphs_of_file(answer_file_path);
 		// @see function setup_generate_condition_for() @ Chinese_converter.js
 		if (content_paragraphs?.configurations) {
-			answer_paragraphs.forEach((answer_paragraph, index) => {
+			for (let index = 0; index < answer_paragraphs.length; index++) {
 				const content_paragraph = content_paragraphs[index];
 				if (content_paragraph in content_paragraphs.configurations) {
 					const configuration = content_paragraphs.configurations[content_paragraph];
 					//console.log([content_paragraph, configuration, answer_paragraph]);
 					if (configuration.原文) {
-						if (configuration.原文 === answer_paragraph) {
+						if (configuration.原文 === answer_paragraphs[index]) {
 							CeL.log(`轉換前後文字相同，無需設定"原文" ${JSON.stringify(content_paragraph)}: ${JSON.stringify(configuration)}`);
 						} else {
 							answer_paragraphs[index] = configuration.原文;
@@ -581,17 +581,34 @@ add_test('正確率檢核', async (assert, setup_test, finish_test, options) => 
 				}
 
 				if (!check_dictionary)
-					return;
+					continue;
 
-				const converted_text_without_rule = text_is_TW ? CeL.CN_to_TW(answer_paragraphs[index]) : CeL.TW_to_CN(answer_paragraphs[index]);
-				//console.trace([converted_text_without_rule, content_paragraph]);
-				if (content_paragraph === converted_text_without_rule) {
-					// 測試所有辭典檔，看看是否有無需 CeCC 就能正確轉換的規則。
-					CeL.debug('單純採用 zh_conversion 可獲得正確結果。若無上下文干擾問題，應可去除這條檢測之相關規則: ' + JSON.stringify(answer_paragraphs[index]) + '→' + JSON.stringify(content_paragraph),
-						// 辭典檔中若是包含這個字串，則代表寫進了這條字串相關的規則。
-						dictionary_file_content.includes(answer_paragraphs[index].replace(/[\s「『【]+$/, '').replace(/[\s、，；：。？！…」』】]+$/, '')) ? 0 : 1);
+				if (content_paragraph.length < 6 && !/[\s、，；：。？！…」』】]$/.test(content_paragraph.trim())) {
+					// 太短的詞句大多已經檢核過，為與上下文有關的問題而設置。 e.g., "松了口气", "后土皇地祇"
+					continue;
 				}
-			});
+
+				const answer_paragraph = answer_paragraphs[index];
+				const converted_text_without_rule = text_is_TW ? CeL.CN_to_TW(answer_paragraph) : CeL.TW_to_CN(answer_paragraph);
+				//console.trace([converted_text_without_rule, content_paragraph]);
+				if (content_paragraph !== converted_text_without_rule) {
+					continue;
+				}
+
+				// 辭典檔中若是包含這個字串，則代表寫進了這條字串相關的規則。
+				let need_note = dictionary_file_content.indexOf(answer_paragraph.length < 7 ? answer_paragraph.trim() : answer_paragraph.replace(/[\s「『【]+$/, '').replace(/[\s、，；：。？！…」』】]+$/, ''));
+				if (need_note > 0
+					// 匹配的位置前一個是中文字。
+					&& !/[\u4e00-\u9fa5]/.test(dictionary_file_content.charAt(need_note - 1))
+				) {
+					const line = dictionary_file_content.slice(need_note).between(null, '\n');
+					need_note = !line.includes('匹配的條件式');
+				} else {
+					need_note = false;
+				}
+				// 測試所有辭典檔，看看是否有無需 CeCC 就能正確轉換的規則。
+				CeL.debug('單純採用 zh_conversion 可獲得正確結果。若無上下文干擾、與其他規則衝突之問題，應可去除這條檢測之相關規則: ' + JSON.stringify(answer_paragraph) + '→' + JSON.stringify(content_paragraph), need_note ? 0 : 1);
+			}
 		}
 
 		await for_each_test_set(Object.assign(test_configuration, {

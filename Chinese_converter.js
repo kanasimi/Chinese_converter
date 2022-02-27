@@ -2023,7 +2023,7 @@ function convert_paragraph(paragraph, options) {
 			}
 
 		} else {
-			CeL.error(`未設定 options.should_be！`);
+			CeL.error(`convert_paragraph: 未設定 options.should_be！`);
 		}
 	}
 
