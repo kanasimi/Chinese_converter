@@ -750,15 +750,16 @@ function print_section_report(configuration, options) {
 		}).join(condition_delimiter)
 		}${reset_style}`);
 
-	if (original_word_list.join('').length - should_convert_to_text.chars().length > 2) {
-		// 全句
+	const is_fragment = original_word_list.join('').length - should_convert_to_text.chars().length > 2;
+	if (is_fragment) {
+		// show 全句
 		CeL.log(`\t原文⇒${reset_style}${JSON.stringify(original_word_list.join(''))}`);
 	}
 
 	//console.log(ansi_converted_CN);
 	//CeL.log(`\t${JSON.stringify(convert_from_text)}`);
 	CeL.log(`${(new SGR_style(normal_style_converted_CN_row)).toString()
-		}\t ${ansi_converted_CN.toString().replace(/\r/g, '\\r').replace(/\n/g, '\\n')}${reset_style}`);
+		}原文:\t ${ansi_converted_CN.toString().replace(/\r/g, '\\r').replace(/\n/g, '\\n')}${reset_style}`);
 
 	// 為轉換前後的差異文字著色。
 	CeL.coloring_diff(JSON.stringify(convert_to_text), JSON.stringify(should_convert_to_text), {
@@ -769,6 +770,10 @@ function print_section_report(configuration, options) {
 		header_style: { fg: 'cyan' }, print: true
 	});
 	condition_list.forEach(print_correction_condition);
+	if (!is_fragment) {
+		CeL.log(`單純 zh_conversion 轉換過程:`);
+		CeL.log('單純:\t ' + (options.convert_to_language === 'TW' ? CeL_CN_to_TW : CeL_TW_to_CN)(original_word_list.join(''), { show_matched: true }));
+	}
 	if (show_tagged_word_list) {
 		CeL.debug(beautify_tagged_word_list(tagged_word_list_pieces), 1);
 	}

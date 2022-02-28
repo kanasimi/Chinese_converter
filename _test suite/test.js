@@ -174,7 +174,7 @@ async function test_paragraphs(converte_from_paragraphs, should_be, test_configu
 			//if (converte_from_paragraphs.configurations) console.trace([converte_from_paragraphs.configurations, converte_from_paragraphs[index], converte_from_paragraphs.configurations[converte_from_paragraphs[index]]]);
 			if (converted_paragraphs[index] !== should_convert_to_text && converte_from_paragraphs.configurations && converte_from_paragraphs.configurations[converte_from_paragraphs[index]]) {
 				//console.trace([converted_paragraphs[index], should_convert_to_text, converte_from_paragraphs.configurations[converte_from_paragraphs[index]]]);
-				CeL.log(`${test_paragraphs.name}: ${JSON.stringify(converte_from_paragraphs[index])} 轉換成→${JSON.stringify(converted_paragraphs[index])}。但由於已設定原文=${JSON.stringify(converte_from_paragraphs.configurations[converte_from_paragraphs[index]].原文)}，因此跳過這項測試。`);
+				CeL.log(`${test_paragraphs.name}: 跳過測試: ${JSON.stringify(converte_from_paragraphs[index])} 轉換成→${JSON.stringify(converted_paragraphs[index])}。但已設定原文=${JSON.stringify(converte_from_paragraphs.configurations[converte_from_paragraphs[index]].原文)}。`);
 				continue;
 			}
 			if (!assert([converted_paragraphs[index], should_convert_to_text], test_title + ` #${index + 1}/${test_length}${test_postfix}`)) {
