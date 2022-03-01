@@ -13,7 +13,11 @@
 # CeCC - Colorless echo Chinese converter
 在人工智慧讀通文義、繁簡轉換前，應用[自然語言處理](https://zh.wikipedia.org/wiki/%E8%87%AA%E7%84%B6%E8%AF%AD%E8%A8%80%E5%A4%84%E7%90%86)中文分詞、標注詞性、判斷語境之後再做轉換，[應比單純詞彙比對更準確](https://www.ccjk.com/word%E4%B8%AD%E6%96%87%E7%AE%80%E7%B9%81%E8%BD%AC%E6%8D%A2%E5%AD%98%E5%9C%A8%E7%9A%84%E9%97%AE%E9%A2%98%E4%B8%8E%E8%A7%A3%E5%86%B3%E5%AF%B9%E7%AD%96-%E8%BD%AC%E8%BD%BD/)。辭典應可如維基百科般由眾人編輯，且記錄改變原由，加進 test suit。
 
+
 ## Concepts
+Chinese_converter 採用先中文分詞（附帶詞義、詞性標注），再以 CeL.zh_conversion 繁簡轉換的方法，來輕量化繁簡轉換辭典，同時達到較為精確的繁簡轉換。
+
+### 單純從前至後替換文字的缺陷
 CeL.zh_conversion 採用與 OpenCC 和新同文堂相同的技術，從前至後，於每個字元位置檢查符合辭典檔中詞彙的最長詞彙，一旦符合就置換並跳到下一個詞彙。
 
 這種方法在遇到某些字詞必須與前一個字詞連動時，就可能漏失掉。例如「干」預設會轉成「幹」。（轉換標的通常是用途雜亂，最難找出規則又出現的字詞。）因此當辭典檔中有「芒果」卻沒有「芒果乾」時，遇到「芒果干」就可能換成「芒果幹」。
@@ -22,7 +26,10 @@ CeL.zh_conversion 採用與 OpenCC 和新同文堂相同的技術，從前至後
 
 此外這種做法最大的問題是不能依上下文判斷。例如「这颗梨子干你什么事」、「我拿水蜜桃干他朋友什么事」就不容易正確轉換。而有些詞像「排泄」、「排洩」，「自制」、「自製」有兩種可能性，也必須依上下文來判斷。
 
-本工具正是採用先中文分詞（附帶詞義、詞性標注），再以 CeL.zh_conversion 繁簡轉換的方法，來輕量化繁簡轉換辭典，同時達到較為精確的繁簡轉換。
+### 先中文分詞的好處
+先中文分詞來判斷，可依句子與片語的結構來轉換。不但較靈活，也更能應對特殊情況。例如 zh_conversion 指定了許多 这只→這隻、一只→一隻 之類的轉換。在遇到「這隻是小鳥」、「這只是妄想」時常常出錯。若能判斷出「只」是否為量詞，則可減少許多錯誤。
+
+由於 zh_conversion 執行速度快許多，因此 Chinese_converter 只對特殊情況才採用中文分詞辭典。
 
 歡迎提供句子以做測試，也歡迎提交辭典檔規則。
 
@@ -43,7 +50,7 @@ CeL.zh_conversion 採用與 OpenCC 和新同文堂相同的技術，從前至後
 ## Installation
 Install [LTP](https://github.com/HIT-SCIR/ltp) first.
 
-經實測，採用哈工大 [LTP](https://github.com/HIT-SCIR/ltp) 4.1.5.post2 Base(v3) 模型的[服務端版本](http://ltp.ai/docs/quickstart.html#ltp-server)，配合[相對應辭典](dictionaries/CN_to_TW.LTP.PoS.txt)，可正確 繁→簡→繁 轉換[測試檔](_test%20suite/articles)中的文字。
+經實測，採用哈工大 [LTP](https://github.com/HIT-SCIR/ltp) 4.1.5.post2 Base(v3) 模型的[服務端版本](http://ltp.ai/docs/quickstart.html#ltp-server)，配合[相對應辭典](dictionaries/CN_to_TW.LTP.PoS.txt)；以 繁→簡→繁 轉換[測試檔](_test%20suite/articles)中的文字，可轉換回原先之內容。
 
 ### Install 中文分詞: LTP
 On Windows, install LTP:
@@ -59,7 +66,7 @@ pip install fire
 ```cmd
 pip install --upgrade ltp
 ```
-
+<!--
 #### Alternative: Install 中文分詞: nodejieba
 Alternative method: On Windows, install [nodejieba](https://github.com/yanyiwu/nodejieba):
 ```cmd
@@ -71,7 +78,7 @@ npm install --global node-pre-gyp
 npm install nodejieba
 REM Waiting for some minutes...
 ```
-
+-->
 ### Install cecc
 Install [Node.js](https://nodejs.org/), and then install cecc:
 
@@ -105,7 +112,7 @@ npm install cecc
 2. zh_conversion 基本上採用 [OpenCC 的辭典](https://github.com/BYVoid/OpenCC/tree/master/data/dictionary)，並以 [generate_additional_table.js](https://github.com/kanasimi/CeJS/blob/master/extension/zh_conversion/generate_additional_table.js) 合併新同文堂和 ConvertZZ 的辭典檔成 additional.to_TW.auto-generated.txt 與 additional.to_CN.auto-generated.txt。依照 [CeL.extension.zh_conversion](https://github.com/kanasimi/CeJS/blob/master/extension/zh_conversion.js) 中 Converter.options 之辭典檔順序，每個序列由長至短轉換。實際文字替換轉換作業在 [CeL.data.Convert_Pairs](https://github.com/kanasimi/CeJS/blob/master/data/Convert_Pairs.js) 中的 <code>function convert_using_pair_Map_by_length(text)</code>。
 
 ## 辭典修訂流程
-### 一次正常的單句式辭典修訂流程
+### 常規單句式辭典修訂流程
 1. 閱讀轉換過的文字，發現轉換錯誤。
 2. 改成正確的句子，填入測試檔 [general.TW.txt](_test%20suite/articles/general.TW.txt) 或 [general.TW.answer.txt](_test%20suite/articles/general.TW.answer.txt)。
 3. 啟動 [LTP server](http://ltp.ai/docs/quickstart.html#ltp-server)，`npm test` 跑測試。
