@@ -196,10 +196,17 @@ class Chinese_converter {
 	}
 
 	static async has_LTP_server(options) {
-		if (typeof options === 'string')
+		if (typeof options === 'string') {
+			// treat options as LTP_URL
 			options = { LTP_URL: options };
-		else
+		} else {
 			options = { LTP_URL: 'http://localhost:5000/', ...options };
+		}
+
+		if (options.skip_server_test) {
+			CeL.debug('強制使用 LTP server，跳過對 LTP server 的運作測試。請只在您準備全程使用 cache 的情況下才使用這個選項。', 1, Chinese_converter.has_LTP_server.name);
+			return options.LTP_URL;
+		}
 
 		try {
 			//console.trace(options);
@@ -648,18 +655,30 @@ function parse_condition(full_condition_text, options) {
 // 顯示用函數。
 
 const KEY_matched_condition = 'matched condition';
-function print_correction_condition(correction_condition) {
+function print_correction_condition(correction_condition, options) {
 	//console.trace(correction_condition);
 	const to_word_data = correction_condition.parsed[KEY_matched_condition];
+	let matched_condition_mark;
 	if (to_word_data) {
 		//console.log(correction_condition);
 		//console.log(correction_condition.parsed.parents);
 		//console.trace(to_word_data);
-		CeL.warn(`Matched condition 匹配的條件式: ${to_word_data.matched_condition ? `${to_word_data.matched_condition} → ` : ''}${to_word_data.full_condition_text}`);
+		matched_condition_mark = ` 匹配的條件式: ${to_word_data.matched_condition ? `${to_word_data.matched_condition} → ` : ''}${to_word_data.full_condition_text}`;
+		CeL.warn(`Matched condition${matched_condition_mark}`);
 	}
 	// 自動提供可符合答案之候選條件式。
-	CeL.info(`Candidate correction for ${JSON.stringify(correction_condition.parsed.text)}→${JSON.stringify(correction_condition.target)} (錯誤轉換為 ${JSON.stringify(correction_condition.error_converted_to)
-		}):\n${correction_condition.join('\t')}`);
+	CeL.info(`Candidate correction for ${JSON.stringify(correction_condition.parsed.text)}→${JSON.stringify(correction_condition.target)} (錯誤轉換為 ${JSON.stringify(correction_condition.error_converted_to)}):`);
+	const {
+		work_title,
+		convert_from_text,
+		tagged_convert_from_text,
+	} = options;
+	if (convert_from_text) {
+		const list = correction_condition.slice(1).filter(correction => !correction.includes('<←'));
+		list.push(tagged_convert_from_text.join(condition_delimiter));
+		CeL.info(`//${work_title ? ` 《${work_title}》` : ''}	${convert_from_text} (${list.join(' ')})${matched_condition_mark || ''}`);
+	}
+	CeL.info(correction_condition.join('\t'));
 }
 
 // 展示有問題的項目。
@@ -670,8 +689,8 @@ function print_section_report(configuration, options) {
 
 	const SGR_style = CeL.interact.console.SGR_style;
 	const normal_style_tagged = (new SGR_style('fg=blue;bg=cyan')).toString(), marked_style_row = 'fg=red;bg=white', marked_style = (new SGR_style(marked_style_row)).toString(), reset_style = (new SGR_style({ reset: true })).toString();
-	const normal_style_converted_CN_row = 'fg=green;bg=black';
-	const ansi_converted_CN = new CeL.interact.console.SGR(convert_from_text);
+	const normal_style_convert_from_text_row = 'fg=green;bg=black';
+	const ansi_convert_from_text = new CeL.interact.console.SGR(convert_from_text);
 
 	let backward = 0, forward = 0;
 	if (start_index >= 0 && should_convert_to_text.chars().length <= 4) {
@@ -706,7 +725,7 @@ function print_section_report(configuration, options) {
 	const tagged_word_list_pieces = start_index >= 0 ? tagged_word_list.slice(start_index - backward, end_index + forward) : tagged_word_list;
 
 	let offset = convert_from_text.match(/^\s*/)[0].length;
-	const original_word_list = [];
+	const tagged_convert_from_text = [];
 	//console.trace([convert_from_text, offset, distance_token_header_to_metched, start_index, backward]);
 	CeL.log(`${normal_style_tagged
 		}${CeL.gettext.get_alias(options.convert_to_language === 'TW' ? 'CN' : 'TW').slice(0, 1)
@@ -715,7 +734,7 @@ function print_section_report(configuration, options) {
 			// condition filter 預設會排除 prefix spaces，因此將 prefix_spaces 另外列出。
 			// @see match_single_condition()
 			const text = stringify_condition(prefix_spaces) + word_data_to_condition.call(this, word_data);
-			original_word_list.push(prefix_spaces + word_data[this.KEY_word]);
+			tagged_convert_from_text.push(text);
 			if (backward && (index -= backward) < 0) {
 				return text;
 			}
@@ -736,30 +755,30 @@ function print_section_report(configuration, options) {
 				return text;
 			}
 
-			//console.trace([word_data, index_hash[index], start_offset, offset, ansi_converted_CN.style]);
-			if (ansi_converted_CN.style_at(start_offset, true)) {
-				// assert: 不間斷連續匹配到。先前已設定過 .style_at(start_offset, normal_style_converted_CN_row)
-				// assert: ansi_converted_CN.style_at(start_offset, true).toString() === normal_style_converted_CN_row.toString()
-				ansi_converted_CN.style_at(start_offset, null);
+			//console.trace([word_data, index_hash[index], start_offset, offset, ansi_convert_from_text.style]);
+			if (ansi_convert_from_text.style_at(start_offset, true)) {
+				// assert: 不間斷連續匹配到。先前已設定過 .style_at(start_offset, normal_style_convert_from_text_row)
+				// assert: ansi_convert_from_text.style_at(start_offset, true).toString() === normal_style_convert_from_text_row.toString()
+				ansi_convert_from_text.style_at(start_offset, null);
 			} else {
-				ansi_converted_CN.style_at(start_offset, marked_style_row);
+				ansi_convert_from_text.style_at(start_offset, marked_style_row);
 			}
-			ansi_converted_CN.style_at(offset, normal_style_converted_CN_row);
+			ansi_convert_from_text.style_at(offset, normal_style_convert_from_text_row);
 			//console.trace([start_offset, offset, convert_from_text.slice(start_offset, offset), text, convert_from_text.slice(word_data.offset, word_data.offset + word_data[this.KEY_word].length)]);
 			return marked_style + text + normal_style_tagged;
 		}).join(condition_delimiter)
 		}${reset_style}`);
 
-	const is_fragment = original_word_list.join('').length - should_convert_to_text.chars().length > 2;
+	const is_fragment = convert_from_text.length - should_convert_to_text.chars().length > 2;
 	if (is_fragment) {
 		// show 全句
-		CeL.log(`\t原文⇒${reset_style}${JSON.stringify(original_word_list.join(''))}`);
+		CeL.log(`\t原文⇒${reset_style}${JSON.stringify(convert_from_text)}`);
 	}
 
-	//console.log(ansi_converted_CN);
+	//console.log(ansi_convert_from_text);
 	//CeL.log(`\t${JSON.stringify(convert_from_text)}`);
-	CeL.log(`${(new SGR_style(normal_style_converted_CN_row)).toString()
-		}原文:\t ${ansi_converted_CN.toString().replace(/\r/g, '\\r').replace(/\n/g, '\\n')}${reset_style}`);
+	CeL.log(`${(new SGR_style(normal_style_convert_from_text_row)).toString()
+		}原文:\t ${ansi_convert_from_text.toString().replace(/\r/g, '\\r').replace(/\n/g, '\\n')}${reset_style}`);
 
 	// 為轉換前後的差異文字著色。
 	CeL.coloring_diff(JSON.stringify(convert_to_text), JSON.stringify(should_convert_to_text), {
@@ -769,11 +788,24 @@ function print_section_report(configuration, options) {
 		],
 		header_style: { fg: 'cyan' }, print: true
 	});
-	condition_list.forEach(print_correction_condition);
+
+	let { work_title } = options;
+	if (!work_title && (work_title = configuration.test_title)) {
+		work_title = work_title.match(/watch_target\.(.+)\.(TW|CN)/);
+		if (work_title)
+			work_title = work_title[1];
+	}
+	condition_list.forEach(condition => print_correction_condition(condition, {
+		work_title,
+		convert_from_text,
+		tagged_convert_from_text,
+	}));
+
 	if (!is_fragment) {
 		CeL.log(`單純 zh_conversion 轉換過程:`);
-		CeL.log('單純:\t ' + (options.convert_to_language === 'TW' ? CeL_CN_to_TW : CeL_TW_to_CN)(original_word_list.join(''), { show_matched: true }));
+		CeL.log('單純:\t ' + (options.convert_to_language === 'TW' ? CeL_CN_to_TW : CeL_TW_to_CN)(convert_from_text, { show_matched: true }));
 	}
+
 	if (show_tagged_word_list) {
 		CeL.debug(beautify_tagged_word_list(tagged_word_list_pieces), 1);
 	}
@@ -1701,6 +1733,7 @@ function convert_paragraph(paragraph, options) {
 	// ---------------------------------------------
 	// Write cache to file
 
+	//console.trace([cache_directory, options]);
 	// options.cache_file_path maybe undefined!
 	if (cache_directory) {
 		if (options.cache_file_path) {

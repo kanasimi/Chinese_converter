@@ -184,6 +184,7 @@ async function test_paragraphs(converte_from_paragraphs, should_be, test_configu
 				//console.trace(should_be.correction_conditions[index]);
 				//console.trace(converte_from_paragraphs.configurations);
 				cecc.print_section_report({
+					test_title,
 					tagged_word_list: tagged_word_list_of_paragraphs ? tagged_word_list_of_paragraphs[index] : await cecc.tag_paragraph(convert_from_text, test_configuration.convert_options),
 					condition_list,
 					convert_from_text,

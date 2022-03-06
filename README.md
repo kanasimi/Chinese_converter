@@ -152,6 +152,7 @@ npm install cecc
 * 清华大学 [THULAC](http://thulac.thunlp.org/) [線上展示](http://thulac.thunlp.org/demo)
 * [HanLP](https://github.com/hankcs/HanLP)
 * 教育部语言文字应用研究所计算语言学研究室 [语料库在线](http://corpus.zhonghuayuwen.org/index.aspx) [線上展示](http://corpus.zhonghuayuwen.org/CpsWParser.aspx)
+* [Macropodus](https://github.com/yongzhuo/Macropodus)
 
 * [NLPIR](https://github.com/NLPIR-team/NLPIR) [中科院计算所 词性类别](http://103.242.175.216:197/nlpir/)
 
