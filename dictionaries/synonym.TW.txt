@@ -325,9 +325,6 @@
 
 	夥伴	伙伴
 
-	念	唸
-	念書	唸書
-
 	奇跡	奇蹟
 
 // http://163.28.10.78/content/junior/chinese/ks_wg/chinese/content/qa/qa05.htm
