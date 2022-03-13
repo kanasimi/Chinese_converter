@@ -112,7 +112,7 @@ npm install cecc
 2. zh_conversion 基本上採用 [OpenCC 的辭典](https://github.com/BYVoid/OpenCC/tree/master/data/dictionary)，並以 [generate_additional_table.js](https://github.com/kanasimi/CeJS/blob/master/extension/zh_conversion/generate_additional_table.js) 合併新同文堂和 ConvertZZ 的辭典檔成 additional.to_TW.auto-generated.txt 與 additional.to_CN.auto-generated.txt。依照 [CeL.extension.zh_conversion](https://github.com/kanasimi/CeJS/blob/master/extension/zh_conversion.js) 中 Converter.options 之辭典檔順序，每個序列由長至短轉換。實際文字替換轉換作業在 [CeL.data.Convert_Pairs](https://github.com/kanasimi/CeJS/blob/master/data/Convert_Pairs.js) 中的 <code>function convert_using_pair_Map_by_length(text)</code>。
 
 ## 辭典修訂流程
-[Chinese_converter 辭典修訂過程](https://lh3.googleusercontent.com/pw/AM-JKLWtoH1NCArwA-RkvBRhQg4QSee6W7lD1SY4Y3tmfOzfVprQ7cXYWG5hMUr67C7yOObE4MWuF9Gmpd0gtGFuq9b8_rPeftvHMUA9z83ZN-h0uWPHBijKmeGlYPlb-I9GyobLunsHOMxac7BWw0yl2K1G=w1261-h306-no)
+![Chinese_converter 辭典修訂過程](https://lh3.googleusercontent.com/pw/AM-JKLWtoH1NCArwA-RkvBRhQg4QSee6W7lD1SY4Y3tmfOzfVprQ7cXYWG5hMUr67C7yOObE4MWuF9Gmpd0gtGFuq9b8_rPeftvHMUA9z83ZN-h0uWPHBijKmeGlYPlb-I9GyobLunsHOMxac7BWw0yl2K1G=w1261-h306-no)
 
 ### 常規單句式辭典修訂流程
 1. 閱讀轉換過的文字，發現轉換錯誤。
