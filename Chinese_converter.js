@@ -393,7 +393,7 @@ function load_text_to_check(should_be_text__file_name, options) {
 		//console.log(this.generate_condition_for_language);
 		// this.generate_condition_for_language[convert_to_language] = { convert_from_text: should_convert_to_text, ... }
 		const generate_condition_for = this.generate_condition_for_language[check_language]
-			|| (this.generate_condition_for_language[check_language] = Object.create(null));
+			|| (this.generate_condition_for_language[check_language] = new Map);
 		const generate_condition_for__title = `${options?.export?.work_title ? `《${options.export.work_title}》` : '通用 '
 			}${CeL.gettext.get_alias(check_language === 'TW' ? 'CN' : 'TW')}→${CeL.gettext.get_alias(check_language)}`;
 		should_be_texts.forEach((should_convert_to_text, index) => {
@@ -411,13 +411,13 @@ function load_text_to_check(should_be_text__file_name, options) {
 				}
 			}
 			//console.trace([check_language === 'TW' ? CeL_CN_to_TW(text) : CeL_TW_to_CN(text), should_convert_to_text]);
-			if (generate_condition_for[text]) {
+			if (generate_condition_for.has(text)) {
 				CeL.log(`${setup_generate_condition_for.name}: ${generate_condition_for__title}: 重複設定 ${JSON.stringify(text)}`);
 			}
-			generate_condition_for[text] = { should_convert_to_text, ...options?.export, ...configuration };
+			generate_condition_for.set(text, { should_convert_to_text, ...options?.export, ...configuration });
 		});
 		//console.trace(generate_condition_for);
-		const totle_count = Object.keys(generate_condition_for).length;
+		const totle_count = generate_condition_for.size;
 		CeL.info(`${load_text_to_check.name}: 自動檢核 ${should_be_texts.length}個${generate_condition_for__title
 			} 之字串。${totle_count === should_be_texts.length ? '' : `總共檢核 ${totle_count}個。`} From ${should_be_text__file_path}`);
 		//console.trace(this.generate_condition_for_language);
@@ -443,8 +443,7 @@ function report_text_to_check(options) {
 	// lost_texts: 用來記錄、顯示還有哪些尚未處理。
 	const lost_texts = [], multi_matched = Object.create(null);
 	let OK_count = 0, NG_count = 0;
-	for (const convert_from in generate_condition_for) {
-		const convert_data = generate_condition_for[convert_from];
+	for (const [convert_from, convert_data] of generate_condition_for.entries()) {
 		if (!convert_data.work_title) {
 			// e.g., 常出錯詞語 @ this.text_to_check_files
 			continue;
@@ -1784,6 +1783,7 @@ function convert_paragraph(paragraph, options) {
 	const word_mode_options = options /* { mode: 'word_first', ...options } */;
 
 	const generate_condition_for = options.generate_condition_for || this.generate_condition_for_language && this.generate_condition_for_language[options.convert_to_language];
+	//console.trace(generate_condition_for);
 
 	let converted_text = [], waiting_queue = [];
 	tagged_word_list.forEach((word_data, index_of_tagged_word_list) => {
@@ -1919,15 +1919,16 @@ function convert_paragraph(paragraph, options) {
 	if (generate_condition_for && this.generate_condition) {
 		// 長度累加紀錄。
 		let tagged_word_list_length_accumulation, converted_text_length_accumulation;
-		for (let [convert_from_text, should_convert_to] of Object.entries(generate_condition_for)) {
+		for (let [convert_from_text, should_convert_to] of generate_condition_for.entries()) {
 			const should_convert_to_is_Object = CeL.is_Object(should_convert_to);
 			const should_convert_to_text = should_convert_to_is_Object ? should_convert_to.should_convert_to_text : should_convert_to;
+			//console.trace([convert_from_text, should_convert_to_text]);
 			// 勣 → '𪟝'.length === 2
 			if (convert_from_text.chars().length !== should_convert_to_text.chars().length) {
 				if (!skip_tests_convert_to_different_length) {
 					CeL.error(`${convert_paragraph.name}: 預設解答與轉換前之文字長度不符，刪除解答：`);
 					check_convert_to_different_length(convert_from_text, should_convert_to_text, true, true);
-					delete generate_condition_for[convert_from_text];
+					generate_condition_for.delete(convert_from_text);
 					continue;
 				}
 
@@ -2009,7 +2010,7 @@ function convert_paragraph(paragraph, options) {
 
 				if (!should_convert_to_is_Object) {
 					// 初始化。
-					generate_condition_for[convert_from_text] = should_convert_to = { should_convert_to_text };
+					generate_condition_for.set(convert_from_text, should_convert_to = { should_convert_to_text });
 				}
 				if (!should_convert_to.check_result) {
 					// 初始化。
