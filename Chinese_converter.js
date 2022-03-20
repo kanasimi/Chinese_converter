@@ -394,6 +394,8 @@ function load_text_to_check(should_be_text__file_name, options) {
 		// this.generate_condition_for_language[convert_to_language] = { convert_from_text: should_convert_to_text, ... }
 		const generate_condition_for = this.generate_condition_for_language[check_language]
 			|| (this.generate_condition_for_language[check_language] = Object.create(null));
+		const generate_condition_for__title = `${options?.export?.work_title ? `《${options.export.work_title}》` : '通用 '
+			}${CeL.gettext.get_alias(check_language === 'TW' ? 'CN' : 'TW')}→${CeL.gettext.get_alias(check_language)}`;
 		should_be_texts.forEach((should_convert_to_text, index) => {
 			const configuration = should_be_texts.configurations[should_convert_to_text];
 			let text = source_texts[index];
@@ -409,12 +411,14 @@ function load_text_to_check(should_be_text__file_name, options) {
 				}
 			}
 			//console.trace([check_language === 'TW' ? CeL_CN_to_TW(text) : CeL_TW_to_CN(text), should_convert_to_text]);
+			if (generate_condition_for[text]) {
+				CeL.log(`${setup_generate_condition_for.name}: ${generate_condition_for__title}: 重複設定 ${JSON.stringify(text)}`);
+			}
 			generate_condition_for[text] = { should_convert_to_text, ...options?.export, ...configuration };
 		});
 		//console.trace(generate_condition_for);
 		const totle_count = Object.keys(generate_condition_for).length;
-		CeL.info(`${load_text_to_check.name}: 自動檢核 ${should_be_texts.length}個${options?.export?.work_title ? `《${options.export.work_title}》` : '通用 '
-			}${CeL.gettext.get_alias(check_language === 'TW' ? 'CN' : 'TW')}→${CeL.gettext.get_alias(check_language)
+		CeL.info(`${load_text_to_check.name}: 自動檢核 ${should_be_texts.length}個${generate_condition_for__title
 			} 之字串。${totle_count === should_be_texts.length ? '' : `總共檢核 ${totle_count}個。`} From ${should_be_text__file_path}`);
 		//console.trace(this.generate_condition_for_language);
 		return this.generate_condition_for_language;
