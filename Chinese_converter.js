@@ -1720,6 +1720,12 @@ function set__options_tagged_word_list__via_cache(paragraph, options) {
 	return [options, cache_directory];
 }
 
+function save_cache_file_for_short_sentences(cache_file_path) {
+	//console.trace([cache_file_path, Object.keys(this.general_word_list_cache).length]);
+	CeL.write_file(cache_file_path, this.general_word_list_cache);
+	delete this.save_cache_file_for_short_sentences;
+}
+
 /**
  * 轉換段落文字。
  * @param {String}paragraph 段落文字
@@ -1755,7 +1761,14 @@ function convert_paragraph(paragraph, options) {
 			if (!this.general_word_list_cache[paragraph]) {
 				// deep clone. 避免後續 this.general_word_list_cache 內容被更動。
 				this.general_word_list_cache[paragraph] = Object.clone(tagged_word_list, true);
-				CeL.write_file(cache_directory + options.cache_file_for_short_sentences, this.general_word_list_cache);
+				const cache_file_path = cache_directory + options.cache_file_for_short_sentences;
+				//console.trace([cache_file_path, paragraph]);
+				if (options.delay_save_file) {
+					// 延遲儲存檔案。 Must save the file yourself!
+					this.save_cache_file_for_short_sentences = save_cache_file_for_short_sentences.bind(this, cache_file_path);
+				} else {
+					save_cache_file_for_short_sentences.call(this, cache_file_path);
+				}
 			}
 		}
 	}

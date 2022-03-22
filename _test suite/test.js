@@ -142,7 +142,7 @@ else
 async function test_paragraphs(converte_from_paragraphs, should_be, test_configuration, options) {
 	const { assert, test_title } = test_configuration;
 	const { tagged_word_list_of_paragraphs, converted_paragraphs }
-		= await cecc[options.convert_to_language === 'TW' ? 'to_TW' : 'to_CN'](converte_from_paragraphs, { ...test_configuration.convert_options, get_full_data: true, generate_condition: true, should_be });
+		= await cecc[options.convert_to_language === 'TW' ? 'to_TW' : 'to_CN'](converte_from_paragraphs, { ...test_configuration.convert_options, get_full_data: true, generate_condition: true, should_be, delay_save_file: true });
 	//console.trace([tagged_word_list_of_paragraphs, test_configuration, converte_from_paragraphs]);
 	const test_postfix = options.test_postfix ? ' ' + options.test_postfix : '';
 
@@ -220,6 +220,11 @@ async function for_each_test_set(test_configuration) {
 	}
 
 	await test_paragraphs(converted_CN, TW_paragraphs, test_configuration, { convert_to_language: 'TW', message_should_be: '原繁' });
+
+	if (cecc.save_cache_file_for_short_sentences) {
+		// 延遲儲存檔案。 Must save the file yourself!
+		cecc.save_cache_file_for_short_sentences();
+	}
 
 	finish_test(test_name);
 }

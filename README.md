@@ -33,13 +33,11 @@ CeL.zh_conversion 採用與 OpenCC 和新同文堂相同的技術，從前至後
 
 歡迎提供句子以做測試，也歡迎提交辭典檔規則。
 
-理想情況，尚可加上自動判斷句子、段落的語境（配合[維基百科專有名詞轉換](https://zh.wikipedia.org/wiki/Wikipedia:%E5%AD%97%E8%A9%9E%E8%BD%89%E6%8F%9B%E8%99%95%E7%90%86/%E5%85%AC%E5%85%B1%E8%BD%89%E6%8F%9B%E7%B5%84)）。
-
 
 ## Process
 繁簡轉換流程： 
 1. 中文分詞（採用外包程式中文斷詞）
-2. TODO: 判別語境
+2. TODO: 自動判斷/手動指定句子、段落的語境（配合[維基百科專有名詞轉換](https://zh.wikipedia.org/wiki/Wikipedia:%E5%AD%97%E8%A9%9E%E8%BD%89%E6%8F%9B%E8%99%95%E7%90%86/%E5%85%AC%E5%85%B1%E8%BD%89%E6%8F%9B%E7%B5%84)）。
 3. 依照相應詞典轉換各詞彙
 
 ## Features
