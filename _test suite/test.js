@@ -170,17 +170,23 @@ async function test_paragraphs(converte_from_paragraphs, should_be, test_configu
 			const condition_list = should_be.correction_conditions[index];
 			if (!condition_list)
 				continue;
-			const should_convert_to_text = should_be[index];
-			//if (converte_from_paragraphs.configurations) console.trace([converte_from_paragraphs.configurations, converte_from_paragraphs[index], converte_from_paragraphs.configurations[converte_from_paragraphs[index]]]);
-			if (converted_paragraphs[index] !== should_convert_to_text && converte_from_paragraphs.configurations && converte_from_paragraphs.configurations[converte_from_paragraphs[index]]) {
-				//console.trace([converted_paragraphs[index], should_convert_to_text, converte_from_paragraphs.configurations[converte_from_paragraphs[index]]]);
-				CeL.debug(`跳過測試: ${JSON.stringify(converte_from_paragraphs[index])} 轉換成→${JSON.stringify(converted_paragraphs[index])}。但已設定原文=${JSON.stringify(converte_from_paragraphs.configurations[converte_from_paragraphs[index]].原文)}。`, 1, test_paragraphs.name);
+			const configuration = converte_from_paragraphs.configurations && converte_from_paragraphs.configurations[converte_from_paragraphs[index]];
+			const original_text = configuration?.原文;
+			const should_convert_to_text = original_text || should_be[index];
+			//if (converte_from_paragraphs.configurations) console.trace([converte_from_paragraphs.configurations, converte_from_paragraphs[index], configuration]);
+			if (original_text) {
+				//console.trace([converted_paragraphs[index], should_convert_to_text, configuration]);
+				if (converted_paragraphs[index] !== should_convert_to_text)
+					CeL.debug(`跳過測試: ${JSON.stringify(converte_from_paragraphs[index])} 轉換成→${JSON.stringify(converted_paragraphs[index])}。但已設定原文=${JSON.stringify(original_text)}。`, 1, test_paragraphs.name);
+				converted_paragraphs[index] = original_text;
 				continue;
 			}
 			if (!assert([converted_paragraphs[index], should_convert_to_text], test_title + ` #${index + 1}/${test_length}${test_postfix}`)) {
 				test_results.error_count++;
 				//CeL.log(`　 繁\t${JSON.stringify(should_convert_to_text)}`);
 				const convert_from_text = converte_from_paragraphs[index];
+				//console.trace(convert_from_text);
+				//console.trace(should_be.configurations && should_be.configurations[should_convert_to_text]);
 				//console.trace(should_be.correction_conditions[index]);
 				//console.trace(converte_from_paragraphs.configurations);
 				cecc.print_section_report({
@@ -576,7 +582,7 @@ add_test('正確率檢核', async (assert, setup_test, finish_test, options) => 
 				const content_paragraph = content_paragraphs[index];
 				if (content_paragraph in content_paragraphs.configurations) {
 					const configuration = content_paragraphs.configurations[content_paragraph];
-					//console.log([content_paragraph, configuration, answer_paragraph]);
+					//console.log([content_paragraph, configuration, answer_paragraphs[index]]);
 					if (configuration.原文) {
 						if (configuration.原文 === answer_paragraphs[index]) {
 							CeL.log(`轉換前後文字相同，無需設定"原文" ${JSON.stringify(content_paragraph)}: ${JSON.stringify(configuration)}`);

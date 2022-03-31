@@ -398,6 +398,7 @@ function load_text_to_check(should_be_text__file_name, options) {
 			}${CeL.gettext.get_alias(check_language === 'TW' ? 'CN' : 'TW')}→${CeL.gettext.get_alias(check_language)}`;
 		should_be_texts.forEach((should_convert_to_text, index) => {
 			const configuration = should_be_texts.configurations[should_convert_to_text];
+			//console.trace([should_convert_to_text, configuration]);
 			let text = source_texts[index];
 			if (false && configuration) {
 				console.trace([text, should_convert_to_text, configuration]);
@@ -1816,6 +1817,7 @@ function convert_paragraph(paragraph, options) {
 			return;
 		}
 
+		//console.trace(matched_condition_data);
 		const { all_matched_conditions } = matched_condition_data;
 		if (all_matched_conditions) {
 			if (all_matched_conditions.length > 1) {
@@ -1859,6 +1861,7 @@ function convert_paragraph(paragraph, options) {
 
 			let converted_word_list;
 			if (waiting_queue.length > 0) {
+				//console.trace(waiting_queue);
 				converted_word_list = forced_convert(waiting_queue, index_of_tagged_word_list, tagged_word_list, word_mode_options);
 				//console.log([waiting_queue.join('').length, converted_word_list.join('').length]);
 				//console.trace([waiting_queue.join(''), converted_word_list.join('')]);
@@ -2201,12 +2204,17 @@ function get_paragraphs_of_text(text, options) {
 			if (text = text.trim()) {
 				// 可用 `// {"原文":"___"}` 來設定下一行文句的屬性。
 				if (text.startsWith('//')) {
+					this_config = null;
+					// 2 === '//'.length
+					text = text.slice(2).trimStart();
 					//console.trace([text]);
-					try {
-						// 2 === '//'.length
-						this_config = JSON.parse(text.slice(2));
-					} catch {
-						this_config = null;
+					if (text.endsWith('}') && /^{\s*"/.test(text)) {
+						try {
+							this_config = JSON.parse(text);
+							//console.trace(this_config);
+						} catch {
+							CeL.warn(`${get_paragraphs_of_text.name}: Invalid JSON? ${text}`);
+						}
 					}
 					return filtered;
 				}
@@ -2216,6 +2224,7 @@ function get_paragraphs_of_text(text, options) {
 				if (this_config) {
 					//console.trace([text, this_config]);
 					configurations[text] = this_config;
+					this_config = null;
 				}
 			}
 			this_config = null;
@@ -2229,8 +2238,10 @@ function get_paragraphs_of_text(text, options) {
 
 	//console.trace([paragraphs, configurations]);
 	if (paragraphs.length > 0) {
-		if (with_configurations)
+		if (with_configurations) {
 			paragraphs.configurations = configurations;
+			//console.trace(paragraphs);
+		}
 		return paragraphs;
 	}
 }
