@@ -728,9 +728,11 @@ function print_section_report(configuration, options) {
 	}
 
 	const tagged_word_list_pieces = start_index >= 0 ? tagged_word_list.slice(start_index - backward, end_index + forward) : tagged_word_list;
+	//console.trace(tagged_word_list_pieces);
 
 	let offset = convert_from_text.match(/^\s*/)[0].length, original_sentence_word_list = [];
 	const tagged_convert_from_text = [];
+	const matched_conditions = [];
 	//console.trace([convert_from_text, offset, distance_token_header_to_metched, start_index, backward]);
 	CeL.log(`${normal_style_tagged
 		}${CeL.gettext.get_alias(options.convert_to_language === 'TW' ? 'CN' : 'TW').slice(0, 1)
@@ -741,6 +743,10 @@ function print_section_report(configuration, options) {
 			const text = stringify_condition(prefix_spaces) + word_data_to_condition.call(this, word_data);
 			tagged_convert_from_text.push(text);
 			original_sentence_word_list.push(prefix_spaces + word_data[this.KEY_word]);
+			const matched_condition_data = word_data[KEY_matched_condition];
+			if (matched_condition_data) {
+				matched_conditions.push(matched_condition_data.matched_condition + ' → ' + matched_condition_data.condition_text);
+			}
 			if (backward && (index -= backward) < 0) {
 				return text;
 			}
@@ -806,6 +812,11 @@ function print_section_report(configuration, options) {
 		original_sentence_word_list,
 		tagged_convert_from_text,
 	}));
+
+	if (matched_conditions.length > 0) {
+		matched_conditions.unshift('匹配的條件式:');
+		CeL.log(matched_conditions.join('\n\t'));
+	}
 
 	if (!is_fragment) {
 		CeL.log(`單純 zh_conversion 轉換過程:`);
@@ -1328,7 +1339,8 @@ function generate_condition_LTP(configuration, options) {
 		}
 		//console.trace([should_be_slice, word_data]);
 		const target = should_be_slice.trim();
-		if (synonyms_Map.has(target) && synonyms_Map.get(target).includes(converted_to.trimStart())) {
+		// 不檢查/跳過同義詞，通用詞彙不算錯誤。用於無法校訂原始文件的情況。
+		if (options.skip_check_for_synonyms && synonyms_Map.has(target) && synonyms_Map.get(target).includes(converted_to.trimStart())) {
 			// 為可接受之同義詞，可跳過。
 			continue;
 		}

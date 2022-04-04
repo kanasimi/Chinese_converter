@@ -547,9 +547,16 @@ add_test('正確率檢核', async (assert, setup_test, finish_test, options) => 
 			// 檢查辭典檔的規則。debug 用，會拖累效能。
 			check_dictionary: CeL.is_debug(),
 
+			// 不檢查/跳過同義詞，通用詞彙不算錯誤。用於無法校訂原始文件的情況。
+			skip_check_for_synonyms: !/^(?:watch_target|[a-z.]+?\.(?:TW|CN))\./.test(file_name),
+
 			// 超過此長度才創建個別的 cache 檔案，否則會放在 .cache_file_for_short_sentences。
 			min_cache_length: 20
 		};
+
+		if (convert_options.skip_check_for_synonyms) {
+			CeL.warn(`不檢查 [${file_name}] 的同義詞。`);
+		}
 
 		const file_path = articles_directory + file_name;
 		const answer_file_path = CeCC.to_converted_file_path(file_path);
