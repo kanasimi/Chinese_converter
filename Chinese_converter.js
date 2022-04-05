@@ -3,6 +3,7 @@
 TODO:
 簡化辭典複雜度: 分割個別作品的辭典為特設辭典。
 依照前後詞彙再建立 Map()，避免條件式串列過長。這可能得考慮如何合併詞性標註錯誤時的條件式。
++ PoS: "n*" 放在 "n:" 之下。
 
 
 https://zhuanlan.zhihu.com/p/95358646
@@ -627,8 +628,11 @@ function parse_condition(full_condition_text, options) {
 
 		condition_data.condition_text = token;
 
-		if (matched.not_match)
-			condition_data.not_match = matched.not_match;
+		if (matched.not_match) {
+			// !!: 採用字串作XOR運算，可能出現錯誤。 ('!'^true)===1
+			condition_data.not_match = !!matched.not_match;
+			//console.trace([matched, condition_data]);
+		}
 		if (matched.tag)
 			condition_data[this.KEY_PoS_tag] = matched.tag;
 		if (matched.is_optional)
@@ -1119,24 +1123,24 @@ function match_single_condition(single_condition, word_data, options) {
 	// NLPIR 词性类别: 计算所汉语词性标记集 http://103.242.175.216:197/nlpir/html/readme.htm
 	filter = single_condition[this.KEY_PoS_tag];
 	if (filter
-		&& !single_condition.not_match ^ CeL.fit_filter(filter, word_data[this.KEY_PoS_tag])) {
-		return;
+		&& !CeL.fit_filter(filter, word_data[this.KEY_PoS_tag])) {
+		//if (single_condition.not_match) console.trace([single_condition, filter, word_data, CeL.fit_filter(filter, word_data[this.KEY_PoS_tag])]);
+		return single_condition.not_match;
 	}
 
 	filter = single_condition[this.KEY_word];
-	if (filter
+	if (!filter
 		// .is_target 時， [this.KEY_word] 可能是欲改成的字串，此時不做篩選。
-		&& (!single_condition.is_target || CeL.is_RegExp(filter))
-		&& !single_condition.not_match ^ (CeL.fit_filter(filter, word_data[this.KEY_word])
-			// 接受 condition filter 包含 prefix spaces 的情況。
-			//|| word_data[KEY_prefix_spaces] && typeof word_data[this.KEY_word] === 'string' && CeL.fit_filter(filter, word_data[KEY_prefix_spaces] + word_data[this.KEY_word])
-		)
-	) {
-		//console.trace([single_condition, filter, CeL.fit_filter(filter, word_data[this.KEY_word])]);
-		return;
+		|| single_condition.is_target && !CeL.is_RegExp(filter)) {
+		return true;
 	}
 
-	return true;
+	//if (single_condition.not_match && /上/.test(filter)) console.trace([single_condition, filter, word_data, CeL.fit_filter(filter, word_data[this.KEY_word]), single_condition.not_match ^ CeL.fit_filter(filter, word_data[this.KEY_word])]);
+	// console.trace([single_condition, filter, CeL.fit_filter(filter, word_data[this.KEY_word])]);
+	return single_condition.not_match ^ (CeL.fit_filter(filter, word_data[this.KEY_word])
+		// 接受 condition filter 包含 prefix spaces 的情況。
+		//|| word_data[KEY_prefix_spaces] && typeof word_data[this.KEY_word] === 'string' && CeL.fit_filter(filter, word_data[KEY_prefix_spaces] + word_data[this.KEY_word])
+	);
 }
 
 function match_condition(options) {
