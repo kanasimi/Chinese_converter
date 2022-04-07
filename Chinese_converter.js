@@ -3,7 +3,7 @@
 TODO:
 簡化辭典複雜度: 分割個別作品的辭典為特設辭典。
 依照前後詞彙再建立 Map()，避免條件式串列過長。這可能得考慮如何合併詞性標註錯誤時的條件式。
-+ PoS: "n*" 放在 "n:" 之下。
++ PoS: "n*" 放在 "n*:" 之下。
 
 
 https://zhuanlan.zhihu.com/p/95358646
@@ -749,6 +749,7 @@ function print_section_report(configuration, options) {
 			original_sentence_word_list.push(prefix_spaces + word_data[this.KEY_word]);
 			const matched_condition_data = word_data[KEY_matched_condition];
 			if (matched_condition_data) {
+				//console.trace(matched_condition_data);
 				matched_conditions.push(matched_condition_data.matched_condition + ' → ' + matched_condition_data.condition_text);
 			}
 			if (backward && (index -= backward) < 0) {
@@ -1020,7 +1021,7 @@ function load_synonym_dictionary() {
 			const 正字正詞 = synonyms.shift();
 			if (synonyms.length === 0) {
 				if (CeL.PATTERN_RegExp_replacement.test(正字正詞)) {
-					// {RegExp}同義詞pattern
+					// {RegExp}通同字/同義詞pattern
 					synonyms_Map[KEY_synonym_pattern].push(正字正詞.to_RegExp({ allow_replacement: true }));
 				} else {
 					CeL.error(`${load_synonym_dictionary.name}: No synonym settle: ${正字正詞}`)
@@ -1343,9 +1344,9 @@ function generate_condition_LTP(configuration, options) {
 		}
 		//console.trace([should_be_slice, word_data]);
 		const target = should_be_slice.trim();
-		// 不檢查/跳過同義詞，通用詞彙不算錯誤。用於無法校訂原始文件的情況。
+		// 不檢查/跳過通同字/同義詞，通用詞彙不算錯誤。用於無法校訂原始文件的情況。
 		if (options.skip_check_for_synonyms && synonyms_Map.has(target) && synonyms_Map.get(target).includes(converted_to.trimStart())) {
-			// 為可接受之同義詞，可跳過。
+			console.trace(`為可接受之通同字/同義詞，可跳過 ${JSON.stringify(target)}。`);
 			continue;
 		}
 
@@ -1355,7 +1356,7 @@ function generate_condition_LTP(configuration, options) {
 			// assert: pattern has .replace_to
 			&& synonym_pattern.replace(target) === converted_to.trimStart()
 		)) {
-			// 為可接受之同義詞，可跳過。
+			// 為可接受之通同字/同義詞，可跳過。
 			continue;
 		}
 
@@ -1836,6 +1837,7 @@ function convert_paragraph(paragraph, options) {
 		//console.trace(matched_condition_data);
 		const { all_matched_conditions } = matched_condition_data;
 		if (all_matched_conditions) {
+			//console.trace(all_matched_conditions);
 			if (all_matched_conditions.length > 1) {
 				//console.trace(all_matched_conditions);
 			}
@@ -2059,7 +2061,7 @@ function convert_paragraph(paragraph, options) {
 				const condition_list = this.generate_condition({ tagged_word_list, converted_text, should_be_text, start_index, end_index }, options);
 				//console.trace(condition_list);
 				if (condition_list.length === 0) {
-					//console.trace('只有同義詞。');
+					//console.trace('只有通同字/同義詞。');
 					should_convert_to.check_result.OK.push(true);
 					continue;
 				}
@@ -2096,7 +2098,7 @@ function convert_paragraph(paragraph, options) {
 						options.should_be.correction_conditions = [];
 					options.should_be.correction_conditions[options.paragraph_index] = condition_list;
 				} else {
-					// 只有同義詞。
+					// 只有通同字/同義詞。
 				}
 
 			}

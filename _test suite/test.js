@@ -187,10 +187,13 @@ async function test_paragraphs(converte_from_paragraphs, should_be, test_configu
 				const convert_from_text = converte_from_paragraphs[index];
 				//console.trace(convert_from_text);
 				//console.trace(should_be.configurations && should_be.configurations[should_convert_to_text]);
+				//console.trace(should_be.correction_conditions);
 				//console.trace(should_be.correction_conditions[index]);
 				//console.trace(converte_from_paragraphs.configurations);
+				//console.trace(tagged_word_list_of_paragraphs);
 				cecc.print_section_report({
 					test_title,
+					// 警告: 採用 cache 會無法取得 word_data[KEY_matched_condition]，有些符合的無法顯示。
 					tagged_word_list: tagged_word_list_of_paragraphs ? tagged_word_list_of_paragraphs[index] : await cecc.tag_paragraph(convert_from_text, test_configuration.convert_options),
 					condition_list,
 					convert_from_text,
@@ -547,7 +550,7 @@ add_test('正確率檢核', async (assert, setup_test, finish_test, options) => 
 			// 檢查辭典檔的規則。debug 用，會拖累效能。
 			check_dictionary: CeL.is_debug(),
 
-			// 不檢查/跳過同義詞，通用詞彙不算錯誤。用於無法校訂原始文件的情況。
+			// 不檢查/跳過通同字/同義詞，通用詞彙不算錯誤。用於無法校訂原始文件的情況。
 			skip_check_for_synonyms: !/^(?:watch_target|[a-z.]+?\.(?:TW|CN))\./.test(file_name),
 
 			// 超過此長度才創建個別的 cache 檔案，否則會放在 .cache_file_for_short_sentences。
@@ -555,7 +558,7 @@ add_test('正確率檢核', async (assert, setup_test, finish_test, options) => 
 		};
 
 		if (convert_options.skip_check_for_synonyms) {
-			CeL.warn(`不檢查 [${file_name}] 的同義詞。`);
+			CeL.warn(`跳過 [${file_name}] 的通同字/同義詞檢查，將通同字/同義詞當作無錯誤。`);
 		}
 
 		const file_path = articles_directory + file_name;
@@ -710,14 +713,20 @@ if (CeL.env.argv.includes('nowiki')) {
 			assert, setup_test, finish_test,
 			test_results: Object.create(null),
 			error_count: 0, max_error_tags_showing: 0,
+			text_is_TW: true,
+			convert_options: {
+				// 不檢查/跳過通同字/同義詞，通用詞彙不算錯誤。用於無法校訂原始文件的情況。
+				skip_check_for_synonyms: true,
+			}
 		};
 
 		for (const page_title of page_title_list) {
 			const page_data = await zhwiki.page(page_title, { redirects: 1 });
 			//console.log(page_data.wikitext);
+			// TODO: including [[維基百科:字詞轉換處理]]
 
 			await for_each_test_set(Object.assign(test_configuration, {
-				test_title: page_title, text_is_TW: true,
+				test_title: page_title,
 				content_paragraphs: CeCC.get_paragraphs_of_text(await get_parsed_wikitext(page_data, 'zh-tw')),
 				answer_paragraphs: CeCC.get_paragraphs_of_text(await get_parsed_wikitext(page_data, 'zh-cn')),
 			}));
