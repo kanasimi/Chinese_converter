@@ -1321,46 +1321,65 @@ function recover_spaces(parsed, paragraph) {
 
 // @inner 自動生成辭典用的候選條件式。須配合 condition_filter_LTP()。
 function generate_condition_LTP(configuration, options) {
-	const synonyms_Map = this.synonyms_of_language[options.convert_to_language];
+	const synonyms_Map = options.skip_check_for_synonyms && this.synonyms_of_language[options.convert_to_language];
+	const synonym_pattern_list = synonyms_Map && synonyms_Map[KEY_synonym_pattern];
+	//console.trace(configuration);
 	const { tagged_word_list, converted_text, should_be_text } = configuration;
+	//console.trace({ tagged_word_list, converted_text, should_be_text });
 	const start_index = configuration.start_index >= 0 ? configuration.start_index : 0;
 	const end_index = isNaN(configuration.end_index) ? tagged_word_list.length : Math.min(tagged_word_list.length, configuration.end_index);
 	//console.trace([configuration, options.paragraph_index, start_index, end_index]);
 	const tagged_word_list_index_offset = start_index - tagged_word_list[start_index].id;
 	//assert: tagged_word_list[tagged_word_list_index_offset].id === 0
 
-	let offset = 0;
+	const diff_list = CeL.LCS(converted_text.join(''), should_be_text, { diff: true });
+	//console.trace({ converted_text, should_be_text, diff_list });
 	const condition_list = [], index_hash = Object.create(null);
 	condition_list.index_hash = index_hash;
-	for (let index = start_index; index < end_index; index++) {
+	for (let index = start_index,
+		/** {Number} offset of converted_to slice in converted_text */
+		index_of_converted_to_slice = 0; index < end_index; index++) {
 		const word_data = tagged_word_list[index];
 		const converted_to = converted_text[index];
-		//const index_of_should_be_slice = offset;
-		const should_be_slice = should_be_text.substr(offset, converted_to.length);
-		offset += converted_to.length;
-		//console.trace([should_be_slice, word_data]);
+		//console.trace([word_data, converted_to]);
+
+		// 應對 converted_to slice 與 should_be_slice 長度不同的情況。
+		const should_be_slice = should_be_text.slice(
+			CeL.LCS.corresponding_index(diff_list, index_of_converted_to_slice),
+			CeL.LCS.corresponding_index(diff_list, index_of_converted_to_slice += converted_to.length)
+		);
+		if (false) {
+			console.trace([
+				[index_of_converted_to_slice, index_of_converted_to_slice + converted_to.length, converted_to],
+				[CeL.LCS.corresponding_index(diff_list, index_of_converted_to_slice - converted_to.length), CeL.LCS.corresponding_index(diff_list, index_of_converted_to_slice), should_be_slice]
+			]);
+		}
+
+		//console.trace([should_be_slice, converted_to, word_data]);
 		if (should_be_slice === converted_to) {
 			continue;
 		}
-		//console.trace([should_be_slice, word_data]);
+		//console.trace([should_be_slice, converted_to, word_data]);
 		const target = should_be_slice.trim();
 		// 不檢查/跳過通同字/同義詞，通用詞彙不算錯誤。用於無法校訂原始文件的情況。
-		if (options.skip_check_for_synonyms && synonyms_Map.has(target) && synonyms_Map.get(target).includes(converted_to.trimStart())) {
-			console.trace(`為可接受之通同字/同義詞，可跳過 ${JSON.stringify(target)}。`);
-			continue;
-		}
+		if (synonyms_Map) {
+			if (synonyms_Map.has(target) && synonyms_Map.get(target).includes(converted_to.trimStart())) {
+				//console.trace(`為可接受之通同字/同義詞，可跳過 ${JSON.stringify(target)}。`);
+				continue;
+			}
 
-		const synonym_pattern_list = synonyms_Map[KEY_synonym_pattern];
-		if (synonym_pattern_list.some(synonym_pattern =>
-			synonym_pattern.test(target)
-			// assert: pattern has .replace_to
-			&& synonym_pattern.replace(target) === converted_to.trimStart()
-		)) {
-			// 為可接受之通同字/同義詞，可跳過。
-			continue;
+			if (synonym_pattern_list.some(synonym_pattern =>
+				synonym_pattern.test(target)
+				// assert: pattern has .replace_to
+				&& synonym_pattern.replace(target) === converted_to.trimStart()
+			)) {
+				//console.trace(`匹配可接受之通同字/同義詞，可跳過 ${JSON.stringify(target)}。`);
+				continue;
+			}
 		}
 
 		const condition = [word_data_to_condition.call(this, word_data)];
+		//console.trace([condition, target]);
 		//const stringified_target = stringify_condition(target);
 		const base_condition = '~' + stringify_condition(target);
 		word_data.condition = condition;
@@ -1405,7 +1424,7 @@ function generate_condition_LTP(configuration, options) {
 		//CeL.info(`${generate_condition_LTP.name}: Condition for ${word_data[this.KEY_word]}→${base_condition}:`);
 		Object.assign(condition, {
 			parsed: word_data, target, error_converted_to: converted_to,
-			//should_be_slice, index_of_should_be_slice
+			//should_be_slice
 		});
 		//CeL.log(condition.join('\t'));
 		//console.trace(condition);
@@ -1987,10 +2006,9 @@ function convert_paragraph(paragraph, options) {
 					tagged_word_list.forEach(word_data => tagged_word_list_length_accumulation.push(length += (word_data[KEY_prefix_spaces] ? word_data[KEY_prefix_spaces].length : 0) + word_data[this.KEY_word].length));
 				}
 				if (!converted_text_length_accumulation) {
-					let length = 0;
 					// 初始化。
-					converted_text_length_accumulation = [length];
-					converted_text.forEach(token => converted_text_length_accumulation.push(length += token.length));
+					converted_text_length_accumulation = [0];
+					converted_text.reduce((accumulated_length, token) => { converted_text_length_accumulation.push(accumulated_length += token.length); return accumulated_length; }, 0);
 				}
 
 				// 找出轉換後文字對應的位置。
