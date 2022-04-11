@@ -1332,8 +1332,8 @@ function generate_condition_LTP(configuration, options) {
 	const tagged_word_list_index_offset = start_index - tagged_word_list[start_index].id;
 	//assert: tagged_word_list[tagged_word_list_index_offset].id === 0
 
-	const diff_list = CeL.LCS(converted_text.join(''), should_be_text, { diff: true });
-	//console.trace({ converted_text, should_be_text, diff_list });
+	const diff_list = CeL.LCS(converted_text.slice(start_index, end_index).join(''), should_be_text, { diff: true });
+	//console.trace({ converted_text.slice(start_index, end_index), should_be_text, diff_list });
 	const condition_list = [], index_hash = Object.create(null);
 	condition_list.index_hash = index_hash;
 	for (let index = start_index,
@@ -1363,6 +1363,7 @@ function generate_condition_LTP(configuration, options) {
 		const target = should_be_slice.trim();
 		// 不檢查/跳過通同字/同義詞，通用詞彙不算錯誤。用於無法校訂原始文件的情況。
 		if (synonyms_Map) {
+			// .trimStart(): 只有 word_data[KEY_prefix_spaces]
 			if (synonyms_Map.has(target) && synonyms_Map.get(target).includes(converted_to.trimStart())) {
 				//console.trace(`為可接受之通同字/同義詞，可跳過 ${JSON.stringify(target)}。`);
 				continue;
@@ -2084,6 +2085,7 @@ function convert_paragraph(paragraph, options) {
 					continue;
 				}
 
+				//console.trace({ distance_token_header_to_metched, converted_text_String });
 				should_convert_to.check_result.NG.push(true);
 				this.print_section_report({
 					tagged_word_list,
