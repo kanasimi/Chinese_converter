@@ -832,6 +832,7 @@ ins上的聖誕短影片，
 會定期和他視訊通話，
 // {"原文":"她的手里还攥着只扫把，"}
 她的手裡還攥著支掃把，
+輸入代碼，oo……
 
 
 // insert_watch_target_to_general_test_text

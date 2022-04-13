@@ -832,6 +832,7 @@ ins上的圣诞短影片，
 会定期和他视讯通话，
 // {"原文":"她的手里还攥着只扫把，"}
 她的手里还攥着支扫把，
+输入代码，oo……
 
 
 // insert_watch_target_to_general_test_text
