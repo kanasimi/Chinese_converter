@@ -37,6 +37,7 @@ let test_done = 0;
 /** {ℕ⁰:Natural}test start time value */
 const test_start_time = Date.now();
 
+// TODO: https://nodejs.org/dist/latest/docs/api/test.html
 function check_tests(recorder, error_count) {
 	all_error_count += error_count;
 	++test_done;
@@ -605,7 +606,8 @@ add_test('正確率檢核', async (assert, setup_test, finish_test, options) => 
 				if (!check_dictionary)
 					continue;
 
-				if (content_paragraph.length < 6 && !/[\s、，；：。？！…」』】]$/.test(content_paragraph.trim())) {
+				// @see CeL.data.count_word()
+				if (content_paragraph.length < 6 && !/[\s、，；：。？！…）」』】]$/.test(content_paragraph.trim())) {
 					// 太短的詞句大多已經檢核過，為與上下文有關的問題而設置。 e.g., "松了口气", "后土皇地祇"
 					continue;
 				}
@@ -618,7 +620,7 @@ add_test('正確率檢核', async (assert, setup_test, finish_test, options) => 
 				}
 
 				// 辭典檔中若是包含這個字串，則代表寫進了這條字串相關的規則。
-				let need_note = dictionary_file_content.indexOf(answer_paragraph.length < 7 ? answer_paragraph.trim() : answer_paragraph.replace(/[\s「『【]+$/, '').replace(/[\s、，；：。？！…」』】]+$/, ''));
+				let need_note = dictionary_file_content.indexOf(answer_paragraph.length < 7 ? answer_paragraph.trim() : answer_paragraph.replace(/[\s（「『【]+$/, '').replace(/[\s、，；：。？！…）」』】]+$/, ''));
 				if (need_note > 0
 					// 匹配的位置前一個是中文字。
 					&& !/[\u4e00-\u9fa5]/.test(dictionary_file_content.charAt(need_note - 1))
