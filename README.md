@@ -18,7 +18,7 @@
 Chinese_converter 採用先中文分詞（附帶詞義、詞性標注），再以 CeL.zh_conversion 繁簡轉換的方法，來輕量化繁簡轉換辭典，同時達到較為精確的繁簡轉換。
 
 ### 單純從前至後替換文字的缺陷
-CeL.zh_conversion 採用與 OpenCC 和新同文堂相同的技術，從前至後，於每個字元位置檢查符合辭典檔中詞彙的最長詞彙，一旦符合就置換並跳到下一個字元位置。
+CeL.zh_conversion 採用與 OpenCC 和新同文堂相同的技術，從前至後順向，於每個字元位置檢查符合辭典檔中詞彙的最長詞彙，一旦符合就置換並跳到下一個字元位置。
 
 這種方法在遇到某些字詞必須與前一個字詞連動時，就可能漏失掉。例如「干」預設會轉成「幹」。（轉換標的通常是用途雜亂，最難找出規則又常出現、例外多的字詞。）因此當辭典檔中有「芒果」卻沒有「芒果乾」時，遇到「芒果干」就可能換成「芒果幹」。
 我們可以藉由把這些需要連動的詞彙全部加入辭典檔來完善轉換結果，例如令「芒果干」轉換成「芒果乾」，additional.to_TW.txt 與 CN_to_TW.LTP.PoS.txt 中就有許多例子。但這造成辭典檔複雜龐大，就本例來說，我們畢竟不可能把所有動植物，如蘋果乾、響尾蛇乾全加進去。
@@ -168,7 +168,7 @@ npm install cecc
 * [textpro中文文本批处理程序](https://www.fodian.net/tools/)
 
 未考慮詞性之簡繁轉換：
-* [OpenCC](https://github.com/BYVoid/OpenCC)
+* 開放中文轉換 (Open Chinese Convert) [OpenCC](https://github.com/BYVoid/OpenCC) [在線轉換](https://opencc.byvoid.com/)
 * [新同文堂](https://github.com/tongwentang/tongwen-core)
 * [ConvertZZ](https://github.com/flier268/ConvertZZ)
 * 厦门大学 [汉字简繁文本智能转换系统](http://jf.xmu.edu.cn/)
