@@ -150,7 +150,10 @@ class Chinese_converter {
 		if (CeL.is_debug()) {
 			// 這些是比較耗時的轉換。
 			for (const [language, convertion_pairs] of Object.entries(this.convertion_pairs)) {
-				CeL.info(`convertion pairs for ${language}:`);
+				CeL.info({
+					// gettext_config:{"id":"convertion-pairs-of-$1"}
+					T: ['%1轉換對', CeL.gettext.get_alias(language)]
+				});
 				function show_convertion_pairs(_pairs, tag = 'general') {
 					const size = _pairs.size;
 					if (size > 0) {
@@ -205,6 +208,7 @@ class Chinese_converter {
 		}
 
 		if (options.skip_server_test) {
+			// gettext_config:{"id":"force-the-use-of-the-ltp-server-and-skip-the-test-of-the-ltp-server-whether-it-works-properly-or-not.-use-this-option-only-if-you-are-prepared-to-use-the-cache-throughout"}
 			CeL.debug('強制使用 LTP server，跳過對 LTP server 的運作測試。請只在您準備全程使用 cache 的情況下才使用這個選項。', 1, Chinese_converter.has_LTP_server.name);
 			return options.LTP_URL;
 		}
@@ -229,8 +233,10 @@ function to_converted_file_path(convert_from_text__file_name) {
 }
 
 async function regenerate_converted(convert_from_text__file_path, convert_to_text__file_status, options) {
-	CeL.info(`${regenerate_converted.name}: Generate a new answer file for ${options.convert_from_text__file_name || convert_from_text__file_path}...`);
-
+	CeL.info(regenerate_converted.name + ': ', {
+		// gettext_config:{"id":"generate-the-answer-file-for-$1"}
+		T: ['生成 %1 的解答檔', options.convert_from_text__file_name || convert_from_text__file_path]
+	});
 	let converted_text = CeL.read_file(convert_from_text__file_path).toString();
 	//console.trace(options.convert_options);
 	converted_text = options.text_is_TW
@@ -355,7 +361,10 @@ function load_text_to_check(should_be_text__file_name, options) {
 			this.load_default_text_to_check();
 	}
 	if (this.generate_condition_for_language[KEY_files_loaded].includes(should_be_text__file_path)) {
-		CeL.log(`${load_text_to_check.name}: The file is already loaded, skip ${should_be_text__file_path}`);
+		CeL.log([load_text_to_check.name + ': ', {
+			// gettext_config:{"id":"skip-the-loaded-file-$1"}
+			T: ['跳過已載入的檔案：%1', should_be_text__file_path]
+		}]);
 		return;
 	}
 	if (!options?.is_default)
@@ -476,7 +485,11 @@ function report_text_to_check(options) {
 	const multi_matched_keys = Object.keys(multi_matched);
 	if (multi_matched_keys.length > 0) {
 		// 這裡可以計算某個值出現幾次。
-		CeL.log(`multi matched counts:\n${normal_style
+		CeL.log({
+			// gettext_config:{"id":"count-of-multiple-matches"}
+			T: '多次匹配的計數：'
+		});
+		CeL.log(`${normal_style
 			}${multi_matched_keys.map(convert_from => `\t${convert_from}: \t${multi_matched[convert_from]}`).join('\n')
 			}${reset_style}`);
 	}
@@ -587,7 +600,10 @@ function parse_condition(full_condition_text, options) {
 		if (matched.is_target && !options?.no_target) {
 			set_as_target(condition_data);
 			if (target_index >= 0)
-				CeL.warn(`${parse_condition.name}: Multiple targets: ${full_condition_text}`);
+				CeL.warn([parse_condition.name + ': ', {
+					// gettext_config:{"id":"there-are-multiple-conversion-targets-$1"}
+					T: ['有多個轉換標的：%1', full_condition_text]
+				}]);
 			else
 				target_index = index - accumulated_target_index_diff;
 		}
@@ -1025,7 +1041,10 @@ function load_synonym_dictionary() {
 					// {RegExp}通同字/同義詞pattern
 					synonyms_Map[KEY_synonym_pattern].push(正字正詞.to_RegExp({ allow_replacement: true }));
 				} else {
-					CeL.error(`${load_synonym_dictionary.name}: No synonym settle: ${正字正詞}`)
+					CeL.error([load_synonym_dictionary.name + ': ', {
+						// gettext_config:{"id":"no-synonym-set-$1"}
+						T: ['未設定任何同義詞：%1', 正字正詞]
+					}]);
 				}
 				return;
 			}
@@ -1491,7 +1510,10 @@ function get_LTP_data(options) {
 	options.paragraphs_before_convert.forEach((paragraph, paragraph_index, list) => {
 		if (typeof paragraph !== 'string' || !paragraph) {
 			// Should not go to here!
-			CeL.error(`${get_LTP_data.name}: Did not set text: ${paragraph_index + 1}/${list.length}`);
+			CeL.error([get_LTP_data.name + ': ', {
+				// gettext_config:{"id":"no-text-set-$1"}
+				T: ['未設定文字：%1', `${paragraph_index + 1}/${list.length}`]
+			}]);
 			return;
 		}
 
@@ -1928,7 +1950,10 @@ function convert_paragraph(paragraph, options) {
 				// 按照正常 zh_conversion 轉換若能獲得相同結果，則無必要。
 				if (converted_word_list.join('') === converted_word_list_without_rule.join('')) {
 					const to_word_data = word_data[KEY_matched_condition];
-					CeL.info(`It seems the rule is unnecessary: ${to_word_data.matched_condition ? `${to_word_data.matched_condition} → ` : ''}${to_word_data.full_condition_text}`);
+					CeL.info({
+						// gettext_config:{"id":"this-rule-seems-unnecessary"}
+						T: ['似為不需要的規則：%1', `${to_word_data.matched_condition ? `${to_word_data.matched_condition} → ` : ''}${to_word_data.full_condition_text}`]
+					});
 					//console.trace(word_data);
 				}
 
@@ -2125,7 +2150,7 @@ function convert_paragraph(paragraph, options) {
 			}
 
 		} else {
-			CeL.error(`convert_paragraph: 未設定 options.should_be！`);
+			CeL.error(`${convert_paragraph.name}: 未設定 options.should_be！`);
 		}
 	}
 
