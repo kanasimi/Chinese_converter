@@ -71,7 +71,7 @@ function parse_word_record(record) {
 }
 
 function scan_dictionary_list(dictionary_list) {
-	const frequencies_old = [], frequencies_new = [], tag_convertion = Object.create(null);
+	const frequencies_old = [], frequencies_new = [], tag_conversion = Object.create(null);
 
 	function scan_line(record) {
 		const word_data = parse_word_record(record);
@@ -81,23 +81,23 @@ function scan_dictionary_list(dictionary_list) {
 		frequencies_old.push(old_word_data.frequency);
 		frequencies_new.push(word_data.frequency);
 		if (old_word_data.tag !== word_data.tag) {
-			if (!tag_convertion[old_word_data.tag])
-				tag_convertion[old_word_data.tag] = [];
-			if (!tag_convertion[old_word_data.tag].includes(word_data.tag))
-				tag_convertion[old_word_data.tag].push(word_data.tag);
+			if (!tag_conversion[old_word_data.tag])
+				tag_conversion[old_word_data.tag] = [];
+			if (!tag_conversion[old_word_data.tag].includes(word_data.tag))
+				tag_conversion[old_word_data.tag].push(word_data.tag);
 		}
 	}
 
 	dictionary_list.forEach(scan_line);
 	const statistics_old = CeL.statistics(frequencies_old);
 	const statistics_new = CeL.statistics(frequencies_new);
-	console.log(tag_convertion);
+	console.log(tag_conversion);
 	if (statistics_new.count > 0)
 		console.trace([statistics_old, statistics_new]);
 	return {
 		delta: statistics_old.mean - statistics_new.mean,
 		ratio: statistics_old.SD / statistics_new.SD,
-		tag_convertion,
+		tag_conversion,
 	};
 }
 

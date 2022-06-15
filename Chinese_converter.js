@@ -94,7 +94,7 @@ function get_dictionary_file_paths(type) {
 // CeCC
 class Chinese_converter {
 	constructor(options) {
-		this.convertion_pairs = Object.create(null);
+		this.conversion_pairs = Object.create(null);
 		this.KEY_word = KEY_word;
 		this.KEY_PoS_tag = KEY_PoS_tag;
 
@@ -149,20 +149,20 @@ class Chinese_converter {
 		}
 		if (CeL.is_debug()) {
 			// 這些是比較耗時的轉換。
-			for (const [language, convertion_pairs] of Object.entries(this.convertion_pairs)) {
+			for (const [language, conversion_pairs] of Object.entries(this.conversion_pairs)) {
 				CeL.info({
-					// gettext_config:{"id":"convertion-pairs-of-$1"}
+					// gettext_config:{"id":"conversion-pairs-of-$1"}
 					T: ['%1轉換對', CeL.gettext.get_alias(language)]
 				});
-				function show_convertion_pairs(_pairs, tag = 'general') {
+				function show_conversion_pairs(_pairs, tag = 'general') {
 					const size = _pairs.size;
 					if (size > 0) {
-						CeL.log(`\t${tag || 'general'}\t${size} convertion(s)${size < 9 ? '\t' + Array.from(_pairs.keys()).join('\t') : ''}`);
+						CeL.log(`\t${tag || 'general'}\t${size} conversion(s)${size < 9 ? '\t' + Array.from(_pairs.keys()).join('\t') : ''}`);
 					}
 				}
-				show_convertion_pairs(convertion_pairs.get(KEY_general_pattern_filter));
-				for (const [tag, _pairs] of Object.entries(convertion_pairs.get(KEY_tag_pattern_filter))) {
-					show_convertion_pairs(_pairs, tag);
+				show_conversion_pairs(conversion_pairs.get(KEY_general_pattern_filter));
+				for (const [tag, _pairs] of Object.entries(conversion_pairs.get(KEY_tag_pattern_filter))) {
+					show_conversion_pairs(_pairs, tag);
 				}
 			}
 		}
@@ -883,29 +883,29 @@ function check_convert_to_different_length(converted_text_String, should_be_text
 const KEY_tag_filter = Symbol('tag filter'), KEY_tag_pattern_filter = Symbol('tag pattern filter'), KEY_general_pattern_filter = Symbol('general pattern filter'), KEY_pattern = 'pattern';
 
 function get_convert_to_conditions(options) {
-	const { word_data, convertion_pairs }
+	const { word_data, conversion_pairs }
 		// incase "Variable 'options' is null checked here, but its property is accessed without null check prior"
 		= options === null ? Object.create(null) : options;
-	let convertion_set, key = word_data[this.KEY_word], pattern;
+	let conversion_set, key = word_data[this.KEY_word], pattern;
 	const KEY_PoS_tag = this.KEY_PoS_tag;
 
-	function set_tag_convertion(KEY) {
-		convertion_set = convertion_pairs.get(KEY);
-		if (!convertion_set[word_data[KEY_PoS_tag]]) {
+	function set_tag_conversion(KEY) {
+		conversion_set = conversion_pairs.get(KEY);
+		if (!conversion_set[word_data[KEY_PoS_tag]]) {
 			if (!options?.create)
 				return;
-			convertion_set[word_data[KEY_PoS_tag]] = new Map;
+			conversion_set[word_data[KEY_PoS_tag]] = new Map;
 		}
-		//console.trace(convertion_set);
-		return convertion_set = convertion_set[word_data[KEY_PoS_tag]];
+		//console.trace(conversion_set);
+		return conversion_set = conversion_set[word_data[KEY_PoS_tag]];
 	}
 
 	if (CeL.is_RegExp(key) || options?.search_pattern) {
 		if (options?.try_tag && word_data[KEY_PoS_tag]) {
-			if (!set_tag_convertion(KEY_tag_pattern_filter))
+			if (!set_tag_conversion(KEY_tag_pattern_filter))
 				return;
 		} else {
-			convertion_set = convertion_pairs.get(KEY_general_pattern_filter);
+			conversion_set = conversion_pairs.get(KEY_general_pattern_filter);
 		}
 
 		if (CeL.is_RegExp(key)) {
@@ -913,7 +913,7 @@ function get_convert_to_conditions(options) {
 			key = key.toString().replace(/(\w)+$/, flags => flags.replace(/[g]/, ''));
 		} else {
 			const all_matched_conditions = [];
-			for (const convert_to_conditions of convertion_set.values()) {
+			for (const convert_to_conditions of conversion_set.values()) {
 				//console.trace([key, convert_to_conditions[KEY_pattern]]);
 				// assert {Array}convert_to_conditions
 				if (convert_to_conditions[KEY_pattern].test(key)) {
@@ -932,25 +932,25 @@ function get_convert_to_conditions(options) {
 
 	} else {
 		if (options?.try_tag && word_data[KEY_PoS_tag]) {
-			if (!set_tag_convertion(KEY_tag_filter))
+			if (!set_tag_conversion(KEY_tag_filter))
 				return;
 		} else {
-			convertion_set = convertion_pairs;
+			conversion_set = conversion_pairs;
 		}
 	}
 
-	if (!convertion_set.has(key)) {
+	if (!conversion_set.has(key)) {
 		if (!options?.create)
 			return;
 		// 初始化 initialization
 		const convert_to_conditions = [];
 		if (pattern)
 			convert_to_conditions[KEY_pattern] = pattern;
-		convertion_set.set(key, convert_to_conditions);
-		//console.trace(convertion_set);
+		conversion_set.set(key, convert_to_conditions);
+		//console.trace(conversion_set);
 	}
 
-	const convert_to_conditions = convertion_set.get(key);
+	const convert_to_conditions = conversion_set.get(key);
 	// assert: {Array}convert_to_conditions
 	return options.get_all_matched_conditions ? [convert_to_conditions] : convert_to_conditions;
 }
@@ -958,12 +958,12 @@ function get_convert_to_conditions(options) {
 const KEY_postfix = Symbol('postfix');
 function load_dictionary(file_path, options) {
 	const word_list = get_paragraphs_of_file(file_path);
-	// 初始化 initialization: convertion_pairs
-	const convertion_pairs = this.convertion_pairs[options.language] = new Map;
-	convertion_pairs.set(KEY_tag_filter, Object.create(null));
-	convertion_pairs.set(KEY_tag_pattern_filter, Object.create(null));
-	convertion_pairs.set(KEY_general_pattern_filter, new Map);
-	convertion_pairs.set(KEY_postfix, []);
+	// 初始化 initialization: conversion_pairs
+	const conversion_pairs = this.conversion_pairs[options.language] = new Map;
+	conversion_pairs.set(KEY_tag_filter, Object.create(null));
+	conversion_pairs.set(KEY_tag_pattern_filter, Object.create(null));
+	conversion_pairs.set(KEY_general_pattern_filter, new Map);
+	conversion_pairs.set(KEY_postfix, []);
 
 	for (let conditions of word_list) {
 		conditions = conditions.split('\t');
@@ -983,8 +983,8 @@ function load_dictionary(file_path, options) {
 		if (filter.not_match)
 			throw new Error('NYI: not_match');
 
-		const convert_to_conditions = filter.filter_name === 'postfix' ? convertion_pairs.get(KEY_postfix)
-			: get_convert_to_conditions.call(this, { word_data: filter, convertion_pairs, create: true, try_tag: true });
+		const convert_to_conditions = filter.filter_name === 'postfix' ? conversion_pairs.get(KEY_postfix)
+			: get_convert_to_conditions.call(this, { word_data: filter, conversion_pairs, create: true, try_tag: true });
 		for (let index = 1; index < conditions.length; index++) {
 			let condition = conditions[index];
 			if (!condition.trim()) {
@@ -1008,7 +1008,7 @@ function load_dictionary(file_path, options) {
 		//console.trace(convert_to_conditions);
 	}
 
-	//console.trace(this.convertion_pairs);
+	//console.trace(this.conversion_pairs);
 }
 
 const KEY_synonym_pattern = Symbol('synonym pattern');
@@ -1073,7 +1073,7 @@ function condition_filter_LTP(single_condition, word_data, options) {
 		return true;
 
 	//console.trace([single_condition, word_data, options]);
-	//console.trace(options.convertion_pairs.get(KEY_tag_filter).v.get('干'));
+	//console.trace(options.conversion_pairs.get(KEY_tag_filter).v.get('干'));
 
 	const { tagged_word_list } = options;
 	// assert: word_data === tagged_word_list[options.index_of_tagged_word_list]
@@ -1836,7 +1836,7 @@ function convert_paragraph(paragraph, options) {
 
 	// ---------------------------------------------
 
-	const convertion_pairs = this.convertion_pairs[options.convert_to_language];
+	const conversion_pairs = this.conversion_pairs[options.convert_to_language];
 	const [forced_convert, max_convert_word_length] = (() => {
 		let converter = options.convert_to_language === 'TW'
 			? this.CN_to_TW || forced_convert_to_TW
@@ -1862,7 +1862,7 @@ function convert_paragraph(paragraph, options) {
 	let converted_text = [], waiting_queue = [];
 	tagged_word_list.forEach((word_data, index_of_tagged_word_list) => {
 		// assert: word_data === tagged_word_list[index_of_tagged_word_list]
-		const matched_condition_data = get_all_possible_matched_condition.call(this, { ...options, word_data, convertion_pairs, index_of_tagged_word_list, tagged_word_list });
+		const matched_condition_data = get_all_possible_matched_condition.call(this, { ...options, word_data, conversion_pairs, index_of_tagged_word_list, tagged_word_list });
 		// 維持與輸入相同格式: 用於補全失落的空白字元。
 		const prefix_spaces = word_data[KEY_prefix_spaces];
 		if (!matched_condition_data) {
@@ -1986,8 +1986,8 @@ function convert_paragraph(paragraph, options) {
 	}
 
 	// 事後轉換函數。
-	//console.trace([this.convertion_pairs, options]);
-	convertion_pairs.get(KEY_postfix).forEach(single_condition => {
+	//console.trace([this.conversion_pairs, options]);
+	conversion_pairs.get(KEY_postfix).forEach(single_condition => {
 		if (single_condition.filter_name in this.filters[options.convert_to_language]) {
 			//console.trace(single_condition);
 			this.filters[options.convert_to_language][single_condition.filter_name].call(this, { single_condition, converted_text, tagged_word_list, options });
