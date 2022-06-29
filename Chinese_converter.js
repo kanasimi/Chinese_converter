@@ -233,10 +233,10 @@ function to_converted_file_path(convert_from_text__file_name) {
 }
 
 async function regenerate_converted(convert_from_text__file_path, convert_to_text__file_status, options) {
-	CeL.info(regenerate_converted.name + ': ', {
+	CeL.info([regenerate_converted.name + ': ', {
 		// gettext_config:{"id":"generate-the-answer-file-for-$1"}
 		T: ['生成 %1 的解答檔', options.convert_from_text__file_name || convert_from_text__file_path]
-	});
+	}]);
 	let converted_text = CeL.read_file(convert_from_text__file_path).toString();
 	//console.trace(options.convert_options);
 	converted_text = options.text_is_TW
