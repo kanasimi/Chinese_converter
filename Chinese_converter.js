@@ -1364,7 +1364,8 @@ function generate_condition_LTP(configuration, options) {
 		//console.trace([word_data, converted_to]);
 
 		// 應對 converted_to slice 與 should_be_slice 長度不同的情況。
-		const should_be_slice = should_be_text.slice(
+		// should_be_text 可能是 undefined。
+		const should_be_slice = (should_be_text || '').slice(
 			CeL.LCS.corresponding_index(diff_list, index_of_converted_to_slice),
 			CeL.LCS.corresponding_index(diff_list, index_of_converted_to_slice += converted_to.length)
 		);
