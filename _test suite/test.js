@@ -14,6 +14,7 @@ CLS && type "test_report.txt"
 
 // load module
 const CeCC = require('../Chinese_converter.js');
+const Fanhuaji = require('../Fanhuaji.js');
 
 // --------------------------
 
@@ -145,6 +146,7 @@ async function test_paragraphs(converte_from_paragraphs, should_be, test_configu
 	const { tagged_word_list_of_paragraphs, converted_paragraphs }
 		= await cecc[options.convert_to_language === 'TW' ? 'to_TW' : 'to_CN'](converte_from_paragraphs, { ...test_configuration.convert_options, get_full_data: true, generate_condition: true, should_be, delay_save_file: true });
 	//console.trace([tagged_word_list_of_paragraphs, test_configuration, converte_from_paragraphs]);
+	//const converted_paragraphs_auxiliary = await Fanhuaji[options.convert_to_language === 'TW' ? 'to_TW' : 'to_CN'](converte_from_paragraphs);
 	const test_postfix = options.test_postfix ? ' ' + options.test_postfix : '';
 
 	if (!should_be) {
@@ -202,6 +204,18 @@ async function test_paragraphs(converte_from_paragraphs, should_be, test_configu
 					should_convert_to_text,
 					show_tagged_word_list: test_configuration.error_count++ < test_configuration.max_error_tags_showing && test_configuration.max_error_tags_showing,
 				}, options);
+			} else if (false && converted_paragraphs_auxiliary[index] !== should_convert_to_text) {
+				// 檢查正確性備用檢核結果。
+				const convert_from_text = converte_from_paragraphs[index];
+				CeL.warn('正確性備用檢核 - 繁化姬: ' + test_title);
+				// 為轉換前後的差異文字著色。
+				CeL.coloring_diff(should_convert_to_text, converted_paragraphs_auxiliary[index], {
+					headers: [
+						`解答\t`,
+						`繁化姬\t`
+					],
+					header_style: { fg: 'cyan' }, print: true
+				});
 			}
 		}
 	}
