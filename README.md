@@ -46,7 +46,7 @@ CeL.zh_conversion 採用與 OpenCC 和新同文堂相同的技術，從前至後
 3. 自附 cache 功能，可大大降低多次轉譯長文的時間（例如在測試期間、修改辭典條件欲重新轉換）。
 
 ## Installation
-Install [LTP](https://github.com/HIT-SCIR/ltp) first.
+Install [LTP](https://github.com/HIT-SCIR/ltp) 4.1.5.post2 first.
 
 經實測，採用哈工大 [LTP](https://github.com/HIT-SCIR/ltp) 4.1.5.post2 Base(v3) 模型的[服務端版本](http://ltp.ai/docs/quickstart.html#ltp-server)，配合[相對應辭典](dictionaries/CN_to_TW.LTP.PoS.txt)；以 繁→簡→繁 轉換[測試檔](_test%20suite/articles)中的文字，可轉換回原先之內容。
 
@@ -55,16 +55,16 @@ On Windows, install LTP:
 1. 安裝 [PyTorch](http://pytorch.org/) 支援的 Python。（最新的 Python 常不能執行 PyTorch。）
 2. 安裝 LTP 與 [LTP server](http://ltp.ai/docs/quickstart.html#ltp-server) 所依賴的軟體包:
 ```cmd
-pip install ltp
+pip install "ltp==4.1.5.post2"
 pip install tornado
 pip install fire
 ```
 
+<!--
 3. Upgrade LTP:
 ```cmd
 pip install --upgrade ltp
 ```
-<!--
 #### Alternative: Install 中文分詞: nodejieba
 Alternative method: On Windows, install [nodejieba](https://github.com/yanyiwu/nodejieba):
 ```cmd
@@ -163,7 +163,7 @@ npm install cecc
 * [ZPar statistical parser](https://github.com/frcchang/zpar)
 
 ### 簡繁轉換
-* [繁化姬](https://zhconvert.org/)
+* [繁化姬](https://zhconvert.org/) [API](https://docs.zhconvert.org/api/getting-started/)
 * [繁簡轉換王](https://convert.tw/)
 * [textpro中文文本批处理程序](https://www.fodian.net/tools/)
 

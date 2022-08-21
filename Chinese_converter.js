@@ -491,7 +491,7 @@ function report_text_to_check(options) {
 		});
 		CeL.log(`${normal_style
 			}${multi_matched_keys.map(convert_from => `\t${convert_from}: \t${multi_matched[convert_from]}`).join('\n')
-			}${reset_style}`);
+			}${/* 似乎沒用，仍可能在最後留一長長的一排背景色。 */reset_style}`);
 	}
 	return { lost_texts, OK_count, NG_count };
 }
@@ -679,7 +679,11 @@ function parse_condition(full_condition_text, options) {
 // 顯示用函數。
 
 const KEY_matched_condition = 'matched condition';
-function print_correction_condition(correction_condition, options) {
+function print_correction_condition(correction_condition, {
+	work_title,
+	original_sentence_word_list,
+	tagged_convert_from_text,
+}) {
 	//console.trace(correction_condition);
 	const to_word_data = correction_condition.parsed[KEY_matched_condition];
 	let matched_condition_mark;
@@ -692,11 +696,6 @@ function print_correction_condition(correction_condition, options) {
 	}
 	// 自動提供可符合答案之候選條件式。
 	CeL.info(`Candidate correction for ${JSON.stringify(correction_condition.parsed.text)}→${JSON.stringify(correction_condition.target)} (錯誤轉換為 ${JSON.stringify(correction_condition.error_converted_to)}):`);
-	const {
-		work_title,
-		original_sentence_word_list,
-		tagged_convert_from_text,
-	} = options;
 	if (tagged_convert_from_text) {
 		const list = correction_condition.slice(1).filter(correction => !correction.includes('<←'));
 		list.push(tagged_convert_from_text.join(condition_delimiter));
@@ -1457,8 +1456,7 @@ function generate_condition_LTP(configuration, options) {
 	return condition_list;
 }
 
-function recover_original_paragraphs(parsed, options) {
-	const { token_count_array } = options;
+function recover_original_paragraphs(parsed, { token_count_array }) {
 	if (!token_count_array)
 		return parsed;
 
@@ -1878,7 +1876,10 @@ function convert_paragraph(paragraph, options) {
 			return;
 		}
 
-		//console.trace(matched_condition_data);
+		if (options.show_all_matched_conditions) {
+			// 預防有些時候在這個地方被截胡卻不曉得。
+			console.log(matched_condition_data);
+		}
 		const { all_matched_conditions } = matched_condition_data;
 		if (all_matched_conditions) {
 			//console.trace(all_matched_conditions);

@@ -53,7 +53,7 @@ from ltp import LTP
 from typing import List
 
 class Server(object):
-    def __init__(self, path: str='small', batch_size: int=50, device: str=None, onnx: bool=False):
+    def __init__(self, path: str='base', batch_size: int=50, device: str=None, onnx: bool=False):
         if onnx:
             self.ltp = FastLTP(path=path, device=device)
         else:
