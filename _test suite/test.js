@@ -99,6 +99,9 @@ const cecc = new_cecc();
 const module_base_path = CeL.append_path_separator(module.path);
 const articles_directory = CeL.append_path_separator(module_base_path + 'articles');
 
+const default_general_test_file = `${articles_directory}general.TW.txt`;
+const default_archived_general_test_file = `${articles_directory}general.archived.TW.txt`;
+
 add_test('基本檢核', async (assert, setup_test, finish_test, options) => {
 	assert([articles_directory, cecc.test_articles_directory]);
 });
@@ -425,6 +428,7 @@ function add_line_to_block(word, line) {
 
 function parse_general_test_text(insert_to_file, options) {
 	const { 簡繁轉換一對多_word_mapper } = options;
+	/** 一般性測試集檔案內容物件。 */
 	const general_test_text = Object.assign([], {
 		toString: function join_with_new_line() {
 			return this.join('\n');
@@ -520,8 +524,8 @@ function parse_general_test_text(insert_to_file, options) {
 /**
  * 自動將個別作品測試集添加至一般性測試集的功能。
  * 
- * @param {String}insert_to_file	個別作品測試集檔案路徑。
- * @param {String}insert_from_file	一般性測試集檔案路徑。
+ * @param {String}insert_to_file	一般性測試集檔案路徑。
+ * @param {String}insert_from_file	個別作品測試集檔案路徑。
  * @param {Object}[options]	附加參數/設定選擇性/特殊功能與選項。
  */
 async function insert_watch_target_to_general_test_text(insert_to_file, insert_from_file, options) {
@@ -535,6 +539,7 @@ async function insert_watch_target_to_general_test_text(insert_to_file, insert_f
 	//console.log([PATTERN_insert_mark, matched_mark, watch_target_text]);
 	if (!mark_matched)
 		return;
+	/** {String}個別作品測試集檔案內容。 */
 	const insert_from_text = CeL.data.Convert_Pairs.remove_comments(watch_target_text.slice(mark_matched.index + mark_matched[0].length)).trim();
 	if (!insert_from_text)
 		return;
@@ -548,7 +553,9 @@ async function insert_watch_target_to_general_test_text(insert_to_file, insert_f
 
 	// ---------------------------------------------
 
+	/** 一般性測試集檔案內容物件。 */
 	const general_test_text = parse_general_test_text(insert_to_file, { ...options, 簡繁轉換一對多_word_mapper, });
+	//console.trace(general_test_text);
 
 	// ---------------------------------------------
 
@@ -560,8 +567,10 @@ async function insert_watch_target_to_general_test_text(insert_to_file, insert_f
 		CeL.info(`${insert_watch_target_to_general_test_text.name}: 已有之區塊字元: ${exists_words.join('')}`);
 	for (let line of insert_from_text.split('\n')) {
 		line = line.trim();
-		if (!/[。？！…」]$/.test(line))
+		if (!/[。？！…」]$/.test(line)) {
+			// 轉成單行結束的句子。
 			line = line.replace(/[、，；：]*$/, '。');
+		}
 		if (pre_generated_text.includes(line)) {
 			// 避免重複添加測試語句。
 			continue;
@@ -579,16 +588,18 @@ async function insert_watch_target_to_general_test_text(insert_to_file, insert_f
 			general_test_text.add_line_to_block(word, line);
 
 		} else {
-			CeL.warn(`${insert_watch_target_to_general_test_text.name}: watch_target 中的測試語句 ${line} 不包括欲測試字元`);
+			CeL.warn(`${insert_watch_target_to_general_test_text.name}: 個別作品測試集檔案 ${insert_from_file} 中的測試語句 ${line} 不包括欲測試字元!`);
 		}
 	}
 
 	for (let index = 0; index < general_test_text.length; index++) {
 		const block = general_test_text[index];
 		if (Array.isArray(block)) {
+			// 去掉每個 block 中，末尾的換行。
 			block.trim();
 		} else if (!block && index > 0 && Array.isArray(general_test_text[index - 1])) {
-			general_test_text.splice(index--, 1);
+			// 去掉每個 block 之後緊接著的換行。
+			//general_test_text.splice(index--, 1);
 		}
 	}
 
@@ -605,17 +616,14 @@ async function insert_watch_target_to_general_test_text(insert_to_file, insert_f
 
 // ------------------------------------------------------------------
 
-const default_general_test_file = 'general.TW.txt';
-const default_archived_general_test_file = 'general.archived.TW.txt';
-
 // data of default_general_test_file → default_archived_general_test_file
 async function merge_new_general_test_text_to_archived() {
 	const 簡繁轉換一對多_word_mapper = await get_簡繁轉換一對多_word_mapper({ text_is_TW: true });
 	//console.trace(簡繁轉換一對多_word_mapper);
-	const general_test_text = parse_general_test_text(`${articles_directory}${default_general_test_file}`, { 簡繁轉換一對多_word_mapper });
+	const general_test_text = parse_general_test_text(default_general_test_file, { 簡繁轉換一對多_word_mapper });
 	//console.trace(general_test_text.toString());
 	//console.trace(general_test_text);
-	const archived_general_test_text = parse_general_test_text(`${articles_directory}${default_archived_general_test_file}`, { 簡繁轉換一對多_word_mapper });
+	const archived_general_test_text = parse_general_test_text(default_archived_general_test_file, { 簡繁轉換一對多_word_mapper });
 
 	for (const [word, block] of general_test_text.word_block_mapper.entries()) {
 		if (block.length === 0)
@@ -623,8 +631,8 @@ async function merge_new_general_test_text_to_archived() {
 		archived_general_test_text.add_line_to_block(word, block);
 		block.truncate();
 	}
-	CeL.write_file(`${articles_directory}${default_general_test_file}`, general_test_text.toString(), default_write_file_options);
-	CeL.write_file(`${articles_directory}${default_archived_general_test_file}`, archived_general_test_text.toString(), default_write_file_options);
+	CeL.write_file(default_general_test_file, general_test_text.toString(), default_write_file_options);
+	CeL.write_file(default_archived_general_test_file, archived_general_test_text.toString(), default_write_file_options);
 }
 
 (async () => {
