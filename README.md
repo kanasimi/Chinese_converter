@@ -165,13 +165,13 @@ npm install cecc
 * [ZPar statistical parser](https://github.com/frcchang/zpar)
 
 ### 簡繁轉換
-* [繁化姬](https://zhconvert.org/) [API](https://docs.zhconvert.org/api/getting-started/)
+* [繁化姬](https://zhconvert.org/) [API](https://docs.zhconvert.org/api/0-getting-started/)
 * [繁簡轉換王](https://convert.tw/)
 * [textpro中文文本批处理程序](https://www.fodian.net/tools/)
 
 未考慮詞性之簡繁轉換：
 * 開放中文轉換 (Open Chinese Convert) [OpenCC](https://github.com/BYVoid/OpenCC) [在線轉換](https://opencc.byvoid.com/)
-* [新同文堂](https://github.com/tongwentang/tongwen-core)
+* [新同文堂](https://github.com/tongwentang/tongwen-core) [簡體正體轉換辭庫](https://github.com/tongwentang/tongwen-dict)
 * [ConvertZZ](https://github.com/flier268/ConvertZZ)
 * 厦门大学 [汉字简繁文本智能转换系统](http://jf.xmu.edu.cn/)
 

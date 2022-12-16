@@ -1,6 +1,5 @@
 cd/d D:\USB\cgi-bin\program\work_crawler\novel.cmn-Hans-CN
 
-node piaotian.js 大乘期才有逆袭系统 convert_to_language=TW recheck discard_old_ebook_file
 
 node piaotian.js 我真没想重生啊 convert_to_language=TW recheck discard_old_ebook_file
 node piaotian.js 我有一座恐怖屋 convert_to_language=TW recheck discard_old_ebook_file
@@ -199,10 +198,11 @@ node biqugse.js 请不要打扰我修仙 convert_to_language=TW recheck discard_
 
 
 read:
-cls
 node piaotian.js 问道红尘 convert_to_language=TW recheck discard_old_ebook_file
 
 
+# move articles/archives/* → articles/
+cls
 node piaotian.js 第一序列 convert_to_language=TW recheck discard_old_ebook_file
 node piaotian.js 道君 convert_to_language=TW recheck discard_old_ebook_file
 
@@ -233,11 +233,13 @@ node piaotian.js 女主从书里跑出来了怎么办 convert_to_language=TW rec
 node piaotian.js 我宅了百年出门已无敌 convert_to_language=TW recheck discard_old_ebook_file
 node piaotian.js 回到过去变成猫 convert_to_language=TW recheck discard_old_ebook_file
 node piaotian.js 最仙遊 convert_to_language=TW recheck discard_old_ebook_file
+node 69shu.js 大乘期才有逆袭系统 convert_to_language=TW recheck discard_old_ebook_file
 
 
 
 # ls -al /i/WWW_works/piaotian/*頂級氣運*TW*.epub
 
+source ~/.bashrc
 cd /E/EPUB
 
 cd 第一序列	&& rm -r *	&& unzip -oqb /i/WWW_works/piaotian/*第一序列*飄天*TW*.epub EPUB/*	&& mv -f EPUB/* . && rm -r EPUB && cd ..
@@ -266,11 +268,13 @@ cd 女主从书里跑出来了怎么办	&& rm -r *	&& unzip -oqb /i/WWW_works/pi
 cd 我宅了百年出门已无敌	&& rm -r *	&& unzip -oqb /i/WWW_works/piaotian/*我宅了百年*TW*.epub EPUB/*	&& mv -f EPUB/* . && rm -r EPUB && cd ..
 cd 回到过去变成猫	&& rm -r *	&& unzip -oqb /i/WWW_works/piaotian/*回到過去變成貓*TW*.epub EPUB/*	&& mv -f EPUB/* . && rm -r EPUB && cd ..
 cd 最仙遊	&& rm -r *	&& unzip -oqb /i/WWW_works/piaotian/*最仙遊*TW*.epub EPUB/*	&& mv -f EPUB/* . && rm -r EPUB && cd ..
+cd 大乘期才有逆袭系统	&& rm -r *	&& unzip -oqb /i/WWW_works/69shu/*大乘期才有逆*TW*.epub EPUB/*	&& mv -f EPUB/* . && rm -r EPUB && cd ..
 
 
 cd 宋朝游历指南	&& rm -r *	&& unzip -oqb /e/epub_hans_to_hant/宋朝*TW*.epub text/*	&& mv -f text/* . && rm -r text && cd ..
 cd 中国历史那些事儿系列套装	&& rm -r *	&& unzip -oqb /e/epub_hans_to_hant/中国历史那些事儿系列套装*TW*.epub OEBPS/Text/*	&& mv -f OEBPS/Text/* . && rm -r OEBPS && cd ..
 
+node auto_commit.js
 
 
 # 檢查
@@ -288,10 +292,12 @@ git config --local color.diff.new "black brightgreen"
 git diff --unified=0 --color-words=$'[^\x80-\xBF][\x80-\xBF]*'
 
 
+cd/d E:\EPUB
+node auto_commit.js
 
-git add -u && git commit -m 仍有錯
+git add -u && git commit -m 仍有錯 && cd ..
 
-git add -u && git commit -m 已改善
+git add -u && git commit -m 已改善 && cd ..
 
 
 ---------------------------------------------------------------------------------------------------

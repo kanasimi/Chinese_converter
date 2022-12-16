@@ -702,7 +702,7 @@ function print_correction_condition(correction_condition, {
 	if (tagged_convert_from_text) {
 		const list = correction_condition.slice(1).filter(correction => !correction.includes('<←'));
 		list.push(tagged_convert_from_text.join(condition_delimiter));
-		CeL.info(`//${matched_condition_mark ? ' 解析錯誤 @' : ''}${work_title ? ` 《${work_title}》` : ''}	${original_sentence_word_list} (${list.join(' ')})${matched_condition_mark || ''}`);
+		CeL.info(`//${matched_condition_mark ? ' 解析錯誤 @' : ''}${work_title ? ` 《${work_title}》` : ''}	${stringify_condition(original_sentence_word_list)} (${list.join(' ')})${matched_condition_mark || ''}`);
 	}
 	CeL.info(correction_condition.join('\t'));
 }

@@ -438,6 +438,7 @@ function parse_general_test_text(insert_to_file, options) {
 		append_new_block,
 		add_line_to_block,
 		簡繁轉換一對多_word_mapper,
+		test_cases: 0,
 	});
 
 	// parse general_test_text
@@ -503,14 +504,19 @@ function parse_general_test_text(insert_to_file, options) {
 		}
 
 		if (general_test_text.last_block) {
-			if (!line.startsWith('//') && !general_test_text.last_block.word_data.pattern.test(line)) {
-				CeL.warn(`${parse_general_test_text.name}: 區塊中的測試語句 ${JSON.stringify(line)} 不包括欲測試字元 ${general_test_text.last_block.word_data.pattern}`);
+			if (!line.startsWith('//')) {
+				if (!general_test_text.last_block.word_data.pattern.test(line)) {
+					CeL.warn(`${parse_general_test_text.name}: 區塊中的測試語句 ${JSON.stringify(line)} 不包括欲測試字元 ${general_test_text.last_block.word_data.pattern}`);
+				}
+				general_test_text.test_cases++;
 			}
 			general_test_text.last_block.push(line);
 		} else {
 			// Insert new block above this line
 			if (/^\/\/\s*Insert new block above this line/.test(line)) {
 				general_test_text.insert_block_index = general_test_text.length;
+			} else {
+				general_test_text.test_cases++;
 			}
 			general_test_text.push(line);
 		}
@@ -529,7 +535,7 @@ function parse_general_test_text(insert_to_file, options) {
  * @param {Object}[options]	附加參數/設定選擇性/特殊功能與選項。
  */
 async function insert_watch_target_to_general_test_text(insert_to_file, insert_from_file, options) {
-	if (!(CeL.fso_status(insert_from_file).mtime - CeL.fso_status(insert_to_file).mtime > 0))
+	if (!(CeL.fso_status(insert_from_file)?.mtime - CeL.fso_status(insert_to_file)?.mtime > 0))
 		return;
 	// insert_from_file is newer than insert_to_file
 
@@ -556,6 +562,10 @@ async function insert_watch_target_to_general_test_text(insert_to_file, insert_f
 	/** 一般性測試集檔案內容物件。 */
 	const general_test_text = parse_general_test_text(insert_to_file, { ...options, 簡繁轉換一對多_word_mapper, });
 	//console.trace(general_test_text);
+	if (general_test_text.test_cases > 300) {
+		CeL.warn(`${insert_watch_target_to_general_test_text.name}: 一般性測試集過大，建議封存：`);
+		CeL.info('npm test nowiki merge_new_general_test_text_to_archived');
+	}
 
 	// ---------------------------------------------
 
@@ -638,6 +648,8 @@ async function merge_new_general_test_text_to_archived() {
 (async () => {
 	if (CeL.env.arg_hash?.merge_new_general_test_text_to_archived) {
 		await merge_new_general_test_text_to_archived();
+		// 已改變 general.archived.TW.txt，應重新讀取檔案以避免處理的是舊資料。
+		process.exit();
 	}
 })();
 
