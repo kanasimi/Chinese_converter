@@ -270,6 +270,7 @@
 老子才不托著你的屁股！
 // {"原文":"同时扇了几巴掌，"}
 同時搧了幾巴掌，
+攤開的本子上有一支簽字筆。
 
 
 // insert_watch_target_to_general_test_text

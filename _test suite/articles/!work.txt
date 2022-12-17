@@ -199,12 +199,14 @@ node biqugse.js 请不要打扰我修仙 convert_to_language=TW recheck discard_
 
 read:
 node piaotian.js 问道红尘 convert_to_language=TW recheck discard_old_ebook_file
+node piaotian.js 道君 convert_to_language=TW recheck discard_old_ebook_file
 
+
+cd/d D:\USB\cgi-bin\program\work_crawler\novel.cmn-Hans-CN
 
 # move articles/archives/* → articles/
 cls
 node piaotian.js 第一序列 convert_to_language=TW recheck discard_old_ebook_file
-node piaotian.js 道君 convert_to_language=TW recheck discard_old_ebook_file
 
 node piaotian.js 随波逐流之一代军师 convert_to_language=TW recheck discard_old_ebook_file
 node piaotian.js 无敌大佬要出世 convert_to_language=TW recheck discard_old_ebook_file
