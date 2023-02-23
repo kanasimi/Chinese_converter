@@ -1526,7 +1526,8 @@ a:干	v:+u:的+~乾+u:了
 // 《第一序列》	嘴巴有点干， (~乾<role.type:A0>嘴巴 ~乾<role.type:ARGM-ADV>有点 n:嘴巴+d:有点+a:干+wp:，)
 a:干	~乾<role.type:A0>/喉咙|嘴巴/	n:+d:有点+~乾
 // 解析錯誤 @ 《平平无奇大师兄》	你眼睛不干吗？ (~乾<role.type:A0>你眼睛 ~乾<←SBV>n:眼睛 r:你+n:眼睛+d:不+v:干+u:吗)	你问我眼睛干不干？ (~乾<role.type:A0>眼睛 n:眼睛+a:干+d:不+a:干)	陆长生居然说一句眼睛干不干。 (~乾<role.type:A0>眼睛 v:说+m:一+q:句+n:眼睛+a:干+d:不+a:干)
-干	~乾<role.type:A0>/眼睛$/	r:+n:+d:不+~乾+u:吗
+// 解析錯誤 @ 《中国历史那些事儿系列套装》	树汁干了， (~乾<COO>v:摇头 ~乾<role.type:A0>树汁 n:树汁+v:干+u:了+wp:，) (~乾<role.type:A0>树汁 n:树汁+a:干+u:了+wp:，)
+干	~乾<role.type:A0>/(?:汁|眼睛)$/	r:+n:+d:不+~乾+u:吗
 // [general.TW.txt]	眼泪已经干了。 (~乾<role.type:A0>眼泪 ~乾<role.type:ARGM-ADV>已经 n:眼泪+d:已经+a:干+u:了)
 a:干	~乾<role.type:A0>眼泪	n:+d:已经+~乾+u:了
 // [general.TW.txt]	行走时汗很容易干。 (~乾<role.type:ARGM-TMP>行走时 ~乾<role.type:A0>汗 v:行走+n:时+n:汗+d:很+a:容易+a:干)

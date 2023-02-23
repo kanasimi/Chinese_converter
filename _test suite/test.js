@@ -108,7 +108,7 @@ add_test('基本檢核', async (assert, setup_test, finish_test, options) => {
 
 // ------------------------------------------------------------------
 
-function get_zhwiki_session() {
+async function get_zhwiki_session() {
 	CeL.run([
 		// 載入操作維基百科的主要功能。
 		'application.net.wiki',
@@ -134,7 +134,12 @@ function get_zhwiki_session() {
 	/** {Object}wiki operator 操作子. */
 	const wiki_session = new Wikiapi('zh');
 
-	return wiki_session;
+	// 注意: new wiki_API() 後之操作，應該採 wiki_session.run()
+	// 的方式，確保此時已經執行過 pre-loading functions @ function wiki_API():
+	// wiki_session.siteinfo(), wiki_session.adapt_task_configurations()
+	return new Promise(/* executor */ function (resolve, reject) {
+		wiki_session.append_session_to_options().session.run(() => resolve(wiki_session));
+	});
 }
 
 // ------------------------------------------------------------------
@@ -293,7 +298,8 @@ async function get_簡繁轉換一對多_word_mapper(options) {
 	簡繁轉換一對多_word_mapper.KEY_id_list = KEY_id_list;
 
 	/** {Object}wiki operator 操作子. */
-	const zhwiki = get_zhwiki_session();
+	const zhwiki = await get_zhwiki_session();
+	//console.trace(zhwiki.append_session_to_options());
 	const page_title = 簡繁轉換一對多_word_mapper.page_title = options.text_is_TW ? '簡繁轉換一對多列表' : '繁簡轉換一對多列表';
 	//console.trace(page_title);
 	const page_data = await zhwiki.page(page_title, { redirects: 1 });
@@ -301,6 +307,7 @@ async function get_簡繁轉換一對多_word_mapper(options) {
 	//console.trace(page_data);
 	page_data.parse().each('Template:簡繁轉換', token => {
 		//console.log(token);
+		//console.trace(CeL.application.net.wiki.template_functions);
 		if (token.简 === token.繁) {
 			// e.g., '𥁕'
 			return;
@@ -470,6 +477,7 @@ function parse_general_test_text(insert_to_file, options) {
 			matched.groups.words.replace(/[\s\/→。]/g, '').chars('').forEach(word => {
 				if (!簡繁轉換一對多_word_mapper.has(word)) {
 					CeL.warn(`${parse_general_test_text.name}: 未登錄於${CeL.wiki.title_link_of(簡繁轉換一對多_word_mapper.page_title)}的字元 ${word} @ ${line}`);
+					//console.trace(簡繁轉換一對多_word_mapper);
 					has_irrelevant_words = true;
 				} else if (!word_data) {
 					word_data = 簡繁轉換一對多_word_mapper.get(word);
@@ -790,14 +798,9 @@ add_test('正確率檢核', async (assert, setup_test, finish_test, options) => 
 
 // ============================================================================
 
-if (CeL.env.arg_hash?.nowiki) {
-	CeL.info(`跳過 wikipedia 測試。`);
-} else if (require('os').freemem() < /* 2GB RAM */ 2 * (2 ** (10 * 3))) {
-	CeL.warn(`RAM 過小 (${CeL.to_KiB(require('os').freemem())})，跳過 wikipedia 測試！`);
-} else {
-
+async function test_wiki_pages() {
 	/** {Object}wiki operator 操作子. */
-	const zhwiki = get_zhwiki_session();
+	const zhwiki = await get_zhwiki_session();
 
 	// 抽取 HTML 文字。
 	function extract_HTML_text(html) {
@@ -878,4 +881,14 @@ if (CeL.env.arg_hash?.nowiki) {
 
 		record_test(test_configuration, options);
 	});
+}
+
+// ============================================================================
+
+if (CeL.env.arg_hash?.nowiki) {
+	CeL.info(`跳過 wikipedia 測試。`);
+} else if (require('os').freemem() < /* 2GB RAM */ 2 * (2 ** (10 * 3))) {
+	CeL.warn(`RAM 過小 (${CeL.to_KiB(require('os').freemem())})，跳過 wikipedia 測試！`);
+} else {
+	test_wiki_pages();
 }
