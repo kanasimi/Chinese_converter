@@ -72,6 +72,7 @@ node piaotian.js 问镜 convert_to_language=TW recheck discard_old_ebook_file
 node piaotian.js 幽冥仙途 convert_to_language=TW recheck discard_old_ebook_file
 node piaotian.js 星谍世家 convert_to_language=TW recheck discard_old_ebook_file
 node piaotian.js 谋断九州 convert_to_language=TW recheck discard_old_ebook_file
+node piaotian.js 我在修仙界长生不死 convert_to_language=TW recheck discard_old_ebook_file
 
 
 cd/d E:\epub_hans_to_hant
