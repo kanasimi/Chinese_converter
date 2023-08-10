@@ -1310,6 +1310,8 @@ a:干	p:和+~幹+n:+a:一样
 
 // 解析錯誤 @ 《咫尺之间人尽敌国》	衣服洗了基本上都能当天干。 (~乾<COO>v:洗 ~乾<role.type:A0>衣服 ~乾<role.type:ARGM-ADV>洗了 n:衣服+v:洗+u:了+d:基本上+d:都+v:能+nt:当天+v:干) 匹配的條件式: v:干 → nt:/天$/+~幹
 v:干	~乾<role.type:A0>衣服	d:都+v:能+nt:当天+~乾
+// 《我的成神日志》	并看到了正热火朝天干工程的人类。 (~幹<ATT>n:人类 ~幹<role.type:ARGM-ADV>正 ~幹<role.type:A1>工程 ~幹<role.type:A0>人类 c:并+v:看到+u:了+d:正+i:热火朝天+v:干+n:工程+u:的+n:人类+wp:。)
+v:干	i:/天$/+~幹
 // [general.TW.txt]	我前一天干两份工作。 (~幹<role.type:A0>我 ~幹<role.type:ARGM-TMP>前一天 ~幹<role.type:A1>两份工作 r:我+nt:前一天+v:干+m:两+q:份+n:工作+wp:。)
 v:干	nt:/天$/+~幹
 // 《亏成首富从游戏开始》	老马干不了这个， (~幹<role.type:A0>老马 ~幹<role.type:A1>这个 nh:老马+v:干+d:不+v:了+r:这个+wp:，)
@@ -1318,6 +1320,14 @@ v:干	nt:/天$/+~幹
 v:干	/[马茄]$/+~幹
 // 《回到过去变成猫》	就白天那大笔的时间足以让张东干很多事情了。 (~幹<VOB>v:让 ~幹<role.type:A0>张东 ~幹<role.type:A1>很多事情 d:就+nt:白天+r:那+n:大笔+u:的+n:时间+d:足以+v:让+nh:张东+v:干+m:很多+n:事情+u:了+wp:。)
 v:干	nh:/东$/+~幹
+
+// [general.TW.txt]	今天干完活了。 (~幹<role.type:ARGM-TMP>今天 ~幹<role.type:A1>活 nt:今天+v:干+v:完+n:活+u:了)
+// [general.TW.txt]	让他干点活。 (~幹<VOB>v:让 ~幹<role.type:A0>他 ~幹<role.type:A1>点活 v:让+r:他+v:干+q:点+n:活)
+// [general.TW.txt]	在这基础上干点杂活。 (~幹<role.type:ARGM-LOC>在这基础上 ~幹<role.type:A1>点杂活 p:在+r:这+n:基础+nd:上+v:干+q:点+n:杂活)	您干点花园的杂活。 (~幹<role.type:A0>您 ~幹<role.type:A1>点花园的杂活 r:您+v:干+q:点+n:花园+u:的+n:杂活)
+// [general.TW.txt]	要是干点大事。 (~幹<role.type:ARGM-DIS>要是 ~幹<role.type:A1>点大事 c:要是+v:干+q:点+n:大事)
+// [general.TW.txt]	该干点正事。 (~幹<role.type:A1>点正事 v:该+v:干+q:点+n:正事) 
+// [general.TW.txt]	真要干了这事。 (~幹<role.type:A1>这事 d:真+v:要+v:干+u:了+r:这+n:事)
+v:干	~幹<role.type:A1>/(?:杂?活|[大正]事|[这点].*[活事])$/
 
 // [general.TW.txt]	让你们白干活。 (v:让+r:你们+d:白+v:干活)
 // 《第一序列》	我今天干活算是最多的了。 (~幹活<role.type:A0>我 ~幹活<role.type:ARGM-TMP>今天 r:我+nt:今天+v:干活+v:算是+d:最+a:多+u:的+u:了+wp:。)
@@ -1390,14 +1400,6 @@ n:才干	n:人+~才幹	r:此人+~才幹
 v:干	p:比+~幹+r:
 // 解析錯誤 @ [general.TW.txt]	一起比干话谁会讲。 (~比幹<role.type:ARGM-ADV>一起 d:一起+v:比干+n:话+r:谁+v:会+v:讲)
 v:比干	~比幹+n:话
-
-// [general.TW.txt]	今天干完活了。 (~幹<role.type:ARGM-TMP>今天 ~幹<role.type:A1>活 nt:今天+v:干+v:完+n:活+u:了)
-// [general.TW.txt]	让他干点活。 (~幹<VOB>v:让 ~幹<role.type:A0>他 ~幹<role.type:A1>点活 v:让+r:他+v:干+q:点+n:活)
-// [general.TW.txt]	在这基础上干点杂活。 (~幹<role.type:ARGM-LOC>在这基础上 ~幹<role.type:A1>点杂活 p:在+r:这+n:基础+nd:上+v:干+q:点+n:杂活)	您干点花园的杂活。 (~幹<role.type:A0>您 ~幹<role.type:A1>点花园的杂活 r:您+v:干+q:点+n:花园+u:的+n:杂活)
-// [general.TW.txt]	要是干点大事。 (~幹<role.type:ARGM-DIS>要是 ~幹<role.type:A1>点大事 c:要是+v:干+q:点+n:大事)
-// [general.TW.txt]	该干点正事。 (~幹<role.type:A1>点正事 v:该+v:干+q:点+n:正事) 
-// [general.TW.txt]	真要干了这事。 (~幹<role.type:A1>这事 d:真+v:要+v:干+u:了+r:这+n:事)
-v:干	~幹<role.type:A1>/(?:杂?活|[大正]事|[这点].*[活事])$/
 
 // 解析錯誤 @ [general.TW.txt]	站在门口干嘛。 (~幹<←RAD>u:嘛 v:站+p:在+nl:门口+v:干+u:嘛)
 // 解析錯誤 @ [general.TW.txt]	你们挤在那里煮开水干嘛。 (~幹<role.type:A0>你们 ~幹<←RAD>u:嘛 r:你们+v:挤+p:在+r:那里+v:煮+n:开水+v:干+u:嘛)
