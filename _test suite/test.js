@@ -8,7 +8,9 @@ npm test nowiki > "test_report.txt" 2>&1
 CHCP 65001
 CLS && type "test_report.txt"
 
+
 CLS && npm test nowiki merge_new_general_test_text_to_archived
+若為修改錯字，應在執行完上述指令後才修改錯別字。
 
 */
 
