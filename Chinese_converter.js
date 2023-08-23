@@ -565,9 +565,9 @@ function parse_condition(full_condition_text, options) {
 	}
 
 	const condition = [];
-	const full_condition_splited = full_condition_text.split(condition_delimiter);
-	for (let index = 0, accumulated_target_index_diff = 0; index < full_condition_splited.length; index++) {
-		let token = full_condition_splited[index];
+	const full_condition_splitted = full_condition_text.split(condition_delimiter);
+	for (let index = 0, accumulated_target_index_diff = 0; index < full_condition_splitted.length; index++) {
+		let token = full_condition_splitted[index];
 		let matched = token.match(PATTERN_condition).groups;
 		if (/^\//.test(matched.tag) && /\(\?$/.test(matched.tag)) {
 			// e.g., "/^(?:a)$/"
@@ -578,9 +578,9 @@ function parse_condition(full_condition_text, options) {
 		if (/^\/(\\\/|[^\/])+$/.test(matched.word)) {
 			// 處理 RegExp pattern 中包含 condition_delimiter 的情況。
 			// e.g., ~里+/^许.+河$/	v:卷+m:/^[\\d〇一二三四五六七八九零十]+$/+~裡
-			const full_condition_splited_expanded = Array.isArray(options.full_condition_splited) ? full_condition_splited.concat(options.full_condition_splited.slice(options.index + 1)) : full_condition_splited;
-			for (let combined_token = token, next_index = index; next_index < full_condition_splited_expanded.length;) {
-				const next_token = full_condition_splited_expanded[++next_index];
+			const full_condition_splitted_expanded = Array.isArray(options.full_condition_splitted) ? full_condition_splitted.concat(options.full_condition_splitted.slice(options.index + 1)) : full_condition_splitted;
+			for (let combined_token = token, next_index = index; next_index < full_condition_splitted_expanded.length;) {
+				const next_token = full_condition_splitted_expanded[++next_index];
 				combined_token += condition_delimiter + next_token;
 				const _matched = combined_token.match(PATTERN_condition).groups;
 				if (CeL.PATTERN_RegExp.test(_matched.word) || CeL.PATTERN_RegExp_replacement.test(_matched.word)) {
@@ -591,11 +591,11 @@ function parse_condition(full_condition_text, options) {
 					//console.trace([token, matched]);
 				}
 			}
-			if (index >= full_condition_splited.length) {
+			if (index >= full_condition_splitted.length) {
 				// e.g., ~干<role.type:A1>/那.+何事$/
-				options.combined_token_count = index - full_condition_splited.length + 1;
+				options.combined_token_count = index - full_condition_splitted.length + 1;
 			}
-			//console.log([full_condition_splited_expanded, full_condition_splited, options.full_condition_splited?.slice(options.index + 1), options]);
+			//console.log([full_condition_splitted_expanded, full_condition_splitted, options.full_condition_splitted?.slice(options.index + 1), options]);
 			//console.trace([index, target_index, accumulated_target_index_diff, token, matched]);
 		}
 
@@ -624,7 +624,7 @@ function parse_condition(full_condition_text, options) {
 				if (!this.condition_filter)
 					throw new Error('No .condition_filter set but set filter: ' + matched.word);
 				filter = filter.groups;
-				const _options = { no_target: true, full_condition_splited, index };
+				const _options = { no_target: true, full_condition_splitted, index };
 				Object.assign(condition_data, {
 					[this.KEY_word]: filter.word,
 					[KEY_filter_name]: filter.filter_name,
@@ -632,7 +632,7 @@ function parse_condition(full_condition_text, options) {
 				});
 				//console.trace(condition_data);
 				if (_options.combined_token_count > 0) {
-					token = full_condition_splited.slice(index, index + _options.combined_token_count + 1).join(condition_delimiter);
+					token = full_condition_splitted.slice(index, index + _options.combined_token_count + 1).join(condition_delimiter);
 					accumulated_target_index_diff += _options.combined_token_count;
 					index += _options.combined_token_count;
 				}
@@ -1763,10 +1763,12 @@ function set__options_tagged_word_list__via_cache(paragraph, options) {
 	) {
 		// 可自附 options.tagged_word_list，或者會由 set__options_tagged_word_list__via_cache() 依 cache_directory 下的資料填入。
 
+		const paragraph_code = paragraph.slice(0, 40);
 		// 重新造一個 options 以避免污染。
 		options = {
 			...options,
-			cache_file_path: cache_directory + CeL.to_file_name(paragraph.slice(0, 40) + '.' + paragraph.hashCode() + '.json')
+			cache_file_path: cache_directory + CeL.to_file_name(paragraph_code + '.' + paragraph.hashCode() + '.json'),
+			paragraph_code,
 		};
 		let cache_data = CeL.read_file(options.cache_file_path);
 		if (cache_data) {
@@ -1790,8 +1792,9 @@ function save_cache_file_for_short_sentences(cache_file_path) {
 	delete this.save_cache_file_for_short_sentences;
 }
 
+
 /**
- * 轉換段落文字。
+ * 繁簡轉換段落文字。
  * @param {String}paragraph 段落文字
  * @param {Object}[options]
  */
@@ -1817,11 +1820,24 @@ function convert_paragraph(paragraph, options) {
 			if (!options.tagged_word_list.is_cache) {
 				CeL.create_directory(cache_directory);
 				//console.trace(options);
-				//console.trace(`Write tagged data to ${options.cache_file_path}`);
-				CeL.write_file(options.cache_file_path, beautify_tagged_word_list(tagged_word_list));
+				//console.trace(`${convert_paragraph.name}: Write tagged data to ${options.cache_file_path}`);
+				const error = CeL.write_file(options.cache_file_path, beautify_tagged_word_list(tagged_word_list));
+				if (!error) {
+					// 刪除其他相同prefix的檔案，這些檔案應該是舊的catch。
+					CeL.remove_files_in_directory(cache_directory,
+						// 刪除掉 cache_directory 中以 paragraph_code 開頭的檔案。
+						file_name => file_name.startsWith(CeL.to_file_name(options.paragraph_code)) && cache_directory + file_name !== options.cache_file_path);
+				} else if (error.code === 'ENOENT' && options.cache_file_for_short_sentences
+					// assert: options.min_cache_length < paragraph.length
+					&& paragraph.length < 2 * options.min_cache_length) {
+					CeL.error(`有特殊字元，改存到 ${options.cache_file_for_short_sentences}：${JSON.stringify(paragraph)}`);
+					//console.error([error, options.cache_file_for_short_sentences]);
+					delete options.cache_file_path;
+				}
 			}
+		}
 
-		} else if (options.cache_file_for_short_sentences) {
+		if (!options.cache_file_path && options.cache_file_for_short_sentences) {
 			if (!this.general_word_list_cache[paragraph]) {
 				// deep clone. 避免後續 this.general_word_list_cache 內容被更動。
 				this.general_word_list_cache[paragraph] = Object.clone(tagged_word_list, true);
@@ -2062,9 +2078,12 @@ function convert_paragraph(paragraph, options) {
 				let should_be_text = should_convert_to_text, end_index;
 				converted_text_length_accumulation.search_sorted(start_index + should_be_text.length, {
 					found(index, is_near) {
-						//console.log(paragraph);
-						//console.log([start_index, should_be_text.length, converted_text_length_accumulation]);
-						//console.log([is_near, index, converted_text]);
+						if (is_near && !converted_text[index]) {
+							// e.g., "A" → "A B" @ additional.to_TW.txt
+							console.log({ paragraph, start_index, should_be_text_length: should_be_text.length, converted_text_length_accumulation, is_near, index, converted_text });
+							console.log(matched_condition_data);
+							console.log(tagged_word_list);
+						}
 						if (is_near) {
 							should_be_text += converted_text[index].slice(start_index + should_be_text.length - converted_text_length_accumulation[index]);
 							end_index = index + 1;
