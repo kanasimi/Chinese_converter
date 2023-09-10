@@ -143,10 +143,10 @@ class Chinese_converter {
 
 		get_dictionary_file_paths.call(this);
 
-		for (const language in this.dictionary_file_paths) {
-			const dictionary_file_path = this.dictionary_file_paths[language]
-				= this.dictionaries_directory + this.dictionary_file_paths[language];
-			load_dictionary.call(this, dictionary_file_path, { language });
+		for (const convert_to_language in this.dictionary_file_paths) {
+			const dictionary_file_path = this.dictionary_file_paths[convert_to_language]
+				= this.dictionaries_directory + this.dictionary_file_paths[convert_to_language];
+			load_dictionary.call(this, dictionary_file_path, { convert_to_language });
 		}
 		if (CeL.is_debug()) {
 			// 這些是比較耗時的轉換。
@@ -285,11 +285,11 @@ async function not_new_article_to_check(convert_from_text__file_name, options) {
 
 	// -----------------------------------
 
-	// 檢查上一次測試後，是否有新詞典檔。
+	// 檢查上一次測試後，是否有尚未檢測通過的詞典檔。
 	const latest_test_result = options.latest_test_result && options.latest_test_result[options.test_name];
 	const latest_test_result_for_file = latest_test_result && latest_test_result.test_results && latest_test_result.test_results[convert_from_text__file_name];
 	const latest_test_result_date = latest_test_result_for_file?.error_count === 0 ? Date.parse(latest_test_result_for_file?.date)
-		// 檢查是否有比測試檔或 .converted.* 解答檔案更新的新詞典檔。
+		// 檢查是否有比測試檔或 .converted.* 解答檔案更新的尚未檢測通過的詞典檔。
 		: convert_to_text__file_status ? Math.max(convert_from_text__file_status.mtime.getTime(), convert_to_text__file_status.mtime.getTime()) : convert_from_text__file_status.mtime.getTime();
 	//console.trace(this.dictionary_file_paths);
 	for (const dictionary_file_path of Object.values(this.dictionary_file_paths)) {
@@ -297,7 +297,7 @@ async function not_new_article_to_check(convert_from_text__file_name, options) {
 		//console.trace(dictionary_file_status);
 		//console.trace([dictionary_file_status.mtime - latest_test_result_date, convert_from_text__file_status && convert_from_text__file_status.mtime - dictionary_file_status.mtime]);
 		if (dictionary_file_status.mtime - latest_test_result_date > 0) {
-			CeL.info(`${not_new_article_to_check.name}: ${convert_from_text__file_name}: 有新詞典檔 ${dictionary_file_path}`);
+			CeL.info(`${not_new_article_to_check.name}: ${convert_from_text__file_name}: 有尚未檢測通過的詞典檔 ${dictionary_file_path}`);
 			if (latest_test_result)
 				delete latest_test_result[convert_from_text__file_name];
 			return;
@@ -313,13 +313,79 @@ async function not_new_article_to_check(convert_from_text__file_name, options) {
 }
 
 
-const KEY_files_loaded = Symbol('files loaded');
+// ----------------------------------------------------------------------------
 
+/**
+ * 載入個別作品特設辭典。
+ * 
+ * @param {Object}options	附加參數/設定選擇性/特殊功能與選項。
+ */
+function load_tailored_dictionary(options) {
+	if (!options.export) {
+		// e.g., { is_default: true }
+		return;
+	}
+
+	//console.trace(options);
+	const { work_title } = options.export;
+	const path_prefix = CeL.append_path_separator(CeL.append_path_separator(this.dictionaries_directory) + 'tailored', work_title) + '.';
+	//console.trace(path_prefix);
+
+	let dictionary_file_path_to_load;
+
+	// ----------------------------------------------------
+
+	// 警告: .add_conversions({sort:}) 必須配合 Converter.options @ CeL.zh_conversion！
+
+	dictionary_file_path_to_load = path_prefix + 'additional.to_TW.txt';
+	if (CeL.file_exists(dictionary_file_path_to_load)) {
+		CeL.info(`${load_tailored_dictionary.name}: 設定載入 zh_conversion 用作品特設辭典 ${dictionary_file_path_to_load}`);
+		CeL_CN_to_TW[CeL.zh_conversion.KEY_converter].add_conversions({ file_path: dictionary_file_path_to_load, remove_comments: true, sort: 0 });
+	}
+	dictionary_file_path_to_load = path_prefix + 'additional.to_CN.txt';
+	if (CeL.file_exists(dictionary_file_path_to_load)) {
+		CeL.info(`${load_tailored_dictionary.name}: 設定載入 zh_conversion 用作品特設辭典 ${dictionary_file_path_to_load}`);
+		CeL_TW_to_CN[CeL.zh_conversion.KEY_converter].add_conversions({ file_path: dictionary_file_path_to_load, remove_comments: true, sort: 0 });
+	}
+
+	// ----------------------------------------------------
+
+	dictionary_file_path_to_load = path_prefix + 'CN_to_TW.LTP.PoS.txt';
+	if (CeL.file_exists(dictionary_file_path_to_load)) {
+		CeL.info(`${load_tailored_dictionary.name}: 載入 CeCC 用作品特設辭典 ${dictionary_file_path_to_load}`);
+		load_dictionary.call(this, dictionary_file_path_to_load, { convert_to_language: 'TW' });
+	}
+	dictionary_file_path_to_load = path_prefix + 'TW_to_CN.LTP.PoS.txt';
+	if (CeL.file_exists(dictionary_file_path_to_load)) {
+		CeL.info(`${load_tailored_dictionary.name}: 載入 CeCC 用作品特設辭典 ${dictionary_file_path_to_load}`);
+		load_dictionary.call(this, dictionary_file_path_to_load, { convert_to_language: 'CN' });
+	}
+}
+
+
+// ----------------------------------------------------------------------------
+
+const KEY_files_loaded = Symbol('files loaded');
+/** {String}辭典修訂測試集檔名前綴。 */
+const KEY_watch_target_file_name_prefix = 'watch_target.';
+/** {RegExp}辭典修訂測試集檔名模式。 */
+const PATTERN_watch_target_file_name = new RegExp(CeL.to_RegExp_pattern(KEY_watch_target_file_name_prefix)
+	+ /(?<work_title>[^.]+)\.(?<to_language>TW|CN)\.\w+$/.source);
+
+/**
+ * 載入個別作品辭典修訂測試集。
+ * 
+ * @param {String|Object}should_be_text__file_name 欲載入的檔案
+ * @param {Object}options	附加參數/設定選擇性/特殊功能與選項。
+ * 
+ * @returns {Promise} conditions
+ */
 function load_text_to_check(should_be_text__file_name, options) {
+	//console.trace(should_be_text__file_name, options);
 	if (CeL.is_Object(should_be_text__file_name)) {
 		if (should_be_text__file_name.all) {
 			CeL.read_directory(this.test_articles_directory).forEach(from_file_name => {
-				const matched = from_file_name.match(/watch_target\.(?<work_title>[^.]+)\.(?<to_language>TW|CN)\.\w+$/);
+				const matched = from_file_name.match(PATTERN_watch_target_file_name);
 				if (matched) {
 					this.load_text_to_check(from_file_name, {
 						export: { work_title: matched.groups.work_title }
@@ -336,7 +402,7 @@ function load_text_to_check(should_be_text__file_name, options) {
 			if (!options.export.work_title)
 				options.export.work_title = should_be_text__file_name.work_title;
 			// e.g., "watch_target.第一序列.TW.txt"
-			should_be_text__file_name = `watch_target.${should_be_text__file_name.work_title}.${should_be_text__file_name.convert_to_language}.${DEFAULT_TEST_FILE_EXTENSION}`;
+			should_be_text__file_name = `${KEY_watch_target_file_name_prefix}${should_be_text__file_name.work_title}.${should_be_text__file_name.convert_to_language}.${DEFAULT_TEST_FILE_EXTENSION}`;
 			//console.trace(should_be_text__file_name);
 		} else {
 			throw new Error(`${load_text_to_check.name}: Invalid should_be_text__file_name: ${JSON.stringify(should_be_text__file_name)}`);
@@ -351,6 +417,8 @@ function load_text_to_check(should_be_text__file_name, options) {
 	}
 
 	check_language = check_language[1];
+
+	this.load_tailored_dictionary(options);
 
 	const convert_to_text__data = get_convert_to_text__file_status.call(this, should_be_text__file_name, options);
 	const should_be_text__file_path = convert_to_text__data.convert_from_text__file_path;
@@ -828,9 +896,9 @@ function print_section_report(configuration, options) {
 
 	let { work_title } = options;
 	if (!work_title && (work_title = configuration.test_title)) {
-		work_title = work_title.match(/watch_target\.(.+)\.(TW|CN)/);
+		work_title = work_title.match(PATTERN_watch_target_file_name);
 		if (work_title)
-			work_title = work_title[1];
+			work_title = work_title.groups.work_title;
 	}
 	condition_list.forEach(condition => print_correction_condition(condition, {
 		work_title,
@@ -961,13 +1029,23 @@ function get_convert_to_conditions(options) {
 const KEY_postfix = Symbol('postfix');
 function load_dictionary(file_path, options) {
 	const word_list = get_paragraphs_of_file(file_path);
-	// 初始化 initialization: conversion_pairs
-	const conversion_pairs = this.conversion_pairs[options.language] = new Map;
-	conversion_pairs.set(KEY_tag_filter, Object.create(null));
-	conversion_pairs.set(KEY_tag_pattern_filter, Object.create(null));
-	conversion_pairs.set(KEY_general_pattern_filter, new Map);
-	conversion_pairs.set(KEY_postfix, []);
+	if (!word_list) {
+		// e.g., file not exists
+		return;
+	}
 
+	//console.trace(this.conversion_pairs[options.convert_to_language]);
+	if (!this.conversion_pairs[options.convert_to_language]) {
+		// 初始化 initialization: conversion_pairs
+		const conversion_pairs = this.conversion_pairs[options.convert_to_language] = new Map;
+		conversion_pairs.set(KEY_tag_filter, Object.create(null));
+		conversion_pairs.set(KEY_tag_pattern_filter, Object.create(null));
+		conversion_pairs.set(KEY_general_pattern_filter, new Map);
+		conversion_pairs.set(KEY_postfix, []);
+	}
+	const conversion_pairs = this.conversion_pairs[options.convert_to_language];
+
+	//console.trace(word_list);
 	for (let conditions of word_list) {
 		conditions = conditions.split('\t');
 		const matched_condition = conditions[0].trim();
@@ -2360,6 +2438,9 @@ Object.assign(Chinese_converter, {
 	//KEY_prefix_spaces,
 	//print_correction_condition,
 
+	KEY_watch_target_file_name_prefix,
+	PATTERN_watch_target_file_name,
+
 	get_paragraphs_of_text, get_paragraphs_of_file,
 	beautify_tagged_word_list,
 	to_converted_file_path,
@@ -2372,12 +2453,12 @@ Object.assign(Chinese_converter.prototype, {
 
 	test_articles_directory: CeL.append_path_separator(test_directory + 'articles'),
 	// 這些是特別的檔案: 會自動檢核。
-	text_to_check_files: ['watch_target.TW.txt', 'watch_target.CN.txt'],
+	text_to_check_files: [KEY_watch_target_file_name_prefix + 'TW.txt', KEY_watch_target_file_name_prefix + 'CN.txt'],
 
 	print_section_report,
 
 	regenerate_converted, not_new_article_to_check,
-	load_text_to_check, load_default_text_to_check, report_text_to_check,
+	load_tailored_dictionary, load_text_to_check, load_default_text_to_check, report_text_to_check,
 });
 
 module.exports = Chinese_converter;

@@ -17,6 +17,7 @@ CLS && npm test nowiki merge_new_general_test_text_to_archived
 
 'use strict';
 
+const Chinese_converter = require('../Chinese_converter.js');
 // load module
 const CeCC = require('../Chinese_converter.js');
 const Fanhuaji = require('../Fanhuaji.js');
@@ -704,10 +705,12 @@ add_test('正確率檢核', async (assert, setup_test, finish_test, options) => 
 			check_dictionary: CeL.is_debug(),
 
 			// 不檢查/跳過通同字/同義詞，通用詞彙不算錯誤。用於無法校訂原始文件的情況。
-			skip_check_for_synonyms: !/^(?:watch_target|[a-z.]+?\.(?:TW|CN))\./.test(file_name),
+			skip_check_for_synonyms: !file_name.startsWith(Chinese_converter.KEY_watch_target_file_name_prefix)
+				// e.g., general.TW.txt
+				&& !/^[a-z.]+?\.(?:TW|CN)\./.test(file_name),
 
 			// 超過此長度才創建個別的 cache 檔案，否則會放在 .cache_file_for_short_sentences。
-			min_cache_length: 20
+			min_cache_length: 20,
 		};
 
 		if (convert_options.skip_check_for_synonyms) {
@@ -723,7 +726,7 @@ add_test('正確率檢核', async (assert, setup_test, finish_test, options) => 
 		}
 		const dictionary_file_content = dictionary_file_contents[file_name_language[1]];
 
-		if (file_name.startsWith('watch_target.') && text_is_TW)
+		if (file_name.startsWith(Chinese_converter.KEY_watch_target_file_name_prefix) && text_is_TW)
 			await insert_watch_target_to_general_test_text(`${articles_directory}general.${file_name_language[1]}.txt`, file_path, { text_is_TW });
 
 		if (await cecc.not_new_article_to_check(file_name, {
@@ -735,6 +738,16 @@ add_test('正確率檢核', async (assert, setup_test, finish_test, options) => 
 		})) {
 			CeL.info(`${options.test_name}: Skip ${file_name}: latest test at ${latest_test_result[options.test_name].date}, no news.`);
 			continue;
+		}
+
+		//console.trace([file_path, answer_file_path]);
+		if (true) {
+			const matched = file_path.match(Chinese_converter.PATTERN_watch_target_file_name);
+			if (matched) {
+				cecc.load_tailored_dictionary({
+					export: { work_title: matched.groups.work_title }
+				});
+			}
 		}
 
 		const content_paragraphs = CeCC.get_paragraphs_of_file(file_path, { with_configurations: true });
