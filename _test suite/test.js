@@ -726,8 +726,11 @@ add_test('正確率檢核', async (assert, setup_test, finish_test, options) => 
 		}
 		const dictionary_file_content = dictionary_file_contents[file_name_language[1]];
 
-		if (file_name.startsWith(Chinese_converter.KEY_watch_target_file_name_prefix) && text_is_TW)
+		if (file_name.startsWith(Chinese_converter.KEY_watch_target_file_name_prefix) && text_is_TW) {
 			await insert_watch_target_to_general_test_text(`${articles_directory}general.${file_name_language[1]}.txt`, file_path, { text_is_TW });
+		} else if (default_general_test_file.endsWith(file_name) || default_archived_general_test_file.endsWith(file_name)) {
+			load_all_tailored_dictionaries();
+		}
 
 		if (await cecc.not_new_article_to_check(file_name, {
 			...options, text_is_TW,
@@ -810,6 +813,21 @@ add_test('正確率檢核', async (assert, setup_test, finish_test, options) => 
 
 	record_test(test_configuration, options);
 });
+
+
+function load_all_tailored_dictionaries() {
+	const file_list = CeL.read_directory(cecc.tailored_dictionaries_directory);
+	for (const file_name of file_list) {
+		const matched = file_name.match(/^(?<work_title>.+?)\.(additional|CN_to_TW|TW_to_CN)/);
+		if (!matched) {
+			continue;
+		}
+		cecc.load_tailored_dictionary({
+			show_message: false,
+			export: { work_title: matched.groups.work_title }
+		});
+	}
+}
 
 
 // ============================================================================
