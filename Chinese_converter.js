@@ -365,7 +365,7 @@ function load_tailored_dictionary(options) {
 		if (options.show_message)
 			CeL.info(`${load_tailored_dictionary.name}: ${is_CeCC ? '載入 CeCC' : '設定載入 zh_conversion'} 用作品特設辭典 ${dictionary_file_path_to_load}`);
 		if (is_CeCC) {
-			load_dictionary.call(_this, dictionary_file_path_to_load, { convert_to_language: to_TW ? 'TW' : 'CN', high_priority: true });
+			load_dictionary.call(_this, dictionary_file_path_to_load, { convert_to_language: to_TW ? 'TW' : 'CN', priority: 0 });
 		} else {
 			_this.dictionary_file_path_loaded_Set.add(dictionary_file_path_to_load);
 			// 警告: .add_conversions({sort:}) 必須配合 Converter.options @ CeL.zh_conversion！
@@ -1116,8 +1116,21 @@ function load_dictionary(file_path, options) {
 			condition = parse_condition.call(this, condition, { matched_condition });
 			if (condition.do_after_converting || convert_to_conditions.length === 0 || !convert_to_conditions[convert_to_conditions.length - 1].do_after_converting) {
 				// TODO: 將 {Array} 之 pattern 轉成 {Regexp} 之 pattern，採用 .replace(pattern, token => match_condition(token))。
-				if (options.high_priority) {
+				if (false && options.priority < 0) {
 					convert_to_conditions.unshift(condition);
+				} else if (options.priority >= 0) {
+					const priority_to_set = Math.floor(options.priority);
+					if (!convert_to_conditions.priority_index)
+						convert_to_conditions.priority_index = [];
+					if (!(convert_to_conditions.priority_index[priority_to_set] >= 0)) {
+						for (let priority = 0; priority < priority_to_set; priority++) {
+							if (!(convert_to_conditions.priority_index[priority] >= 0))
+								convert_to_conditions.priority_index[priority] = convert_to_conditions.priority_index[priority - 1] || 0;
+						}
+						convert_to_conditions.priority_index[priority_to_set] = convert_to_conditions.priority_index[priority_to_set - 1] || 0;
+					}
+					convert_to_conditions.splice(convert_to_conditions.priority_index[priority_to_set]++, 0, condition);
+					//console.trace([priority_to_set, convert_to_conditions.priority_index, condition]);
 				} else {
 					convert_to_conditions.push(condition);
 				}
@@ -2499,6 +2512,7 @@ Object.assign(Chinese_converter.prototype, {
 
 	test_articles_directory: CeL.append_path_separator(test_directory + 'articles'),
 	// `${.test_articles_directory}/${.test_articles_archives_directory}/*`
+	/** 這個目錄底下的檔案是基本上不會再變更的測試集，多為已經整本檢核完畢的作品。少數是淺嚐輒止者。 */
 	test_articles_archives_directory: CeL.append_path_separator('archives'),
 	// 這些是特別的檔案: 會自動檢核。
 	text_to_check_files: [KEY_watch_target_file_name_prefix + 'TW.txt', KEY_watch_target_file_name_prefix + 'CN.txt'],
