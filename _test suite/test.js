@@ -11,7 +11,7 @@ CLS && type "test_report.txt"
 
 歸檔 general.TW.txt → general.archived.TW.txt
 CLS && npm test nowiki merge_new_general_test_text_to_archived
-若為修改錯字，應在執行完上述指令後才修改 `general.archived.TW.txt` 的錯別字。
+若為修改錯字，應在**無轉換錯誤的情況下**執行完上述指令後才修改 `general.archived.TW.txt` 的錯別字。
 
 */
 
