@@ -1959,12 +1959,12 @@ function convert_paragraph(paragraph, options) {
 				//console.trace(`${convert_paragraph.name}: Write tagged data to ${options.cache_file_path}`);
 				const error = CeL.write_file(options.cache_file_path, beautify_tagged_word_list(tagged_word_list));
 				if (!error) {
-					console.trace([cache_directory, regenerate_converted.default_convert_options.cache_directory]);
 					// 刪除 `Chinese_converter/_test suite/cache_data/*/*.json`，不刪除 `繁簡轉換 cache/*.json`
-					if (cache_directory.includes(regenerate_converted.default_convert_options.cache_directory)) {
+					//console.trace([cache_directory, regenerate_converted.default_convert_options.cache_directory]);
+					if (cache_directory.startsWith(regenerate_converted.default_convert_options.cache_directory)) {
 						// 刪除其他相同prefix的檔案，這些檔案應該是舊的catch。
 						CeL.remove_files_in_directory(cache_directory,
-							// 刪除掉 cache_directory 中以 paragraph_code 開頭的檔案。
+							// 刪除掉 cache_directory 中以 paragraph_code 開頭的檔案，不包括 cache file 本身。
 							file_name => file_name.startsWith(CeL.to_file_name(options.paragraph_code)) && cache_directory + file_name !== options.cache_file_path);
 					}
 				} else if (error.code === 'ENOENT' && options.cache_file_for_short_sentences
