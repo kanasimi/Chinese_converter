@@ -56,6 +56,9 @@ CeL.run(['application.debug',
 /** {Number}未發現之index。 const: 基本上與程式碼設計合一，僅表示名義，不可更改。(=== -1) */
 const NOT_FOUND = ''.indexOf('_');
 
+/** {RegExp}沒中文字元，可跳過解析。 */
+const PATTERN_non_Chinese_characters = /^[\u0000-\u00ff]*$/;
+
 const module_base_path = CeL.append_path_separator(module.path);
 const test_directory = CeL.append_path_separator(module_base_path + '_test suite');
 
@@ -355,7 +358,7 @@ function load_tailored_dictionary(options) {
 		let matched;
 		while (matched = PATTERN_indicate_work_title.exec(contains)) {
 			//console.trace(matched);
-			if (matched.groups.work_title !== work_title) {
+			if (!matched.groups.work_title.startsWith(work_title)) {
 				CeL.warn(`${load_tailored_dictionary.name}: 特設辭典可能混入了其他作品的設定？ (${dictionary_file_path_to_load}) ${matched[0]}`);
 			}
 		}
@@ -1935,6 +1938,11 @@ function save_cache_file_for_short_sentences(cache_file_path) {
  * @param {Object}[options]
  */
 function convert_paragraph(paragraph, options) {
+	if (typeof paragraph !== 'string' || PATTERN_non_Chinese_characters.test(paragraph)) {
+		return paragraph;
+	}
+	//console.trace(paragraph);
+
 	let cache_directory;
 	[options, cache_directory] = set__options_tagged_word_list__via_cache.call(this, paragraph, options);
 
