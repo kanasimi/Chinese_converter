@@ -79,7 +79,7 @@ function add_test(test_name, conditions) {
 
 	all_tests++;
 	//console.trace([all_tests, test_name]);
-	CeL.test(test_name, conditions, check_tests);
+	return CeL.test(test_name, conditions, check_tests);
 }
 
 // ============================================================================
@@ -105,10 +105,6 @@ const articles_directory = CeL.append_path_separator(module_base_path + 'article
 
 const default_general_test_file = `${articles_directory}general.TW.txt`;
 const default_archived_general_test_file = `${articles_directory}general.archived.TW.txt`;
-
-add_test('基本檢核', async (assert, setup_test, finish_test, options) => {
-	assert([articles_directory, cecc.test_articles_directory]);
-});
 
 // ------------------------------------------------------------------
 
@@ -657,17 +653,9 @@ async function merge_new_general_test_text_to_archived() {
 	CeL.write_file(default_archived_general_test_file, archived_general_test_text.toString(), default_write_file_options);
 }
 
-(async () => {
-	if (CeL.env.arg_hash?.merge_new_general_test_text_to_archived) {
-		await merge_new_general_test_text_to_archived();
-		// 已改變 general.archived.TW.txt，應重新讀取檔案以避免處理的是舊資料。
-		process.exit();
-	}
-})();
-
 // ------------------------------------------------------------------
 
-add_test('正確率檢核', async (assert, setup_test, finish_test, options) => {
+async function test_正確率檢核(assert, setup_test, finish_test, options) {
 	const file_list = CeL.storage.read_directory(articles_directory);
 	//console.trace([articles_directory, file_list]);
 
@@ -812,13 +800,12 @@ add_test('正確率檢核', async (assert, setup_test, finish_test, options) => 
 	}
 
 	record_test(test_configuration, options);
-});
-
+}
 
 function load_all_tailored_dictionaries() {
 	const file_list = CeL.read_directory(cecc.tailored_dictionaries_directory);
 	for (const file_name of file_list) {
-		const matched = file_name.match(/^(?<work_title>.+?)\.(additional|CN_to_TW|TW_to_CN)/);
+		const matched = file_name.match(/^(?<work_title>[^.\n]{3,}?)\.(additional|CN_to_TW|TW_to_CN)/);
 		if (!matched) {
 			continue;
 		}
@@ -919,10 +906,25 @@ async function test_wiki_pages() {
 
 // ============================================================================
 
-if (CeL.env.arg_hash?.nowiki) {
-	CeL.info(`跳過 wikipedia 測試。`);
-} else if (require('os').freemem() < /* 2GB RAM */ 2 * (2 ** (10 * 3))) {
-	CeL.warn(`RAM 過小 (${CeL.to_KiB(require('os').freemem())})，跳過 wikipedia 測試！`);
-} else {
-	test_wiki_pages();
-}
+(async () => {
+	//console.trace(CeL.env.arg_hash);
+	if (CeL.env.arg_hash?.merge_new_general_test_text_to_archived) {
+		await merge_new_general_test_text_to_archived();
+		// 已改變 general.archived.TW.txt，應重新讀取檔案以避免處理的是舊資料。
+		process.exit();
+	}
+
+	add_test('基本檢核', async (assert, setup_test, finish_test, options) => {
+		assert([articles_directory, cecc.test_articles_directory]);
+	});
+
+	add_test('正確率檢核', test_正確率檢核);
+
+	if (CeL.env.arg_hash?.nowiki) {
+		CeL.info(`跳過 wikipedia 測試。`);
+	} else if (require('os').freemem() < /* 2GB RAM */ 2 * (2 ** (10 * 3))) {
+		CeL.warn(`RAM 過小 (${CeL.to_KiB(require('os').freemem())})，跳過 wikipedia 測試！`);
+	} else {
+		test_wiki_pages();
+	}
+})();

@@ -354,7 +354,7 @@ function load_tailored_dictionary(options) {
 		}
 
 		const contains = CeL.read_file(dictionary_file_path_to_load);
-		const PATTERN_indicate_work_title = /(\n\/\/|@)\s*(《(?<work_title>.+?)》)/g;
+		const PATTERN_indicate_work_title = /(\n\/\/|@)\s*(《(?<work_title>[^.\n]{3,}?)》)/g;
 		let matched;
 		while (matched = PATTERN_indicate_work_title.exec(contains)) {
 			//console.trace(matched);
@@ -397,7 +397,7 @@ const KEY_files_loaded = Symbol('files loaded');
 const KEY_watch_target_file_name_prefix = 'watch_target.';
 /** {RegExp}辭典修訂測試集檔名模式。 */
 const PATTERN_watch_target_file_name = new RegExp(CeL.to_RegExp_pattern(KEY_watch_target_file_name_prefix)
-	+ /(?<work_title>[^.]+)\.(?<to_language>TW|CN)\.\w+$/.source);
+	+ /(?<work_title>[^.\n]{3,})\.(?<to_language>TW|CN)\.\w+$/.source);
 
 /**
  * 載入個別作品辭典修訂測試集。
