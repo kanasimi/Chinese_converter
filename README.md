@@ -167,12 +167,13 @@ npm install cecc
 ### 簡繁轉換
 * [繁化姬](https://zhconvert.org/) [API](https://docs.zhconvert.org/api/0-getting-started/)
 * [繁簡轉換王](https://convert.tw/)
-* [textpro中文文本批处理程序](https://www.fodian.net/tools/)
+* 厦门大学 [汉字简繁文本智能转换系统](http://jf.xmu.edu.cn/)
+* ~~[textpro中文文本批处理程序](https://www.fodian.net/tools/)~~ 2023/10/18 前 403 Forbidden
 
-未考慮詞性之簡繁轉換：
+未考慮詞性之簡繁轉換辭典：
 * 開放中文轉換 (Open Chinese Convert) [OpenCC](https://github.com/BYVoid/OpenCC) [在線轉換](https://opencc.byvoid.com/)
 * [新同文堂](https://github.com/tongwentang/tongwen-core) [簡體正體轉換辭庫](https://github.com/tongwentang/tongwen-dict)
 * [ConvertZZ](https://github.com/flier268/ConvertZZ)
-* 厦门大学 [汉字简繁文本智能转换系统](http://jf.xmu.edu.cn/)
+* [Switch Traditional Chinese and Simplified Chinese.user.js](https://github.com/hoothin/UserScripts/blob/master/Switch%20Traditional%20Chinese%20and%20Simplified%20Chinese/Switch%20Traditional%20Chinese%20and%20Simplified%20Chinese.user.js)
 
 * [搜狗输入法字典 词库下载](https://pinyin.sogou.com/dict/)
