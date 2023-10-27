@@ -29,6 +29,7 @@
 		"url": "git+https://github.com/kanasimi/Chinese_converter.git"
 	},
 
+	"type": "commonjs",
 	"main": "Chinese_converter.js",
 	"scripts": {
 		"test": "node \"_test suite/test.js\""

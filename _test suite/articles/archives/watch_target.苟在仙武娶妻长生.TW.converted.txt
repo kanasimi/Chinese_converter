@@ -67,6 +67,7 @@
 品质更好些。
 // {"原文":"承圣山也太能收刮了。"}
 承圣山也太能搜刮了。
+成仙王后就能肉身不死、元神不灭，
 
 
 // insert_watch_target_to_general_test_text
