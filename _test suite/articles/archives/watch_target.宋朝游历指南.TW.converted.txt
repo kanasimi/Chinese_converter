@@ -121,6 +121,7 @@
 // {"原文":"叶庭圭云："}
 叶庭圭云：
 在交子上印上固定的几种面值，
+称之为“粥面聚”。
 
 
 // insert_watch_target_to_general_test_text
