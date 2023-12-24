@@ -87,4 +87,8 @@ zh_conversion 用作品特設辭典
 喂犼	餵犼
 // 《请公子斩妖》	不受伤怎么回复，不回复他为什么要执掌这条大道？ (~回復<COO>v:泛 ~回復<role.type:ARGM-ADV>怎么 d:不+v:受伤+r:怎么+v:回复+wp:，+d:不+v:回复+r:他+r:为什么+v:要+v:执掌+r:这+q:条+n:大道+wp:？)
 不受伤怎么回复，不回复	不受傷怎麼回復，不回復
+// 《请公子斩妖》	起码盘神骨能克制恶地藏， (~剋制<VOB>v:道 ~剋制<role.type:ARGM-ADV>起码 ~剋制<role.type:A1>恶地藏 ~剋制<role.type:A1>万法 d:起码+n:盘神骨+v:能+v:克制+n:恶地藏+wp:，)
+克制恶地藏	剋制惡地藏
+// 解析錯誤 @ 《请公子斩妖》	酒气也就干了。 (~乾<COO>v:是 ~乾<role.type:ARGM-DIS>就 n:酒气+d:也+d:就+v:干+u:了+wp:。) (~乾<COO>v:带 ~乾<role.type:A0>酒气 ~乾<role.type:ARGM-ADV>也 ~乾<role.type:ARGM-DIS>就 ~乾<role.type:ARGM-ADV>也 ~乾<role.type:ARGM-DIS>就 n:酒气+d:也+d:就+v:干+u:了+wp:。)
+酒气也就干了	酒氣也就乾了
 

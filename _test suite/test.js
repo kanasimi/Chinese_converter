@@ -732,7 +732,8 @@ async function test_正確率檢核(assert, setup_test, finish_test, options) {
 		}
 
 		//console.trace([file_path, answer_file_path]);
-		if (true) {
+		// IIFE
+		{
 			const matched = file_path.match(Chinese_converter.PATTERN_watch_target_file_name);
 			if (matched) {
 				cecc.load_tailored_dictionary({
