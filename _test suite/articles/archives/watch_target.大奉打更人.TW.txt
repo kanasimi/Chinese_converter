@@ -559,6 +559,7 @@
 不識得的，也願意賣我幾分薄面。
 //槍聲和軍弩的弦聲交織，
 //期間夾雜著車弩清越的弦聲。
+我嫌噁心。
 
 
 // insert_watch_target_to_general_test_text
