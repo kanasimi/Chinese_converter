@@ -1232,6 +1232,9 @@ v:干	p:将+a:干+d:未+~乾
 v:干	n:/[风唇]$/+~乾+u:的
 // 解析錯誤 @ 《我本无意成仙》	兴许晾个两天，也就干了。 (~乾<COO>v:晾 ~乾<role.type:ARGM-ADV>也 ~乾<role.type:ARGM-DIS>就 d:兴许+v:晾+q:个+m:两+q:天+wp:，+d:也+d:就+v:干+u:了+wp:。) 單純 zh_conversion 轉換過程: 干了→幹了 (~乾<COO>v:晾 ~乾<role.type:ARGM-ADV>也 ~乾<role.type:ARGM-DIS>就 d:兴许+v:晾+q:个+m:两+q:天+wp:，+d:也+d:就+a:干+u:了+wp:。) 單純 zh_conversion 轉換過程: 干了→幹了
 干	~乾<COO>v:晾+u:了
+// 《仙人只想躺着》	很多时候衣服洗完了晾10天都不干， (~乾<COO>v:晾 ~乾<role.type:ARGM-TMP>很多时候 ~乾<role.type:ARGM-ADV>都 ~乾<role.type:ARGM-ADV>不 m:很多+n:时候+n:衣服+v:洗+v:完+u:了+v:晾+m:10+q:天+d:都+d:不+a:干+wp:，) (~乾<COO>v:洗 ~乾<role.type:ARGM-TMP>很多时候 ~乾<role.type:A0>衣服 ~乾<role.type:ARGM-ADV>洗完了 ~乾<role.type:ARGM-ADV>都 ~乾<role.type:ARGM-ADV>不 m:很多+n:时候+n:衣服+v:洗+v:完+u:了+v:晾+m:10+q:天+d:都+d:不+a:干+wp:，)
+a:干	~乾<COO>v:晾
+a:干	~乾<COO>v:洗
 // [general.TW.txt]	泥地干了。 (~乾<role.type:A0>泥地 n:泥地+a:干+u:了) 單純 zh_conversion 轉換過程: 干了→幹了
 // 解析錯誤 @ 《道诡异仙》	羊粪干了可以当柴烧， (~乾<COO>v:记住 n:羊粪+v:干+u:了+v:可以+v:当+n:柴+v:烧+wp:，) 單純 zh_conversion 轉換過程: 干了→幹了
 // 解析錯誤 @ 《长生，从养鸡杂役开始》	发现甲七拉在被窝里的鸡屎已经干了…… (~乾<VOB>v:发现 ~乾<role.type:A0>漫天的星辰 ~乾<role.type:ARGM-ADV>都 ~乾<role.type:ARGM-ADV>许多 ~乾<role.type:A0>甲七拉在被窝里的鸡屎 ~乾<role.type:ARGM-ADV>已经 v:发现+nh:甲七+v:拉+p:在+n:被窝+nd:里+u:的+n:鸡屎+d:已经+v:干+u:了+wp:……) 單純 zh_conversion 轉換過程: 干了→幹了
