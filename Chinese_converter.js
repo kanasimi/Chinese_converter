@@ -1274,6 +1274,8 @@ function condition_filter_LTP(single_condition, word_data, options) {
 function match_single_condition(single_condition, word_data, options) {
 	//if (!single_condition) console.trace([single_condition, word_data, options]);
 
+	//if (single_condition.not_match && word_data[this.KEY_PoS_tag] === 'wp' && word_data[this.KEY_word] === '：') console.trace([single_condition, word_data]);
+
 	if (single_condition[KEY_filter_name]) {
 		return this.condition_filter && this.condition_filter(single_condition, word_data, options);
 	}
@@ -1295,7 +1297,7 @@ function match_single_condition(single_condition, word_data, options) {
 	if (!filter
 		// .is_target 時， [this.KEY_word] 可能是欲改成的字串，此時不做篩選。
 		|| single_condition.is_target && !CeL.is_RegExp(filter)) {
-		return true;
+		return !single_condition.not_match;
 	}
 
 	//if (single_condition.not_match && /上/.test(filter)) console.trace([single_condition, filter, word_data, CeL.fit_filter(filter, word_data[this.KEY_word]), single_condition.not_match ^ CeL.fit_filter(filter, word_data[this.KEY_word])]);
