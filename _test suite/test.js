@@ -10,7 +10,7 @@ CLS && type "test_report.txt"
 
 
 歸檔 general.TW.txt → general.archived.TW.txt
-CLS && npm test nowiki merge_new_general_test_text_to_archived
+CLS && npm test nowiki merge_new_general_test_text_to_archived remove_duplicate_lines_in_test_text_file
 若為修改錯字，應在除欲修改的語句外**無轉換錯誤的情況下**執行完上述指令後才修改 `general.archived.TW.txt` 的錯別字。
 
 */
@@ -388,6 +388,7 @@ function append_new_block(word_data, line) {
 		append_line: block_append_line,
 		word_data,
 		trim: trim_block,
+		lines_Set: new Set,
 	});
 
 	last_block.append_line(line);
@@ -448,8 +449,11 @@ function parse_general_test_text(insert_to_file, options) {
 		test_cases: 0,
 	});
 
+	/** remove duplicate lines in test text file */
+	const remove_duplicate_lines_in_test_text_file = CeL.env.arg_hash?.remove_duplicate_lines_in_test_text_file;
+
 	// parse general_test_text
-	let is_in_comments;
+	let is_in_comments, is_after_comments, lines_Set = new Set;
 	const original_general_test_text = CeL.read_file(insert_to_file).toString();
 	general_test_text.original_general_test_text = original_general_test_text;
 	for (let line of original_general_test_text.split('\n')) {
@@ -461,6 +465,7 @@ function parse_general_test_text(insert_to_file, options) {
 			// TODO: handle with "/* ... */ ... /*"
 			is_in_comments = line.includes('*/');
 			(general_test_text.last_block || general_test_text).push(line);
+			is_after_comments = true;
 			continue;
 		}
 
@@ -469,6 +474,7 @@ function parse_general_test_text(insert_to_file, options) {
 		// 標題全部都包含 "↓" 的情況。
 		const matched = line.match(PATTERN_block_mark);
 		if (matched && (general_test_text.last_block || matched.groups.mark !== '↑')) {
+			is_after_comments = false;
 			// parse title
 			let word_data = matched.groups.words.between(null, '→').trim(), has_irrelevant_words;
 			//console.trace([word_data, 簡繁轉換一對多_word_mapper.get(word_data)?.title]);
@@ -509,6 +515,19 @@ function parse_general_test_text(insert_to_file, options) {
 
 			CeL.warn(`${parse_general_test_text.name}: ${has_irrelevant_words ? '有不相干的文字' : '無法解析標題，當做普通註解'}: ${line}`);
 			// 繼續將 line 加入 general_test_text。
+		}
+
+
+		if (line && remove_duplicate_lines_in_test_text_file) {
+			if (!is_after_comments && !line.startsWith('//') && (general_test_text.last_block?.lines_Set || lines_Set).has(line)) {
+				//is_after_comments = false;
+				CeL.warn(`${parse_general_test_text.name}: Skip duplicate line ${JSON.stringify(line)}`);
+				continue;
+			}
+
+			is_after_comments = line.startsWith('//');
+			if (!is_after_comments)
+				(general_test_text.last_block?.lines_Set || lines_Set).add(line);
 		}
 
 		if (general_test_text.last_block) {
@@ -572,7 +591,7 @@ async function insert_watch_target_to_general_test_text(insert_to_file, insert_f
 	//console.trace(general_test_text);
 	if (general_test_text.test_cases > 300) {
 		CeL.warn(`${insert_watch_target_to_general_test_text.name}: 一般性測試集過大，建議封存：`);
-		CeL.info('npm test nowiki merge_new_general_test_text_to_archived');
+		CeL.info('npm test nowiki merge_new_general_test_text_to_archived remove_duplicate_lines_in_test_text_file');
 	}
 
 	// ---------------------------------------------
