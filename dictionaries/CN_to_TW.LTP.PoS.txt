@@ -4557,6 +4557,8 @@ v:冲	~衝<role.type:A0>天兵
 // 《我的一天有48小时》	之后后者又去烧了点水，冲了茶叶。 (~沖<COO>v:烧 ~沖<role.type:ARGM-TMP>之后 ~沖<role.type:A0>后者 ~沖<role.type:ARGM-DIS>又 ~沖<role.type:A1>茶叶 nd:之后+r:后者+d:又+v:去+v:烧+u:了+q:点+n:水+wp:，+v:冲+u:了+n:茶叶+wp:。)
 // 《咫尺之间人尽敌国》	云生烟替顾聆影冲了一杯茶。 (~沖<role.type:A0>云生烟 ~沖<role.type:ARGM-BNF>替顾聆影 ~沖<role.type:A1>一杯茶 nh:云生烟+p:替+nh:顾聆影+v:冲+u:了+m:一+q:杯+n:茶+wp:。)
 v:冲	~沖<role.type:A1>/(?:[浴凉]|茶叶?|[^奖]杯|胳膊|咖啡|可可)$/
+// 《我在田宗剑道成仙》	之前的茅草屋才被山洪冲了， (~沖<VOB>v:说 ~沖<role.type:A1>鲜花与草木 ~沖<role.type:A1>之前的茅草屋 ~沖<role.type:ARGM-ADV>才 ~沖<role.type:A0>山洪 nd:之前+u:的+n:茅草屋+d:才+p:被+n:山洪+v:冲+u:了+wp:，)
+v:冲	~沖<role.type:A0>山洪
 
 // 《我师兄实在太稳健了》	已从各个方向冲抵玄都城大阵前； (~衝<role.type:ARGM-ADV>已 ~衝<role.type:ARGM-DIR>从各个方向 ~衝<role.type:A1>玄都城大阵前 d:已+p:从+r:各个+n:方向+v:冲+v:抵+ns:玄都城+a:大+n:阵+nd:前+wp:；)
 v:冲	~衝+v:抵+ns:

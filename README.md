@@ -54,7 +54,7 @@ Install [LTP](https://github.com/HIT-SCIR/ltp) 4.1.5.post2 first.
 On Windows, install LTP:
 1. 安裝 [PyTorch](http://pytorch.org/) 支援的 Python。（最新的 Python 常不能執行 PyTorch。）
 2. 安裝 LTP 與 [LTP server](http://ltp.ai/docs/quickstart.html#ltp-server) 所依賴的軟體包:
-```cmd
+```sh
 pip install --force-reinstall "ltp==4.1.5.post2"
 pip install tornado
 pip install fire
@@ -62,33 +62,39 @@ pip install fire
 
 <!--
 3. Upgrade LTP:
-```cmd
+```sh
 pip install --upgrade ltp
 ```
 #### Alternative: Install 中文分詞: nodejieba
 Alternative method: On Windows, install [nodejieba](https://github.com/yanyiwu/nodejieba):
-```cmd
-REM run as Administrator
+```sh
+# run as Administrator
 npm install --global windows-build-tools
-REM Waiting for some minutes...
+# Waiting for some minutes...
 npm install --global node-gyp
 npm install --global node-pre-gyp
 npm install nodejieba
-REM Waiting for some minutes...
+# Waiting for some minutes...
 ```
 -->
 ### Install cecc
 Install [Node.js](https://nodejs.org/), and then install cecc:
 
-```bash
+```sh
 npm install cecc
 ```
 
 ## Usage
-1. 直接下載 [LTP server 原始碼](https://github.com/HIT-SCIR/ltp/blob/master/tools/server.py)並改 <code>'small'</code> 為 <code>'base'</code>。
-2. 啟動 LTP server，預設為 http://localhost:5000/ 。您可能需要 6 GB 記憶體來啟動 server。第一次執行需要下載超過 500 MiB 的辭典檔。
+### 1. Preparing server script
+1. 直接下載 [LTP server 原始碼](https://raw.githubusercontent.com/HIT-SCIR/ltp/4.1/tools/server.py)並改 <code>'small'</code> 為 <code>'base'</code>。您可直接採用[已改過的 server.base.py](https://raw.githubusercontent.com/kanasimi/Chinese_converter/master/resources/server.base.py)。
+2. 啟動 LTP server，預設為 http://localhost:5000/ 。您可能需要 6 GB 記憶體來啟動 server。第一次執行需要下載超過 500 MiB 的辭典檔，通常耗時10分多鐘。
+   ```sh
+   # 當您採用上述已改過的 server.base.py，可以此法啟動 LTP server。
+   python server.base.py serve
+   ```
 
-3. Try codes:
+### 2. Running codes
+1. Try running codes using node.js:
    ```javascript
    // load module
    const CeCC = require('cecc');
@@ -97,7 +103,7 @@ npm install cecc
    cecc.to_TW('简体中文');
    cecc.to_CN('繁體中文');
    ```
-4. 完整測試。
+2. Full test. 完整測試。
    ```sh
    # 重新生成 .converted.* 解答檔案。
    npm test regenerate_converted
