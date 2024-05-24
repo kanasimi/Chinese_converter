@@ -50,7 +50,7 @@ Install [LTP](https://github.com/HIT-SCIR/ltp) 4.1.5.post2 first.
 
 經實測，採用哈工大 [LTP](https://github.com/HIT-SCIR/ltp) 4.1.5.post2 [Base 模型](https://huggingface.co/LTP/base)的[服務端版本](http://ltp.ai/docs/quickstart.html#ltp-server)，配合[相對應辭典](dictionaries/CN_to_TW.LTP.PoS.txt)；以 繁→簡→繁 轉換[測試檔](_test%20suite/articles)中的文字，可轉換回原先之內容。
 
-### Install 中文分詞: LTP
+### 1. Install 中文分詞: LTP
 On Windows, install LTP:
 1. 安裝 [PyTorch](http://pytorch.org/) 支援的 Python。（最新的 Python 常不能執行 PyTorch。）
 2. 安裝 LTP 與 [LTP server](http://ltp.ai/docs/quickstart.html#ltp-server) 所依賴的軟體包:
@@ -77,7 +77,7 @@ npm install nodejieba
 # Waiting for some minutes...
 ```
 -->
-### Install cecc
+### 2. Install cecc
 Install [Node.js](https://nodejs.org/), and then install cecc:
 
 ```sh
