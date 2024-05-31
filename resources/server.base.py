@@ -49,7 +49,12 @@ class LTPHandler(RequestHandler):
 
 class Server(object):
     def __init__(self, path: str = 'base', batch_size: int = 50, device: str = None, onnx: bool = False):
-        self.ltp = LTP(path=path, device=device)
+        try:
+            # 2024/6/1 7:9:45 adapt for "ltp==4.2.13"
+            self.ltp = LTP('LTP/base')
+        except:
+            # 2020 for old versions, e.g., "ltp==4.1.5.post2"
+            self.ltp = LTP(path=path, device=device)
         self.split = lambda a: map(lambda b: a[b:b + batch_size], range(0, len(a), batch_size))
 
     def _build_words(self, words, pos, dep):
