@@ -8,7 +8,7 @@ LTP Server 是对 LTP 的一个简单包装，依赖于 tornado，使用方式�
 .. code-block:: bash
 
     pip install ltp, tornado
-    python utils/server.py serve
+    python tools/server.py serve
 """
 import sys
 import json
@@ -39,7 +39,8 @@ class LTPHandler(RequestHandler):
         try:
             print(self.request.body.decode('utf-8'))
             text = json.loads(self.request.body.decode('utf-8'))['text']
-            result = self.ltp._predict([text])[0]
+            #print(text)
+            result = self.ltp._predict([text])
             #print(result)
             self.finish(result)
         except Exception as e:
@@ -51,83 +52,69 @@ class LTPHandler(RequestHandler):
 
 class Server(object):
     def __init__(self, path: str = 'base', batch_size: int = 50, device: str = None, onnx: bool = False):
-        try:
-            # 2024/6/1 7:9:45 adapt for "ltp==4.2.13"
-            self.ltp = LTP('LTP/base')
-        except:
-            # 2020 for old versions, e.g., "ltp==4.1.5.post2"
-            self.ltp = LTP(path=path, device=device)
-        self.split = lambda a: map(lambda b: a[b:b + batch_size], range(0, len(a), batch_size))
+        # 2024/6/1 7:9:45 adapt for "ltp==4.2.13"
+        self.ltp = LTP('LTP/base')
 
-    def _build_words(self, words, pos, dep):
-        res = [{'id': -1, 'length': 0, 'offset': 0, 'text': 'root'}]
-        for word, p, (id, parent, relation) in zip(words, pos, dep):
-            offset = res[-1]['offset'] + res[-1]['length']
-            res.append({
-                'id': id - 1,
+    def _predict(self, sentences: List[str]):
+        #result = []
+        output = self.ltp.pipeline(sentences, tasks=["cws", "pos", "ner", "srl", "dep", "sdp", "sdpg"])
+
+
+        # https://github.com/HIT-SCIR/ltp/blob/main/python/interface/docs/quickstart.rst
+        # 需要注意的是，在依存句法当中，虚节点ROOT占据了0位置，因此节点的下标从1开始。
+        id = 0
+        offset = 0
+        words = []
+        for word, pos, parent, relation in \
+                zip(output.cws[0], output.pos[0], output.dep[0]['head'], output.dep[0]['label']):
+            #print([id, word, pos, parent, relation])
+            words.append({
+                'id': id,
                 'length': len(word),
                 'offset': offset,
                 'text': word,
-                'pos': p,
+                'pos': pos,
                 'parent': parent - 1,
                 'relation': relation,
                 'roles': [],
                 'parents': []
             })
+            id = id + 1
+            offset = offset + len(word)
 
-        return res[1:]
 
-    def _predict(self, sentences: List[str]):
-        result = []
-        for sentences_batch in self.split(sentences):
-            batch_seg, hidden = self.ltp.seg(sentences_batch)
-            #print([batch_seg, hidden])
-            batch_pos = self.ltp.pos(hidden)
-            batch_ner = self.ltp.ner(hidden)
-            batch_srl = self.ltp.srl(hidden)
-            batch_dep = self.ltp.dep(hidden, fast=False)
-            batch_sdp = self.ltp.sdp(hidden, mode='mix')
-            #print([sentences_batch, batch_seg, batch_pos, batch_ner, batch_srl, batch_dep, batch_sdp])
-
-            for sent, seg, pos, ner, srl, dep, sdp in \
-                    zip(sentences_batch, batch_seg, batch_pos, batch_ner, batch_srl, batch_dep, batch_sdp):
-                #print([sent, seg, pos, ner, srl, dep, sdp])
-
-                words = self._build_words(seg, pos, dep)
-                #print(words)
-
-                for word, token_srl in zip(words, srl):
-                    for role, start, end in token_srl:
-                        text = "".join(seg[start:end + 1])
-                        offset = words[start]['offset']
-                        word['roles'].append({
-                            'text': text,
-                            'offset': offset,
-                            'length': len(text),
-                            'type': role
-                        })
-                        #print(word['roles'][-1])
-
-                #print(sdp)
-                for start, end, label in sdp:
-                    words[start - 1]['parents'].append({'parent': end - 1, 'relate': label})
-                    #print(start - 1, words[start - 1]['parents'])
-
-                nes = []
-                for role, start, end in ner:
-                    text = "".join(seg[start:end + 1])
-                    nes.append({
-                        'text': text,
-                        'offset': start,
-                        'ne': role.lower(),
-                        'length': len(text)
-                    })
-
-                result.append({
-                    'text': sent,
-                    'nes': nes,
-                    'words': words
+        for token_srl in output.srl[0]:
+            for argument in token_srl['arguments']:
+                #print(token_srl['index'], token_srl['predicate'], argument)
+                text = argument[1]
+                start = argument[2]
+                offset = words[start]['offset']
+                words[token_srl['index']]['roles'].append({
+                    'text': text,
+                    'offset': offset,
+                    'length': len(text),
+                    'type': argument[0]
                 })
+
+
+        start = 0
+        for end, label in \
+                zip(output.sdp[0]['head'], output.sdp[0]['label']):
+            words[start]['parents'].append({'parent': end - 1, 'relate': label})
+            start = start + 1
+
+
+        if (not output.ner[0]):
+            # 請提供您嘗試解析的語句供我們改進LTP，謝謝。
+            raise Exception("NYI for ner: Please provide the phrases you are trying to parse to improve LTP, thank you.")
+
+
+        result = {
+            'text': sentences[0],
+            # TODO: add output.ner
+            #'nes': nes,
+            'words': words
+        }
 
         return result
 
