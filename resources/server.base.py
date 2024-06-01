@@ -39,7 +39,9 @@ class LTPHandler(RequestHandler):
         try:
             print(self.request.body.decode('utf-8'))
             text = json.loads(self.request.body.decode('utf-8'))['text']
-            self.finish(self.ltp._predict([text])[0])
+            result = self.ltp._predict([text])[0]
+            #print(result)
+            self.finish(result)
         except Exception as e:
             self.finish(self.ltp._predict(['服务器遇到错误！'])[0])
 
@@ -79,16 +81,20 @@ class Server(object):
         result = []
         for sentences_batch in self.split(sentences):
             batch_seg, hidden = self.ltp.seg(sentences_batch)
+            #print([batch_seg, hidden])
             batch_pos = self.ltp.pos(hidden)
             batch_ner = self.ltp.ner(hidden)
             batch_srl = self.ltp.srl(hidden)
             batch_dep = self.ltp.dep(hidden, fast=False)
             batch_sdp = self.ltp.sdp(hidden, mode='mix')
+            #print([sentences_batch, batch_seg, batch_pos, batch_ner, batch_srl, batch_dep, batch_sdp])
 
             for sent, seg, pos, ner, srl, dep, sdp in \
                     zip(sentences_batch, batch_seg, batch_pos, batch_ner, batch_srl, batch_dep, batch_sdp):
+                #print([sent, seg, pos, ner, srl, dep, sdp])
 
                 words = self._build_words(seg, pos, dep)
+                #print(words)
 
                 for word, token_srl in zip(words, srl):
                     for role, start, end in token_srl:
@@ -100,9 +106,12 @@ class Server(object):
                             'length': len(text),
                             'type': role
                         })
+                        #print(word['roles'][-1])
 
+                #print(sdp)
                 for start, end, label in sdp:
                     words[start - 1]['parents'].append({'parent': end - 1, 'relate': label})
+                    #print(start - 1, words[start - 1]['parents'])
 
                 nes = []
                 for role, start, end in ner:
@@ -142,7 +151,7 @@ class Server(object):
         gen_log.setLevel(logging.INFO)
         access_log.setLevel(logging.INFO)
 
-        app_log.info("Model is loading...")
+        #app_log.info("Model is loading...")
         app_log.info("Model Has Been Loaded!")
 
         app = Application([
