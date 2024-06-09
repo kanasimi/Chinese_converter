@@ -908,16 +908,20 @@ async function test_wiki_pages() {
 			}
 		};
 
-		for (const page_title of page_title_list) {
-			const page_data = await zhwiki.page(page_title, { redirects: 1 });
-			//console.log(page_data.wikitext);
-			// TODO: including [[維基百科:字詞轉換處理]]
+		if (page_title_list?.length > 0) {
+			for (const page_title of page_title_list) {
+				const page_data = await zhwiki.page(page_title, { redirects: 1 });
+				//console.log(page_data.wikitext);
+				// TODO: including [[維基百科:字詞轉換處理]]
 
-			await for_each_test_set(Object.assign(test_configuration, {
-				test_title: page_title,
-				content_paragraphs: CeCC.get_paragraphs_of_text(await get_parsed_wikitext(page_data, 'zh-tw')),
-				answer_paragraphs: CeCC.get_paragraphs_of_text(await get_parsed_wikitext(page_data, 'zh-cn')),
-			}));
+				await for_each_test_set(Object.assign(test_configuration, {
+					test_title: page_title,
+					content_paragraphs: CeCC.get_paragraphs_of_text(await get_parsed_wikitext(page_data, 'zh-tw')),
+					answer_paragraphs: CeCC.get_paragraphs_of_text(await get_parsed_wikitext(page_data, 'zh-cn')),
+				}));
+			}
+		} else {
+			CeL.warn(`${test_wiki_pages.name}: No test page specified in the file [${module_base_path + 'zhwiki pages.txt'}].`);
 		}
 
 		record_test(test_configuration, options);
