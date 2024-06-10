@@ -6807,11 +6807,13 @@ v:扇	~搧<role.type:A1>巴掌
 v:扇	~搧<role.type:A2>几巴掌
 // 《回到过去变成猫》	还是让我扇一巴掌？ (~搧<VOB>v:让 ~搧<role.type:A0>我 ~搧<role.type:ARGM-EXT>一巴掌 c:还是+v:让+r:我+v:扇+m:一+n:巴掌+wp:？)
 // 《大乘期才有逆袭系统》	还扇了男修士一巴掌。 (~搧<COO>v:气不过 ~搧<role.type:ARGM-DIS>还 ~搧<role.type:ARGM-EXT>一巴掌 d:还+v:扇+u:了+b:男+n:修士+m:一+q:巴掌+wp:。) (~搧<role.type:ARGM-DIS>还 ~搧<role.type:A1>男修士 ~搧<role.type:ARGM-EXT>一巴掌 d:还+v:扇+u:了+b:男+n:修士+m:一+n:巴掌+wp:。)
-v:扇	~搧<role.type:ARGM-EXT>/巴掌$/
+// 《我在田宗剑道成仙》	我酒真子第一个就上去扇他一个大逼斗。 (~搧<COO>v:上去 ~搧<role.type:A0>我酒真子 ~搧<role.type:ARGM-ADV>第一个 ~搧<role.type:ARGM-DIS>就 ~搧<role.type:A1>他 ~搧<role.type:ARGM-EXT>一个大逼斗 r:我+nh:酒真子+m:第一+q:个+d:就+v:上去+v:扇+r:他+m:一个+a:大+n:逼斗+wp:。)
+v:扇	~搧<role.type:ARGM-EXT>/(?:巴掌|大逼斗)$/
 // 《回到过去变成猫》	被郑叹扇了几巴掌， (~搧<role.type:A0>郑叹 ~搧<role.type:ARGM-FRQ>几巴掌 p:被+nh:郑叹+v:扇+u:了+m:几+q:巴掌+wp:，)
 v:扇	~搧<role.type:ARGM-FRQ>几巴掌
 // 《大乘期才有逆袭系统》	就立即扇了自己两个大嘴巴子。 (~搧<role.type:ARGM-ADV>就 ~搧<role.type:ARGM-ADV>立即 ~搧<role.type:A1>自己 ~搧<role.type:A1>两个大嘴巴子 d:就+d:立即+v:扇+u:了+r:自己+m:两+q:个+a:大+n:嘴巴子+wp:。)
-v:扇	~搧<role.type:A1>/嘴巴子$/
+// 《我在田宗剑道成仙》	我酒真子第一个就上去扇他一个大逼斗。 (~搧<COO>v:上去 ~搧<role.type:A0>我酒真子 ~搧<role.type:A1>他 ~搧<role.type:A1>一个大逼斗 r:我+nh:酒真子+m:第一+q:个+d:就+v:上去+v:扇+r:他+m:一个+a:大+n:逼斗+wp:。)
+v:扇	~搧<role.type:A1>/(?:嘴巴子|大逼斗)$/
 
 
 // --------------------------------------------------------------------------------------------------------------------
