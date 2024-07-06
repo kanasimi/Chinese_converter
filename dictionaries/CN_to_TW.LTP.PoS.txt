@@ -1750,6 +1750,9 @@ a:干瘦	~乾瘦
 // 《不会真有人觉得修仙难吧》	一个身材干瘦的男子开口， (~乾瘦<ATT>n:男子 m:一个+n:身材+z:干瘦+u:的+n:男子+v:开口+wp:，)
 z:干瘦	~乾瘦
 
+// 《女侠且慢》	不过顷刻之间，脸上皮肉便已经干苍， (~乾蒼<COO>i:血流如注 c:不过+nt:顷刻+nd:之间+wp:，+n:脸上+n:皮肉+d:便+d:已经+z:干苍+wp:，)
+z:干苍	~乾蒼
+
 // 《我不可能是剑神》	你看上去干巴瘦， (~乾巴<ADV>a:瘦 r:你+v:看上去+z:干巴+a:瘦+wp:，)
 z:干巴	~乾巴
 
@@ -2559,6 +2562,10 @@ v:制约	~制約
 n:制度	~制度
 // [general.TW.txt]	她把她的政治筹码全押在定制裁者的罪。 (~制裁者<ATT>n:罪 r:她+p:把+r:她+u:的+n:政治+n:筹码+d:全+v:押+p:在+v:定+n:制裁者+u:的+n:罪+wp:。)
 n:制裁者	~制裁者
+
+// 日語
+// 《女侠且慢》	作为昔日制霸刀坛三十年，身高过两米的巅峰刀客， (~制霸<ATT>n:刀客 ~制霸<role.type:ARGM-TMP>昔日 ~制霸<role.type:A1>刀坛 ~制霸<role.type:ARGM-EXT>三十年 ~制霸<role.type:A0>刀客 p:作为+nt:昔日+v:制霸+n:刀坛+m:三十+q:年+wp:，+n:身高+v:过+m:两+q:米+u:的+n:巅峰+n:刀客+wp:，)
+v:制霸	/日$/+~制霸
 
 // 《女主从书里跑出来了怎么办》	没想到松田的异能对你这么克制…… (~剋制<VOB>v:想到 ~剋制<role.type:A0>松田的异能 ~剋制<role.type:A2>对你 ~剋制<role.type:ARGM-ADV>这么 d:没+v:想到+nh:松田+u:的+n:异能+p:对+r:你+r:这么+v:克制+wp:……)
 // 《剑宗旁门》	这样的对手似乎会被镇魂符相当地克制。 (~剋制<COO>v:抓 ~剋制<role.type:ARGM-TMP>就在此时 ~剋制<role.type:A1>这看起来凶恶无比的鬼鳄 ~剋制<role.type:A1>这样的对手 ~剋制<role.type:ARGM-ADV>似乎 ~剋制<role.type:A0>镇魂符 ~剋制<role.type:ARGM-ADV>相当地 r:这样+u:的+n:对手+d:似乎+v:会+p:被+n:镇魂符+d:相当+u:地+v:克制+wp:。)
@@ -6302,6 +6309,9 @@ v:合	~闔<role>/(?:眼睛?|书[籍本页]?)$/
 // 《回到过去变成猫》	卫棱合上书， (~闔上<COO>v:感谢 ~闔上<role.type:ARGM-TMP>看完那段内容之后 ~闔上<role.type:A0>卫棱 ~闔上<role.type:A1>书 nh:卫棱+v:合上+n:书+wp:，)
 v:合上	~闔上<role>/(?:眼睛?|书[籍本页]?)$/
 
+// 《女侠且慢》	恐怕晚上连合眼的机会都没有， (~闔眼<ATT>n:机会 d:恐怕+nt:晚上+u:连+v:合眼+u:的+n:机会+d:都+v:没有+wp:，)
+v:合眼	u:连+~闔眼
+
 
 // --------------------------------------------------------------------------------------------------------------------
 
@@ -6842,20 +6852,16 @@ n:灵谷	~靈穀<SBV>i:大有用处
 v:扇	~搧<ATT>nh:
 v:扇	~搧<ATT>散修
 // 《回到过去变成猫》	扇耳光。 (~搧<role.type:A1>耳光 v:扇+n:耳光+wp:。)
-v:扇	~搧<role.type:A1>耳光
 // 《回到过去变成猫》	然后被二者扇巴掌， (~搧<COO>v:挂 ~搧<role.type:A1>小米的猫牌 ~搧<role.type:A1>爪子 ~搧<role.type:A0>郑叹 ~搧<role.type:ARGM-DIS>然后 ~搧<role.type:A0>二者 ~搧<role.type:A1>巴掌 c:然后+p:被+r:二者+v:扇+n:巴掌+wp:，)
-v:扇	~搧<role.type:A1>巴掌
+// 《我在田宗剑道成仙》	我酒真子第一个就上去扇他一个大逼斗。 (~搧<COO>v:上去 ~搧<role.type:A0>我酒真子 ~搧<role.type:A1>他 ~搧<role.type:A1>一个大逼斗 r:我+nh:酒真子+m:第一+q:个+d:就+v:上去+v:扇+r:他+m:一个+a:大+n:逼斗+wp:。)
+// 《大乘期才有逆袭系统》	就立即扇了自己两个大嘴巴子。 (~搧<role.type:ARGM-ADV>就 ~搧<role.type:ARGM-ADV>立即 ~搧<role.type:A1>自己 ~搧<role.type:A1>两个大嘴巴子 d:就+d:立即+v:扇+u:了+r:自己+m:两+q:个+a:大+n:嘴巴子+wp:。)
 // 《回到过去变成猫》	同时扇了几巴掌， (~搧<COO>v:跳 ~搧<role.type:ARGM-ADV>见对方扑过来 ~搧<role.type:A0>郑叹 ~搧<role.type:ARGM-ADV>同时 ~搧<role.type:A2>几巴掌 c:同时+v:扇+u:了+m:几+q:巴掌+wp:，) (~搧<role.type:ARGM-DIS>同时 ~搧<role.type:ARGM-EXT>几巴掌 c:同时+v:扇+u:了+m:几+q:巴掌+wp:，)
-v:扇	~搧<role.type:A2>几巴掌
 // 《回到过去变成猫》	还是让我扇一巴掌？ (~搧<VOB>v:让 ~搧<role.type:A0>我 ~搧<role.type:ARGM-EXT>一巴掌 c:还是+v:让+r:我+v:扇+m:一+n:巴掌+wp:？)
 // 《大乘期才有逆袭系统》	还扇了男修士一巴掌。 (~搧<COO>v:气不过 ~搧<role.type:ARGM-DIS>还 ~搧<role.type:ARGM-EXT>一巴掌 d:还+v:扇+u:了+b:男+n:修士+m:一+q:巴掌+wp:。) (~搧<role.type:ARGM-DIS>还 ~搧<role.type:A1>男修士 ~搧<role.type:ARGM-EXT>一巴掌 d:还+v:扇+u:了+b:男+n:修士+m:一+n:巴掌+wp:。)
 // 《我在田宗剑道成仙》	我酒真子第一个就上去扇他一个大逼斗。 (~搧<COO>v:上去 ~搧<role.type:A0>我酒真子 ~搧<role.type:ARGM-ADV>第一个 ~搧<role.type:ARGM-DIS>就 ~搧<role.type:A1>他 ~搧<role.type:ARGM-EXT>一个大逼斗 r:我+nh:酒真子+m:第一+q:个+d:就+v:上去+v:扇+r:他+m:一个+a:大+n:逼斗+wp:。)
-v:扇	~搧<role.type:ARGM-EXT>/(?:巴掌|大逼斗)$/
 // 《回到过去变成猫》	被郑叹扇了几巴掌， (~搧<role.type:A0>郑叹 ~搧<role.type:ARGM-FRQ>几巴掌 p:被+nh:郑叹+v:扇+u:了+m:几+q:巴掌+wp:，)
-v:扇	~搧<role.type:ARGM-FRQ>几巴掌
-// 《大乘期才有逆袭系统》	就立即扇了自己两个大嘴巴子。 (~搧<role.type:ARGM-ADV>就 ~搧<role.type:ARGM-ADV>立即 ~搧<role.type:A1>自己 ~搧<role.type:A1>两个大嘴巴子 d:就+d:立即+v:扇+u:了+r:自己+m:两+q:个+a:大+n:嘴巴子+wp:。)
-// 《我在田宗剑道成仙》	我酒真子第一个就上去扇他一个大逼斗。 (~搧<COO>v:上去 ~搧<role.type:A0>我酒真子 ~搧<role.type:A1>他 ~搧<role.type:A1>一个大逼斗 r:我+nh:酒真子+m:第一+q:个+d:就+v:上去+v:扇+r:他+m:一个+a:大+n:逼斗+wp:。)
-v:扇	~搧<role.type:A1>/(?:嘴巴子|大逼斗)$/
+// 《女侠且慢》	便一巴掌给扇南薰河里去了， (~搧<COO>v:想 ~搧<role.type:ARGM-ADV>再怎么滴 ~搧<role.type:ARGM-ADV>也 ~搧<role.type:A0>夜惊堂 ~搧<role.type:ARGM-DIS>便 ~搧<role.type:ARGM-ADV>一巴掌 ~搧<role.type:A2>南薰河里 ~搧<role.type:ARGM-EXT>小半里 d:便+m:一+n:巴掌+p:给+v:扇+ns:南薰河+nd:里+v:去+u:了+wp:，) (~搧<role.type:ARGM-ADV>便 ~搧<role.type:ARGM-MNR>一巴掌 ~搧<role.type:A2>南薰河里 d:便+m:一+n:巴掌+p:给+v:扇+ns:南薰河+nd:里+v:去+u:了+wp:，)
+v:扇	~搧<role>/(?:巴掌|耳光|嘴巴子|大逼斗)$/
 
 
 // --------------------------------------------------------------------------------------------------------------------
