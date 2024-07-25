@@ -339,18 +339,30 @@ function load_tailored_dictionary(options) {
 	}
 
 	//console.trace(options);
-	const { work_title } = options.export;
+	const { work_title, original_work_title } = options.export;
 	const path_prefix = this.tailored_dictionaries_directory + work_title + '.';
+	const original_work_title__path_prefix = this.tailored_dictionaries_directory + original_work_title + '.';
 	//console.trace(path_prefix);
 
 	const _this = this;
-	function check_and_load(is_CeCC, to_TW) {
-		const dictionary_file_path_to_load = path_prefix
+	function check_and_load(is_CeCC, to_TW, try_original_work_title) {
+		const using_title = try_original_work_title ? original_work_title : work_title;
+		let dictionary_file_path_to_load = (try_original_work_title ? original_work_title__path_prefix : path_prefix)
 			+ (is_CeCC ? get_dictionary_file_paths.call(_this, 'PoS')[to_TW ? 'TW' : 'CN']
 				: 'additional.' + (to_TW ? 'to_TW' : 'to_CN') + '.txt');
 
-		if (_this.dictionary_file_path_loaded_Set.has(dictionary_file_path_to_load) || !CeL.file_exists(dictionary_file_path_to_load)) {
+		if (_this.dictionary_file_path_loaded_Set.has(dictionary_file_path_to_load)) {
 			return;
+		}
+
+		if (!CeL.file_exists(dictionary_file_path_to_load)) {
+			if (!try_original_work_title)
+				check_and_load(is_CeCC, to_TW, true);
+			return;
+		}
+
+		if (try_original_work_title) {
+			CeL.info(`${load_tailored_dictionary.name}: 無《${work_title}》之特設辭典，改採原標題《${original_work_title}》之特設辭典。`);
 		}
 
 		const contains = CeL.read_file(dictionary_file_path_to_load);
@@ -358,7 +370,7 @@ function load_tailored_dictionary(options) {
 		let matched;
 		while (matched = PATTERN_indicate_work_title.exec(contains)) {
 			//console.trace(matched);
-			if (!matched.groups.work_title.startsWith(work_title)) {
+			if (!matched.groups.work_title.startsWith(using_title)) {
 				CeL.warn(`${load_tailored_dictionary.name}: 特設辭典可能混入了其他作品的設定？ (${dictionary_file_path_to_load}) ${matched[0]}`);
 			}
 		}
@@ -429,10 +441,12 @@ function load_text_to_check(should_be_text__file_name, options) {
 
 		if (should_be_text__file_name.work_title) {
 			options = CeL.setup_options(options);
-			if (!options.export)
-				options.export = Object.create(null);
-			if (!options.export.work_title)
-				options.export.work_title = should_be_text__file_name.work_title;
+			if (!options.export) {
+				options.export = {
+					work_title: should_be_text__file_name.work_title,
+					original_work_title: should_be_text__file_name.original_work_title,
+				};
+			}
 			// e.g., "watch_target.第一序列.TW.txt"
 			should_be_text__file_name = `${KEY_watch_target_file_name_prefix}${should_be_text__file_name.work_title}.${should_be_text__file_name.convert_to_language}.${DEFAULT_TEST_FILE_EXTENSION}`;
 			//console.trace(should_be_text__file_name);
