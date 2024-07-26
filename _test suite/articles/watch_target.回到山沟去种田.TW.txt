@@ -1,0 +1,17 @@
+// 《回到山沟去种田》辭典修訂測試集：
+
+
+// «常出錯詞語» @ watch_target.TW.txt
+
+
+// «角色人名»
+
+
+// «其他專有名詞»
+
+
+// «特殊句子»
+披著亞麻色的大波浪捲髮，
+
+
+// insert_watch_target_to_general_test_text

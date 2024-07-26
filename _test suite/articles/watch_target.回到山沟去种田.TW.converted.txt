@@ -1,0 +1,17 @@
+// 《回到山沟去种田》辞典修订测试集：
+
+
+// «常出错词语» @ watch_target.TW.txt
+
+
+// «角色人名»
+
+
+// «其他专有名词»
+
+
+// «特殊句子»
+披着亚麻色的大波浪卷发，
+
+
+// insert_watch_target_to_general_test_text
