@@ -816,7 +816,7 @@ function print_correction_condition(correction_condition, {
 		matched_condition_mark = ` 匹配的條件式: ${to_word_data.matched_condition ? `${to_word_data.matched_condition} → ` : ''}${to_word_data.full_condition_text}`;
 		CeL.warn(`Matched condition${matched_condition_mark}`);
 	}
-	// 自動提供可符合答案之候選條件式。
+	//console.trace('自動提供可符合答案之候選條件式。');
 	CeL.info(`Candidate correction for ${JSON.stringify(correction_condition.parsed.text)}→${JSON.stringify(correction_condition.target)} (錯誤轉換為 ${JSON.stringify(correction_condition.error_converted_to)}):`);
 	if (tagged_convert_from_text) {
 		const list = correction_condition.slice(1).filter(correction => !correction.includes('<←'));
@@ -1666,11 +1666,14 @@ function get_LTP_data(options) {
 	const parsed_array = [];
 	let promise;
 	options.paragraphs_before_convert.forEach((paragraph, paragraph_index, list) => {
-		if (typeof paragraph !== 'string' || !paragraph) {
+		if (typeof paragraph !== 'string'
+			// 2024/8/5 LTP server 解析 "\n" 會出現:
+			// RuntimeError: cannot reshape tensor of 0 elements into shape [1, 0, 4, -1] because the unspecified dimension size -1 can be any value and is ambiguous
+			|| !/\S/.test(paragraph)) {
 			// Should not go to here!
 			CeL.error([get_LTP_data.name + ': ', {
 				// gettext_config:{"id":"no-text-set-$1"}
-				T: ['未設定文字：%1', `${paragraph_index + 1}/${list.length}`]
+				T: ['未設定文字：%1', `${paragraph_index + 1}/${list.length} ${JSON.stringify(paragraph)}`]
 			}]);
 			return;
 		}
@@ -1759,9 +1762,15 @@ function tag_paragraph_LTP(paragraphs, options) {
 		paragraphs.forEach(paragraph => {
 			while (paragraph.length > LTP_paragraph_MAX_LENGTH) {
 				const piece = paragraph.slice(0, LTP_paragraph_MAX_LENGTH);
+				// 盡量截取完整句子：從結尾往前，消除所有非結尾標點符號。
 				let token = piece.replace(/[^。？！…]*$/, preserve_tail)
 					|| piece.replace(/[^.?!，]*$/, preserve_tail)
 					|| piece;
+				// 2024/8/5 LTP server 解析 "\n" 會出現:
+				// RuntimeError: cannot reshape tensor of 0 elements into shape [1, 0, 4, -1] because the unspecified dimension size -1 can be any value and is ambiguous
+				if (!/\S/.test(token) && (token === piece || !/\S/.test(token = piece))) {
+					CeL.error(`${tag_paragraph_LTP.name}: 輸入的文字包含大段空白！`);
+				}
 				paragraph = paragraph.slice(token.length);
 				const matched = paragraph.match(/^\s+/);
 				if (matched) {
@@ -2116,7 +2125,10 @@ function convert_paragraph(paragraph, options) {
 				converted_word_list = forced_convert(waiting_queue, index_of_tagged_word_list, tagged_word_list, word_mode_options);
 				//console.log([waiting_queue.join('').length, converted_word_list.join('').length]);
 				//console.trace([waiting_queue.join(''), converted_word_list.join('')]);
-				converted_text.append(converted_word_list);
+				if (converted_text.length === 0)
+					converted_text = converted_word_list;
+				else
+					converted_text.append(converted_word_list);
 			}
 
 			if (check_dictionary) {
@@ -2171,7 +2183,10 @@ function convert_paragraph(paragraph, options) {
 		const converted_word_list = forced_convert(waiting_queue, tagged_word_list.length, tagged_word_list, word_mode_options);
 		//console.log([waiting_queue.join('').length, converted_word_list.join('').length]);
 		//console.trace([waiting_queue.join(''), converted_word_list.join('')]);
-		converted_text.append(converted_word_list);
+		if (converted_text.length === 0)
+			converted_text = converted_word_list;
+		else
+			converted_text.append(converted_word_list);
 		waiting_queue = null;
 	}
 
@@ -2244,11 +2259,12 @@ function convert_paragraph(paragraph, options) {
 				//console.assert(converted_text.join('').slice(start_index).startsWith(should_convert_to_text));
 
 				let should_be_text = should_convert_to_text, end_index;
+				// 找尋 should_be_text 結尾所在的 converted_text。
 				converted_text_length_accumulation.search_sorted(start_index + should_be_text.length, {
 					found(index, is_near) {
-						if (is_near && !converted_text[index]) {
+						if (false && is_near && !converted_text[index]) {
 							// e.g., "A" → "A B" @ additional.to_TW.txt
-							console.log({ paragraph, start_index, should_be_text_length: should_be_text.length, converted_text_length_accumulation, is_near, index, converted_text });
+							console.trace({ paragraph, start_index, should_be_text_length: should_be_text.length, converted_text_length_accumulation, is_near, index, converted_text });
 							console.log(matched_condition_data);
 							console.log(tagged_word_list);
 						}
@@ -2262,14 +2278,23 @@ function convert_paragraph(paragraph, options) {
 				});
 				/** {Number}在converted_text上，從本token開頭到匹配的文字中間的位移距離。token包括prefix_spaces。 */
 				let distance_token_header_to_metched = 0;
+				// 找尋 should_be_text 開頭所在的 converted_text。
 				// 避免中間切斷，移到本token之首。
 				converted_text_length_accumulation.search_sorted(start_index, {
 					found(index, is_near) {
 						if (is_near) {
 							distance_token_header_to_metched = start_index - converted_text_length_accumulation[index];
-							// assert: distance_token_header_to_metched > 0
-							//console.trace([start_index, converted_text_length_accumulation[index], converted_text[index].slice(0, distance_token_header_to_metched), should_be_text]);
-							should_be_text = converted_text[index].slice(0, distance_token_header_to_metched) + should_be_text;
+							// assert: is_near && distance_token_header_to_metched > 0
+							let converte_to_text = converted_text[index], _index = index, length_needed = distance_token_header_to_metched + should_be_text.length;
+							// 保證擷取了夠長的預設解答詞。
+							while (converte_to_text.length < length_needed && ++_index < converted_text.length) {
+								converte_to_text += converted_text[_index];
+							}
+							//console.trace([start_index, converted_text_length_accumulation[index], converte_to_text, should_be_text]);
+							if (!converte_to_text.includes(should_be_text)) {
+								CeL.warn(`${convert_paragraph.name}: 預設解答詞 ${JSON.stringify(converte_to_text)} 不包含轉換後的文字 ${JSON.stringify(should_be_text)}，可能造成錯誤的推薦詞。`);
+							}
+							should_be_text = converte_to_text.slice(0, length_needed);
 						}
 						// assert: should_be_text.startsWith(converted_text[index]);
 						start_index = index;
