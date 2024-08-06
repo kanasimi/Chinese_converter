@@ -2285,16 +2285,8 @@ function convert_paragraph(paragraph, options) {
 						if (is_near) {
 							distance_token_header_to_metched = start_index - converted_text_length_accumulation[index];
 							// assert: is_near && distance_token_header_to_metched > 0
-							let converte_to_text = converted_text[index], _index = index, length_needed = distance_token_header_to_metched + should_be_text.length;
-							// 保證擷取了夠長的預設解答詞。
-							while (converte_to_text.length < length_needed && ++_index < converted_text.length) {
-								converte_to_text += converted_text[_index];
-							}
-							//console.trace([start_index, converted_text_length_accumulation[index], converte_to_text, should_be_text]);
-							if (!converte_to_text.includes(should_be_text)) {
-								CeL.warn(`${convert_paragraph.name}: 預設解答詞 ${JSON.stringify(converte_to_text)} 不包含轉換後的文字 ${JSON.stringify(should_be_text)}，可能造成錯誤的推薦詞。`);
-							}
-							should_be_text = converte_to_text.slice(0, length_needed);
+							//console.trace([start_index, converted_text_length_accumulation[index], converted_text[index].slice(0, distance_token_header_to_metched), should_be_text]);
+							should_be_text = converted_text[index].slice(0, distance_token_header_to_metched) + should_be_text;
 						}
 						// assert: should_be_text.startsWith(converted_text[index]);
 						start_index = index;
@@ -2319,9 +2311,13 @@ function convert_paragraph(paragraph, options) {
 					continue;
 				}
 
-				//CeL.info(`檢查: ${convert_from_text}→${should_be_text}`);
-				//console.trace({ tagged_word_list, converted_text, should_be_text, start_index, end_index });
-				const condition_list = this.generate_condition({ tagged_word_list, converted_text, should_be_text, start_index, end_index }, options);
+				if (false && converted_text_String.length > should_convert_to_text.length && !converted_text_String.includes(should_convert_to_text)) {
+					CeL.warn(`${convert_paragraph.name}: 預設解答詞 ${JSON.stringify(converted_text_String)} 不包含轉換後的文字 ${JSON.stringify(should_convert_to_text)}。`);
+				}
+
+				//CeL.info(`檢查: ${convert_from_text}→${converted_text_String}`);
+				//console.trace({ tagged_word_list, converted_text, converted_text_String, start_index, end_index });
+				const condition_list = this.generate_condition({ tagged_word_list, converted_text, converted_text_String, start_index, end_index }, options);
 				//console.trace(condition_list);
 				if (condition_list.length === 0) {
 					//console.trace('只有通同字/同義詞。');
