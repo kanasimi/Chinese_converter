@@ -1,0 +1,17 @@
+// 《重生之都市狂仙》辞典修订测试集：
+
+
+// «常出错词语» @ watch_target.TW.txt
+
+
+// «角色人名»
+
+
+// «其他专有名词»
+
+
+// «特殊句子»
+他算是知道红衣出去干嘛了。
+
+
+// insert_watch_target_to_general_test_text

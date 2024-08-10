@@ -755,6 +755,7 @@ async function test_正確率檢核(assert, setup_test, finish_test, options) {
 		{
 			const matched = file_path.match(Chinese_converter.PATTERN_watch_target_file_name);
 			if (matched) {
+				convert_options.tailored_key = matched.groups.work_title;
 				cecc.load_tailored_dictionary({
 					export: { work_title: matched.groups.work_title }
 				});

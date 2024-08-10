@@ -1,0 +1,17 @@
+// 《我宅了百年出门已无敌》辭典修訂測試集：
+
+
+// «常出錯詞語» @ watch_target.TW.txt
+
+
+// «角色人名»
+
+
+// «其他專有名詞»
+
+
+// «特殊句子»
+裂天乾笑一聲。
+
+
+// insert_watch_target_to_general_test_text

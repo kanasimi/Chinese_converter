@@ -1,0 +1,17 @@
+// 《太浩》辞典修订测试集：
+
+
+// «常出错词语» @ watch_target.TW.txt
+
+
+// «角色人名»
+
+
+// «其他专有名词»
+
+
+// «特殊句子»
+一缕火光似慢实快蹿向北斗第七星摇光星的边缘。
+
+
+// insert_watch_target_to_general_test_text

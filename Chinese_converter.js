@@ -98,6 +98,8 @@ function get_dictionary_file_paths(type) {
 class Chinese_converter {
 	constructor(options) {
 		this.conversion_pairs = Object.create(null);
+		// this.tailored_conversion_pairs[work_title] = ((tailored conversion_pairs))
+		this.tailored_conversion_pairs = Object.create(null);
 		this.KEY_word = KEY_word;
 		this.KEY_PoS_tag = KEY_PoS_tag;
 
@@ -380,11 +382,17 @@ function load_tailored_dictionary(options) {
 		if (options.show_message)
 			CeL.info(`${load_tailored_dictionary.name}: ${is_CeCC ? '載入 CeCC' : '設定載入 zh_conversion'} 用作品特設辭典 ${dictionary_file_path_to_load}`);
 		if (is_CeCC) {
-			load_dictionary.call(_this, dictionary_file_path_to_load, { convert_to_language: to_TW ? 'TW' : 'CN', priority: 0 });
+			load_dictionary.call(_this, dictionary_file_path_to_load, {
+				convert_to_language: to_TW ? 'TW' : 'CN', priority: 0,
+				// TODO: 自定 conversion_pairs，tailored dictionary 放在個別 conversion_pairs 中以避免污染。
+				tailored_key: using_title,
+			});
 		} else {
 			_this.dictionary_file_path_loaded_Set.add(dictionary_file_path_to_load);
 			// 警告: .add_conversions({sort:}) 必須配合 Converter.options @ CeL.zh_conversion！
-			(to_TW ? CeL_CN_to_TW : CeL_TW_to_CN)[CeL.zh_conversion.KEY_converter].add_conversions({ file_path: dictionary_file_path_to_load, remove_comments: true, sort: '主要繁簡轉換' });
+			(to_TW ? CeL_CN_to_TW : CeL_TW_to_CN)[CeL.zh_conversion.KEY_converter].add_conversions({
+				file_path: dictionary_file_path_to_load, remove_comments: true, sort: '主要繁簡轉換', tailored_key: using_title,
+			});
 		}
 	}
 
@@ -805,6 +813,7 @@ function print_correction_condition(correction_condition, {
 	work_title,
 	original_sentence_word_list,
 	tagged_convert_from_text,
+	zh_conversion_converted_pairs,
 }) {
 	//console.trace(correction_condition);
 	const to_word_data = correction_condition.parsed[KEY_matched_condition];
@@ -816,13 +825,23 @@ function print_correction_condition(correction_condition, {
 		matched_condition_mark = ` 匹配的條件式: ${to_word_data.matched_condition ? `${to_word_data.matched_condition} → ` : ''}${to_word_data.full_condition_text}`;
 		CeL.warn(`Matched condition${matched_condition_mark}`);
 	}
+
 	//console.trace('自動提供可符合答案之候選條件式。');
 	CeL.info(`Candidate correction for ${JSON.stringify(correction_condition.parsed.text)}→${JSON.stringify(correction_condition.target)} (錯誤轉換為 ${JSON.stringify(correction_condition.error_converted_to)}):`);
 	if (tagged_convert_from_text) {
 		const list = correction_condition.slice(1).filter(correction => !correction.includes('<←'));
 		list.push(tagged_convert_from_text.join(condition_delimiter));
-		CeL.info(`//${matched_condition_mark ? ' 解析錯誤 @' : ''}${work_title ? ` 《${work_title}》` : ''}	${stringify_condition(original_sentence_word_list)} (${list.join(' ')})${matched_condition_mark || ''}`);
+		let zh_conversion_converted;
+		if (Array.isArray(zh_conversion_converted_pairs) && zh_conversion_converted_pairs.length > 0) {
+			zh_conversion_converted = zh_conversion_converted_pairs.filter(
+				pair_text => pair_text.includes(correction_condition.parsed.text.charAt(0))
+					|| correction_condition.parsed.text.length > 1 && pair_text.includes(correction_condition.parsed.text.charAt(-1))
+			);
+			zh_conversion_converted = zh_conversion_converted.length > 0 ? ' 單純 zh_conversion 轉換過程: ' + zh_conversion_converted.unique().join(' ') : null;
+		}
+		CeL.info(`//${matched_condition_mark ? ' 解析錯誤 @' : ''}${work_title ? ` 《${work_title}》` : ''}	${stringify_condition(original_sentence_word_list)} (${list.join(' ')})${matched_condition_mark || ''}${zh_conversion_converted || ''}`);
 	}
+
 	CeL.info(correction_condition.join('\t'));
 }
 
@@ -876,6 +895,7 @@ function print_section_report(configuration, options) {
 	const tagged_convert_from_text = [];
 	const matched_conditions = [];
 	//console.trace([convert_from_text, offset, distance_token_header_to_metched, start_index, backward]);
+
 	CeL.log(`${normal_style_tagged
 		}${CeL.gettext.get_alias(options.convert_to_language === 'TW' ? 'CN' : 'TW').slice(0, 1)
 		}\t${tagged_word_list_pieces.map((word_data, index) => {
@@ -951,10 +971,20 @@ function print_section_report(configuration, options) {
 		if (work_title)
 			work_title = work_title.groups.work_title;
 	}
+
+	const zh_conversion_converted_pairs = [];
+	zh_conversion_converted_pairs.result = (options.convert_to_language === 'TW' ? CeL_CN_to_TW : CeL_TW_to_CN)(convert_from_text, {
+		show_matched(convert_from_text, convert_to_text) {
+			zh_conversion_converted_pairs.push(convert_from_text + '→' + convert_to_text);
+			return false;
+		}
+	});
+
 	condition_list.forEach(condition => print_correction_condition(condition, {
 		work_title,
 		original_sentence_word_list,
 		tagged_convert_from_text,
+		zh_conversion_converted_pairs,
 	}));
 
 	if (matched_conditions.length > 0) {
@@ -964,7 +994,10 @@ function print_section_report(configuration, options) {
 
 	if (!is_fragment) {
 		CeL.log(`單純 zh_conversion 轉換過程:`);
-		CeL.log('單純:\t ' + (options.convert_to_language === 'TW' ? CeL_CN_to_TW : CeL_TW_to_CN)(convert_from_text, { show_matched: true }));
+
+		//CeL.log('單純 zh_conversion 轉換:\t' + (options.convert_to_language === 'TW' ? CeL_CN_to_TW : CeL_TW_to_CN)(convert_from_text, { show_matched: true }));
+		zh_conversion_converted_pairs.forEach(pair_text => CeL.info(pair_text));
+		CeL.log('單純 zh_conversion 轉換:\t' + zh_conversion_converted_pairs.result);
 	}
 
 	if (show_tagged_word_list) {
@@ -1091,17 +1124,27 @@ function load_dictionary(file_path, options) {
 		return;
 	}
 
-	//console.trace(this.conversion_pairs[options.convert_to_language]);
-	if (!this.conversion_pairs[options.convert_to_language]) {
+	let conversion_pairs_set;
+	if (options.tailored_key) {
+		// TODO: 自定 conversion_pairs，tailored dictionary 放在個別 conversion_pairs 中以避免污染。
+		if (!this.tailored_conversion_pairs[options.tailored_key])
+			this.tailored_conversion_pairs[options.tailored_key] = Object.create(null);
+		conversion_pairs_set = this.tailored_conversion_pairs[options.tailored_key];
+	} else {
+		conversion_pairs_set = this.conversion_pairs;
+	}
+
+	//console.trace(conversion_pairs_set[options.convert_to_language]);
+	if (!conversion_pairs_set[options.convert_to_language]) {
 		// 初始化 initialization: conversion_pairs
-		const conversion_pairs = this.conversion_pairs[options.convert_to_language] = new Map;
+		const conversion_pairs = conversion_pairs_set[options.convert_to_language] = new Map;
 		conversion_pairs.set(KEY_tag_filter, Object.create(null));
 		conversion_pairs.set(KEY_tag_pattern_filter, Object.create(null));
 		conversion_pairs.set(KEY_general_pattern_filter, new Map);
 		conversion_pairs.set(KEY_postfix, []);
 
 	}
-	const conversion_pairs = this.conversion_pairs[options.convert_to_language];
+	const conversion_pairs = conversion_pairs_set[options.convert_to_language];
 
 	//console.trace(word_list);
 	for (let conditions of word_list) {
@@ -1164,7 +1207,7 @@ function load_dictionary(file_path, options) {
 		//console.trace(convert_to_conditions);
 	}
 
-	//console.trace(this.conversion_pairs);
+	//console.trace(conversion_pairs_set);
 }
 
 const KEY_synonym_pattern = Symbol('synonym pattern');
@@ -1713,8 +1756,9 @@ const MARK_result_starts = 'Parsed JSON:';
 // assert: LTP_paragraph_MAX_LENGTH <= 510
 const LTP_paragraph_MAX_LENGTH = 500;
 
+/** 保留屬於上一個句子結尾的部分。 */
 function preserve_tail(tail) {
-	return tail.match(/^["'’”」：\s]*/)[0];
+	return tail.match(/^(?:["'’”」』：\s]|<\/\w[^<>]*>)*/)[0];
 }
 
 function fill_cached_tagged_word_list_Map(paragraphs, options, cached_tagged_word_list_Map) {
@@ -1761,15 +1805,26 @@ function tag_paragraph_LTP(paragraphs, options) {
 		const token_count_array = [];
 		paragraphs.forEach(paragraph => {
 			while (paragraph.length > LTP_paragraph_MAX_LENGTH) {
-				const piece = paragraph.slice(0, LTP_paragraph_MAX_LENGTH);
-				// 盡量截取完整句子：從結尾往前，消除所有非結尾標點符號。
-				let token = piece.replace(/[^。？！…]*$/, preserve_tail)
-					|| piece.replace(/[^.?!，]*$/, preserve_tail)
-					|| piece;
+				let piece = paragraph.slice(0, LTP_paragraph_MAX_LENGTH);
+				// 去掉末尾不完整的 HTML tag。
+				let token = piece.replace(/<(?:\w[^<>]*)$/, '');
+				if (/\S/.test(token)) {
+					piece = token;
+					// 盡量截取完整句子：從結尾往前，消除所有非結尾標點符號。
+					token = piece.replace(/[^。？！…]*$/, preserve_tail)
+						|| piece.replace(/[^.?!，]*$/, preserve_tail)
+						|| piece;
+				} else {
+					// 輸入的文字包含過長的 HTML tag。
+					token = piece;
+				}
+
 				// 2024/8/5 LTP server 解析 "\n" 會出現:
 				// RuntimeError: cannot reshape tensor of 0 elements into shape [1, 0, 4, -1] because the unspecified dimension size -1 can be any value and is ambiguous
-				if (!/\S/.test(token) && (token === piece || !/\S/.test(token = piece))) {
-					CeL.error(`${tag_paragraph_LTP.name}: 輸入的文字包含大段空白！`);
+				if (!/\S/.test(token)
+					&& (token === piece || !/\S/.test(token = piece))
+				) {
+					CeL.error(`${tag_paragraph_LTP.name}: 輸入的文字包含大段空白或者過長的 HTML tag！`);
 				}
 				paragraph = paragraph.slice(token.length);
 				const matched = paragraph.match(/^\s+/);
@@ -2033,6 +2088,8 @@ function convert_paragraph(paragraph, options) {
 	// ---------------------------------------------
 
 	const conversion_pairs = this.conversion_pairs[options.convert_to_language];
+	const tailored_key = options.tailored_key || options.work_title;
+	const tailored_conversion_pairs = tailored_key && this.tailored_conversion_pairs[tailored_key] && this.tailored_conversion_pairs[tailored_key][options.convert_to_language];
 	const [forced_convert, max_convert_word_length] = (() => {
 		let converter = options.convert_to_language === 'TW'
 			? this.CN_to_TW || forced_convert_to_TW
@@ -2058,7 +2115,8 @@ function convert_paragraph(paragraph, options) {
 	let converted_text = [], waiting_queue = [];
 	tagged_word_list.forEach((word_data, index_of_tagged_word_list) => {
 		// assert: word_data === tagged_word_list[index_of_tagged_word_list]
-		const matched_condition_data = get_all_possible_matched_condition.call(this, { ...options, word_data, conversion_pairs, index_of_tagged_word_list, tagged_word_list });
+		const matched_condition_data = tailored_conversion_pairs && get_all_possible_matched_condition.call(this, { ...options, word_data, conversion_pairs: tailored_conversion_pairs, index_of_tagged_word_list, tagged_word_list })
+			|| get_all_possible_matched_condition.call(this, { ...options, word_data, conversion_pairs, index_of_tagged_word_list, tagged_word_list });
 		// 維持與輸入相同格式: 用於補全失落的空白字元。
 		const prefix_spaces = word_data[KEY_prefix_spaces];
 		if (!matched_condition_data) {
@@ -2191,6 +2249,12 @@ function convert_paragraph(paragraph, options) {
 	}
 
 	// 事後轉換函數。
+	tailored_conversion_pairs && tailored_conversion_pairs.get(KEY_postfix).forEach(single_condition => {
+		if (single_condition.filter_name in this.filters[options.convert_to_language]) {
+			//console.trace(single_condition);
+			this.filters[options.convert_to_language][single_condition.filter_name].call(this, { single_condition, converted_text, tagged_word_list, options });
+		}
+	});
 	//console.trace([this.conversion_pairs, options]);
 	conversion_pairs.get(KEY_postfix).forEach(single_condition => {
 		if (single_condition.filter_name in this.filters[options.convert_to_language]) {
@@ -2244,6 +2308,7 @@ function convert_paragraph(paragraph, options) {
 				}
 
 				// 找出轉換後文字對應的位置。
+				// TODO: 先建構 tagged_word_list(轉換前 words) → converted_text 的 mapping。
 
 				/** {Number}start index of converted_text */
 				let start_index = offset;
@@ -2315,9 +2380,9 @@ function convert_paragraph(paragraph, options) {
 					CeL.warn(`${convert_paragraph.name}: 預設解答詞 ${JSON.stringify(converted_text_String)} 不包含轉換後的文字 ${JSON.stringify(should_convert_to_text)}。`);
 				}
 
-				//CeL.info(`檢查: ${convert_from_text}→${converted_text_String}`);
-				//console.trace({ tagged_word_list, converted_text, converted_text_String, start_index, end_index });
-				const condition_list = this.generate_condition({ tagged_word_list, converted_text, converted_text_String, start_index, end_index }, options);
+				//CeL.info(`檢查: ${convert_from_text}→${should_be_text}`);
+				//console.trace({ tagged_word_list, converted_text, should_be_text, start_index, end_index });
+				const condition_list = this.generate_condition({ tagged_word_list, converted_text, should_be_text, start_index, end_index }, options);
 				//console.trace(condition_list);
 				if (condition_list.length === 0) {
 					//console.trace('只有通同字/同義詞。');

@@ -1,0 +1,17 @@
+// 《我真不是邪神走狗》辞典修订测试集：
+
+
+// «常出错词语» @ watch_target.TW.txt
+
+
+// «角色人名»
+
+
+// «其他专有名词»
+
+
+// «特殊句子»
+为全新的明天干杯，
+
+
+// insert_watch_target_to_general_test_text
