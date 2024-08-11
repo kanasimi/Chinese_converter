@@ -2115,8 +2115,16 @@ function convert_paragraph(paragraph, options) {
 	let converted_text = [], waiting_queue = [];
 	tagged_word_list.forEach((word_data, index_of_tagged_word_list) => {
 		// assert: word_data === tagged_word_list[index_of_tagged_word_list]
-		const matched_condition_data = tailored_conversion_pairs && get_all_possible_matched_condition.call(this, { ...options, word_data, conversion_pairs: tailored_conversion_pairs, index_of_tagged_word_list, tagged_word_list })
-			|| get_all_possible_matched_condition.call(this, { ...options, word_data, conversion_pairs, index_of_tagged_word_list, tagged_word_list });
+		const matched_condition_data = (() => {
+			if (tailored_conversion_pairs) {
+				const matched_condition_data = get_all_possible_matched_condition.call(this, { ...options, word_data, conversion_pairs: tailored_conversion_pairs, index_of_tagged_word_list, tagged_word_list });
+				if (matched_condition_data?.all_matched_conditions) {
+					return matched_condition_data;
+				}
+			}
+			return get_all_possible_matched_condition.call(this, { ...options, word_data, conversion_pairs, index_of_tagged_word_list, tagged_word_list });
+		})();
+
 		// 維持與輸入相同格式: 用於補全失落的空白字元。
 		const prefix_spaces = word_data[KEY_prefix_spaces];
 		if (!matched_condition_data) {
