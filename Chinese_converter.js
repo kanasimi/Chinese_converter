@@ -262,17 +262,24 @@ regenerate_converted.default_convert_options = {
 	min_cache_length: 40,
 };
 
+function get_convert_from_text__file_path(convert_from_text__file_name, options) {
+	let test_articles_directory = this.test_articles_directory;
+	let file_path = test_articles_directory + convert_from_text__file_name;
+	if (CeL.file_exists(file_path))
+		return file_path;
+
+	test_articles_directory += this.test_articles_archives_directory;
+	file_path = test_articles_directory + convert_from_text__file_name;
+	if (options?.check_file_exists && !CeL.file_exists(file_path))
+		return;
+	return file_path;
+}
+
 function get_convert_to_text__file_status(convert_from_text__file_name, options) {
 	options = CeL.setup_options(options);
 	let test_articles_directory = this.test_articles_directory;
-	const convert_from_text__file_path = (() => {
-		let file_path = test_articles_directory + convert_from_text__file_name;
-		if (CeL.file_exists(file_path))
-			return file_path;
-		test_articles_directory += this.test_articles_archives_directory;
-		file_path = test_articles_directory + convert_from_text__file_name;
-		return file_path;
-	})();
+	const convert_from_text__file_path = options.is_file_path ? convert_from_text__file_name : get_convert_from_text__file_path.call(this, convert_from_text__file_name);
+
 	const convert_from_text__file_status = CeL.fso_status(convert_from_text__file_path);
 
 	const convert_to_text__file_path = options.convert_to_text__file_path
@@ -310,7 +317,7 @@ async function not_new_article_to_check(convert_from_text__file_name, options) {
 		//console.trace(dictionary_file_status);
 		//console.trace([dictionary_file_status.mtime - latest_test_result_date, convert_from_text__file_status && convert_from_text__file_status.mtime - dictionary_file_status.mtime]);
 		if (dictionary_file_status.mtime - latest_test_result_date > 0) {
-			CeL.info(`${not_new_article_to_check.name}: ${convert_from_text__file_name}: 有尚未檢測通過的詞典檔 ${dictionary_file_path}`);
+			CeL.info(`${not_new_article_to_check.name}: ${convert_from_text__file_name}: 自上次測試後，有新修改的辭典檔 ${dictionary_file_path}`);
 			if (latest_test_result)
 				delete latest_test_result[convert_from_text__file_name];
 			return;
@@ -455,8 +462,24 @@ function load_text_to_check(should_be_text__file_name, options) {
 					original_work_title: should_be_text__file_name.original_work_title,
 				};
 			}
-			// e.g., "watch_target.第一序列.TW.txt"
-			should_be_text__file_name = `${KEY_watch_target_file_name_prefix}${should_be_text__file_name.work_title}.${should_be_text__file_name.convert_to_language}.${DEFAULT_TEST_FILE_EXTENSION}`;
+
+			let first_file_name;
+			if (!['work_title', 'original_work_title'].some((key) => {
+				const work_title = should_be_text__file_name[key];
+				if (!work_title)
+					return;
+				// e.g., "watch_target.第一序列.TW.txt"
+				const file_name = `${KEY_watch_target_file_name_prefix}${work_title}.${should_be_text__file_name.convert_to_language}.${DEFAULT_TEST_FILE_EXTENSION}`;
+				if (get_convert_from_text__file_path.call(this, file_name, { check_file_exists: true })) {
+					should_be_text__file_name = file_name;
+					return true;
+				}
+				if (!first_file_name)
+					first_file_name = file_name;
+			})) {
+				// 找不到辭典檔，但仍繼續執行，由後面的程序處理。
+				should_be_text__file_name = first_file_name;
+			}
 			//console.trace(should_be_text__file_name);
 		} else {
 			throw new Error(`${load_text_to_check.name}: Invalid should_be_text__file_name: ${JSON.stringify(should_be_text__file_name)}`);
@@ -476,6 +499,7 @@ function load_text_to_check(should_be_text__file_name, options) {
 	this.load_tailored_dictionary(options);
 
 	const convert_to_text__data = get_convert_to_text__file_status.call(this, should_be_text__file_name, options);
+	// assert: CeL.is_Object(convert_to_text__data)
 	const should_be_text__file_path = convert_to_text__data.convert_from_text__file_path;
 	if (!this.generate_condition_for_language
 		|| options?.reset && !this.generate_condition_for_language.only_default) {
@@ -661,7 +685,7 @@ word:
 */
 
 // [ condition, is target, not match, tag (PoS), word / pattern, is optional / repeat range ]
-const PATTERN_condition = /^(?<is_target>~)?(?<not_match>!)?(?:(?<tag>[^:+<>]+):)?(?<word>.*?)(?<is_optional>\?)?$/;
+const PATTERN_condition = /^(?<is_target>~)?(?<not_match>!)?(?:(?<tag>[^:+<>?\\\/]+):)?(?<word>.*?)(?<is_optional>\?)?$/;
 // [ all, word, do_after_converting ]
 const PATTERN_do_after_converting = new RegExp('^(?<word>.*?)~(?<do_after_converting>' + CeL.PATTERN_RegExp_replacement.source.slice(1, -1) + ')?$');
 
@@ -702,28 +726,51 @@ function parse_condition(full_condition_text, options) {
 			matched.tag = undefined;
 			//console.trace(matched);
 		}
-		if (/^\/(\\\/|[^\/])+$/.test(matched.word)) {
-			// 處理 RegExp pattern 中包含 condition_delimiter 的情況。
-			// e.g., ~里+/^许.+河$/	v:卷+m:/^[\\d〇一二三四五六七八九零十]+$/+~裡
-			const full_condition_splitted_expanded = Array.isArray(options.full_condition_splitted) ? full_condition_splitted.concat(options.full_condition_splitted.slice(options.index + 1)) : full_condition_splitted;
-			for (let combined_token = token, next_index = index; next_index < full_condition_splitted_expanded.length;) {
-				const next_token = full_condition_splitted_expanded[++next_index];
-				combined_token += condition_delimiter + next_token;
-				const _matched = combined_token.match(PATTERN_condition).groups;
-				if (CeL.PATTERN_RegExp.test(_matched.word) || CeL.PATTERN_RegExp_replacement.test(_matched.word)) {
-					token = combined_token;
-					matched = _matched;
-					accumulated_target_index_diff += next_index - index;
-					index = next_index;
-					//console.trace([token, matched]);
+
+		const PATTERN_word_with_filter = /^(?<word>.*?)<(?<filter_name>[^<>\n*+?]+)>(?<filter_target>.*?)$/;
+		{
+			function test_if_is_regular(matched_group) {
+				let word_to_test = matched_group.word;
+				const filter = word_to_test.match(PATTERN_word_with_filter);
+				if (filter) {
+					word_to_test = filter.groups.filter_target;
 				}
+
+				if (!word_to_test.startsWith('/')) {
+					// not RegExp
+					return true;
+				}
+
+				//const PATTERN_unclosed_RegExp = /^\/(?:\\\/|[^\/])+$/;
+				//if (PATTERN_unclosed_RegExp.test(word_to_test)) return false;
+
+				return CeL.PATTERN_RegExp.test(word_to_test) || CeL.PATTERN_RegExp_replacement.test(word_to_test);
 			}
-			if (index >= full_condition_splitted.length) {
-				// e.g., ~干<role.type:A1>/那.+何事$/
-				options.combined_token_count = index - full_condition_splitted.length + 1;
+
+			if (!test_if_is_regular(matched)) {
+				// 處理 RegExp pattern 中包含 condition_delimiter 的情況。
+				// e.g., ~里+/^许.+河$/	v:卷+m:/^[\\d〇一二三四五六七八九零十]+$/+~裡
+				const full_condition_splitted_expanded = Array.isArray(options.full_condition_splitted) ? full_condition_splitted.concat(options.full_condition_splitted.slice(options.index + 1)) : full_condition_splitted;
+				for (let combined_token = token, next_index = index; next_index < full_condition_splitted_expanded.length;) {
+					const next_token = full_condition_splitted_expanded[++next_index];
+					combined_token += condition_delimiter + next_token;
+					const _matched = combined_token.match(PATTERN_condition).groups;
+					if (test_if_is_regular(_matched)) {
+						token = combined_token;
+						matched = _matched;
+						accumulated_target_index_diff += next_index - index;
+						index = next_index;
+						//console.trace([token, matched]);
+						break;
+					}
+				}
+				if (index >= full_condition_splitted.length) {
+					// e.g., ~干<role.type:A1>/那.+何事$/
+					options.combined_token_count = index - full_condition_splitted.length + 1;
+				}
+				//console.log([full_condition_splitted_expanded, full_condition_splitted, options.full_condition_splitted?.slice(options.index + 1), options]);
+				//console.trace([index, target_index, accumulated_target_index_diff, token, matched]);
 			}
-			//console.log([full_condition_splitted_expanded, full_condition_splitted, options.full_condition_splitted?.slice(options.index + 1), options]);
-			//console.trace([index, target_index, accumulated_target_index_diff, token, matched]);
 		}
 
 		const condition_data = Object.create(null);
@@ -746,7 +793,7 @@ function parse_condition(full_condition_text, options) {
 				condition_data.do_after_converting = do_after_converting;
 		}
 		if (matched.word) {
-			let filter = matched.word.match(/^(?<word>.*?)<(?<filter_name>[^<>]+)>(?<filter_target>.*?)$/);
+			let filter = matched.word.match(PATTERN_word_with_filter);
 			if (filter) {
 				if (!this.condition_filter)
 					throw new Error('No .condition_filter set but set filter: ' + matched.word);
@@ -833,9 +880,11 @@ function print_correction_condition(correction_condition, {
 		list.push(tagged_convert_from_text.join(condition_delimiter));
 		let zh_conversion_converted;
 		if (Array.isArray(zh_conversion_converted_pairs) && zh_conversion_converted_pairs.length > 0) {
+			const condition_text = correction_condition.parsed.text;
+			const pattern = new RegExp(`[${CeL.to_RegExp_pattern(condition_text)}]`);
+			//console.trace([condition_text, pattern]);
 			zh_conversion_converted = zh_conversion_converted_pairs.filter(
-				pair_text => pair_text.includes(correction_condition.parsed.text.charAt(0))
-					|| correction_condition.parsed.text.length > 1 && pair_text.includes(correction_condition.parsed.text.charAt(-1))
+				pair_text => pattern.test(pair_text.replace(/→.*$/, ''))
 			);
 			zh_conversion_converted = zh_conversion_converted.length > 0 ? ' 單純 zh_conversion 轉換過程: ' + zh_conversion_converted.unique().join(' ') : null;
 		}
@@ -974,6 +1023,7 @@ function print_section_report(configuration, options) {
 
 	const zh_conversion_converted_pairs = [];
 	zh_conversion_converted_pairs.result = (options.convert_to_language === 'TW' ? CeL_CN_to_TW : CeL_TW_to_CN)(convert_from_text, {
+		...options,
 		show_matched(convert_from_text, convert_to_text) {
 			zh_conversion_converted_pairs.push(convert_from_text + '→' + convert_to_text);
 			return false;
@@ -2088,8 +2138,16 @@ function convert_paragraph(paragraph, options) {
 	// ---------------------------------------------
 
 	const conversion_pairs = this.conversion_pairs[options.convert_to_language];
-	const tailored_key = options.tailored_key || options.work_title;
-	const tailored_conversion_pairs = tailored_key && this.tailored_conversion_pairs[tailored_key] && this.tailored_conversion_pairs[tailored_key][options.convert_to_language];
+	const tailored_conversion_pairs = (() => {
+		// @see work_data.convert_options @ CeL.application.net.work_crawler.ebook
+		// @see function convert_text(text, options) @ CeL.extension.zh_conversion
+		for (const key of ['tailored_key', 'work_title', 'original_work_title']) {
+			let tailored_key = options[key];
+			let tailored_conversion_pairs = tailored_key && this.tailored_conversion_pairs[tailored_key];
+			if (tailored_conversion_pairs)
+				return tailored_conversion_pairs[options.convert_to_language];
+		}
+	})();
 	const [forced_convert, max_convert_word_length] = (() => {
 		let converter = options.convert_to_language === 'TW'
 			? this.CN_to_TW || forced_convert_to_TW

@@ -96,4 +96,6 @@ zh_conversion 用作品特設辭典
 变干了！	變乾了！
 // 《我为长生仙》	紫微大帝是眼下六界，除去娲皇之外，最能够克制住伏羲的存在。 (~剋制<COO>v:是 ~剋制<role.type:ARGM-ADV>也 ~剋制<role.type:ARGM-ADV>最 ~剋制<role.type:A1>伏羲的存在 ~剋制<role.type:ARGM-ADV>无法 nh:紫微+n:大帝+v:是+nt:眼下+m:六界+wp:，+p:除去+n:娲皇+nd:之外+wp:，+d:最+v:能够+v:克制+v:住+nh:伏羲+u:的+v:存在+wp:。)
 克制住伏羲	剋制住伏羲
+// 解析錯誤 @ 《我为长生仙》	晃动牛斗！ (~牛斗<VOB>v:晃动 v:晃动+n:牛斗+wp:！) (~斗<COO>v:晃动 v:晃动+n:牛+v:斗+wp:！) 單純 zh_conversion 轉換過程: 斗→鬥
+晃动牛斗	晃動牛斗
 

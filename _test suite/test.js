@@ -825,9 +825,13 @@ async function test_正確率檢核(assert, setup_test, finish_test, options) {
 
 function load_all_tailored_dictionaries() {
 	const file_list = CeL.read_directory(cecc.tailored_dictionaries_directory);
+	//console.trace(file_list);
 	for (const file_name of file_list) {
-		const matched = file_name.match(/^(?<work_title>[^.\n]{3,}?)\.(additional|CN_to_TW|TW_to_CN)/);
+		const matched = file_name.match(/^(?<work_title>[^.\n]{1,}?)\.(additional|CN_to_TW|TW_to_CN)/);
 		if (!matched) {
+			if (!/\.js$/.test(file_name)) {
+				CeL.warn(`${load_all_tailored_dictionaries.name}: 跳過不合命名規則的檔案 ${JSON.stringify(file_name)}`);
+			}
 			continue;
 		}
 		cecc.load_tailored_dictionary({
