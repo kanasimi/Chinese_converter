@@ -1594,6 +1594,7 @@ function recover_spaces(parsed, paragraph) {
 function generate_condition_LTP(configuration, options) {
 	const synonyms_Map = options.skip_check_for_synonyms && this.synonyms_of_language[options.convert_to_language];
 	const synonym_pattern_list = synonyms_Map && synonyms_Map[KEY_synonym_pattern];
+
 	//console.trace(configuration);
 	const { tagged_word_list, converted_text, should_be_text } = configuration;
 	//console.trace({ tagged_word_list, converted_text, should_be_text });
@@ -2448,7 +2449,11 @@ function convert_paragraph(paragraph, options) {
 
 				//CeL.info(`檢查: ${convert_from_text}→${should_be_text}`);
 				//console.trace({ tagged_word_list, converted_text, should_be_text, start_index, end_index });
-				const condition_list = this.generate_condition({ tagged_word_list, converted_text, should_be_text, start_index, end_index }, options);
+				const condition_list = this.generate_condition({ tagged_word_list, converted_text, should_be_text, start_index, end_index }, {
+					// 當此轉換為作品針對性設置時，不因通同字而跳過。
+					skip_check_for_synonyms: should_convert_to.work_title,
+					...options
+				});
 				//console.trace(condition_list);
 				if (condition_list.length === 0) {
 					//console.trace('只有通同字/同義詞。');
@@ -2483,13 +2488,17 @@ function convert_paragraph(paragraph, options) {
 				;
 
 			} else if (converted_text_String !== should_be_text) {
-				const condition_list = this.generate_condition({ tagged_word_list, converted_text, should_be_text }, options);
+				const condition_list = this.generate_condition({ tagged_word_list, converted_text, should_be_text }, {
+					// 當此轉換為作品針對性設置時，不因通同字/同義詞而跳過。
+					skip_check_for_synonyms: should_convert_to.work_title,
+					...options
+				});
 				if (condition_list.length > 0) {
 					if (!options.should_be.correction_conditions)
 						options.should_be.correction_conditions = [];
 					options.should_be.correction_conditions[options.paragraph_index] = condition_list;
 				} else {
-					// 只有通同字/同義詞。
+					// 只有通同字。
 				}
 
 			}
