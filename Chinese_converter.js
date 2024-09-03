@@ -2488,11 +2488,7 @@ function convert_paragraph(paragraph, options) {
 				;
 
 			} else if (converted_text_String !== should_be_text) {
-				const condition_list = this.generate_condition({ tagged_word_list, converted_text, should_be_text }, {
-					// 當此轉換為作品針對性設置時，不因通同字/同義詞而跳過。
-					skip_check_for_synonyms: should_convert_to.work_title,
-					...options
-				});
+				const condition_list = this.generate_condition({ tagged_word_list, converted_text, should_be_text }, options);
 				if (condition_list.length > 0) {
 					if (!options.should_be.correction_conditions)
 						options.should_be.correction_conditions = [];
