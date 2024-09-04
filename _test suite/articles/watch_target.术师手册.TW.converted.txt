@@ -140,6 +140,7 @@
 别喂！
 首榜第6名：笼中鸟后
 //术师的生命质量非常稳定。
+被时间冲一下就只剩泡沫。
 
 
 // insert_watch_target_to_general_test_text
