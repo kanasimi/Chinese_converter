@@ -4459,15 +4459,7 @@ v:冲	~衝<role.type:A0>天兵
 // 《咫尺之间人尽敌国》	云生烟替顾聆影冲了一杯茶。 (~沖<role.type:A0>云生烟 ~沖<role.type:ARGM-BNF>替顾聆影 ~沖<role.type:A1>一杯茶 nh:云生烟+p:替+nh:顾聆影+v:冲+u:了+m:一+q:杯+n:茶+wp:。)
 // 《都重生了谁谈恋爱啊》	冲完澡之后， (~沖<ATT>nd:之后 ~沖<role.type:A1>澡 v:冲+v:完+n:澡+nd:之后+wp:，)
 v:冲	~沖<role.type:A1>/(?:[浴澡凉]|茶叶?|[^奖]杯|胳膊|咖啡|可可)$/
-// 《我在田宗剑道成仙》	之前的茅草屋才被山洪冲了， (~沖<VOB>v:说 ~沖<role.type:A1>鲜花与草木 ~沖<role.type:A1>之前的茅草屋 ~沖<role.type:ARGM-ADV>才 ~沖<role.type:A0>山洪 nd:之前+u:的+n:茅草屋+d:才+p:被+n:山洪+v:冲+u:了+wp:，)
-v:冲	~沖<role.type:A0>山洪
 
-// 《我师兄实在太稳健了》	已从各个方向冲抵玄都城大阵前； (~衝<role.type:ARGM-ADV>已 ~衝<role.type:ARGM-DIR>从各个方向 ~衝<role.type:A1>玄都城大阵前 d:已+p:从+r:各个+n:方向+v:冲+v:抵+ns:玄都城+a:大+n:阵+nd:前+wp:；)
-v:冲	~衝+v:抵+ns:
-// 《大乘期才有逆袭系统》	想要用合体期威压冲抵李院长的威压。 (~沖<VOB>v:想 v:想+v:要+p:用+nt:合体期+v:威压+v:冲+v:抵+nh:李+n:院长+u:的+v:威压+wp:。) 匹配的條件式: v:冲 → ~衝+v:抵+nh:
-v:冲	v:威压+~沖+v:抵+nh:
-// 《我师兄实在太稳健了》	已冲抵熊伶俐身前五十丈， (~衝<role.type:ARGM-ADV>已 ~衝<role.type:A1>熊伶俐身前 ~衝<role.type:ARGM-EXT>五十丈 d:已+v:冲+v:抵+nh:熊伶俐+nl:身前+m:五十+q:丈+wp:，)
-v:冲	~衝+v:抵+nh:
 // 《随波逐流之一代军师》	灵雨已经撞碎花厅的窗子，冲了出去。 (~衝<COO>v:撞 ~衝<role.type:A0>灵雨 n:灵雨+d:已经+v:撞+a:碎+ns:花厅+u:的+n:窗子+wp:，+v:冲+u:了+v:出去) 匹配的條件式: v:冲 → ~沖<role.type:A0>/雨/
 // 《我的一天有48小时》	不过因为立柱很光滑，没有固定点，张恒最终也被冲了出去。 (~沖<role.type:ARGM-DIS>不过 ~沖<role.type:ARGM-PRP>因为立柱很光滑，没有固定点 ~沖<role.type:A0>张恒 ~沖<role.type:ARGM-ADV>最终 ~沖<role.type:ARGM-ADV>也 c:不过+c:因为+n:立柱+d:很+a:光滑+wp:，+v:没有+n:固定点+wp:，+nh:张恒+d:最终+d:也+p:被+v:冲+u:了+v:出去+wp:。) 匹配的條件式: v:冲 → ~衝+u:了+v:出去
 v:冲	~衝<role.type:A0>/雨/+u:了+v:出去
@@ -4477,9 +4469,11 @@ v:冲	~衝<role.type:A1>/云霄/+v:上+u:了
 v:冲	n:阴影+~衝+v:到+r:那
 // [general.TW.txt]	被雨冲去了光彩。 (~沖<role.type:A0>雨 p:被+n:雨+v:冲+v:去+u:了+n:光彩)	一场雨冲去了多少繁华。 (~沖<role.type:A0>一场雨 ~沖<role.type:A1>多少繁华 m:一+q:场+n:雨+v:冲+v:去+u:了+r:多少+a:繁华)	雨天冲去你所有的忧愁。 (~沖<role.type:A0>雨天 ~沖<role.type:A1>你所有的忧愁 n:雨天+v:冲+v:去+r:你+b:所有+u:的+a:忧愁)
 // 《女主从书里跑出来了怎么办》	就算海浪冲不掉， (~沖<role.type:ARGM-DIS>就算 ~沖<role.type:A0>海浪 c:就算+n:海浪+v:冲+d:不+v:掉+wp:，)
-v:冲	~沖<role.type:A0>/雨|海浪/
+// 《我在田宗剑道成仙》	之前的茅草屋才被山洪冲了， (~沖<VOB>v:说 ~沖<role.type:A1>鲜花与草木 ~沖<role.type:A1>之前的茅草屋 ~沖<role.type:ARGM-ADV>才 ~沖<role.type:A0>山洪 nd:之前+u:的+n:茅草屋+d:才+p:被+n:山洪+v:冲+u:了+wp:，)
+// 《术师手册》	被流金河一冲就丧失斗志。 (~沖<role.type:A0>流金河 ~沖<role.type:ARGM-ADV>一 p:被+ns:流金河+d:一+v:冲+d:就+v:丧失+n:斗志+wp:。) 單純 zh_conversion 轉換過程: 冲→衝
+// 《术师手册》	数度被浩瀚激流冲退。 (~沖<role.type:ARGM-ADV>数度 ~沖<role.type:A0>浩瀚激流 m:数+q:度+p:被+z:浩瀚+n:激流+v:冲+v:退+wp:。) 單純 zh_conversion 轉換過程: 冲退→衝退
 // [general.TW.txt]	莲蓬头的水会一直冲着。 (~沖<role.type:A0>莲蓬头的水 ~沖<role.type:ARGM-ADV>一直 n:莲蓬头+u:的+n:水+v:会+d:一直+v:冲+u:着+wp:。)
-v:冲	~沖<role.type:A0>/的水$/
+v:冲	~沖<role.type:A0>/(?:河|雨天?|山洪|激流|海浪|的水)$/
 
 // 《无敌大佬要出世》	被九幽之力冲得震动不已， (~沖<role.type:A0>九幽之力 ~沖<role.type:ARGM-EXT>震动不已 p:被+n:九幽+u:之+n:力+v:冲+u:得+v:震动+v:不已+wp:，)
 v:冲	~沖<role.type:A0>/之力$/
@@ -4487,6 +4481,13 @@ v:冲	~沖<role.type:A0>/之力$/
 v:冲	~沖<role.type:ARGM-EXT>/清醒/	~沖<role.type:ARGM-ADV>/清醒/	~沖+u:得+a:清醒
 // [general.TW.txt]	用冷水冲冲你的脑袋。 (~沖沖<role.type:ARGM-MNR>用冷水 ~沖沖<role.type:A1>你的脑袋 p:用+n:冷水+v:冲冲+r:你+u:的+n:脑袋)
 v:冲冲	~沖沖<role.type:A1>/脑/
+
+// 《我师兄实在太稳健了》	已从各个方向冲抵玄都城大阵前； (~衝<role.type:ARGM-ADV>已 ~衝<role.type:ARGM-DIR>从各个方向 ~衝<role.type:A1>玄都城大阵前 d:已+p:从+r:各个+n:方向+v:冲+v:抵+ns:玄都城+a:大+n:阵+nd:前+wp:；)
+v:冲	~衝+v:抵+ns:
+// 《大乘期才有逆袭系统》	想要用合体期威压冲抵李院长的威压。 (~沖<VOB>v:想 v:想+v:要+p:用+nt:合体期+v:威压+v:冲+v:抵+nh:李+n:院长+u:的+v:威压+wp:。) 匹配的條件式: v:冲 → ~衝+v:抵+nh:
+v:冲	v:威压+~沖+v:抵+nh:
+// 《我师兄实在太稳健了》	已冲抵熊伶俐身前五十丈， (~衝<role.type:ARGM-ADV>已 ~衝<role.type:A1>熊伶俐身前 ~衝<role.type:ARGM-EXT>五十丈 d:已+v:冲+v:抵+nh:熊伶俐+nl:身前+m:五十+q:丈+wp:，)
+v:冲	~衝+v:抵+nh:
 
 // 《烂柯棋缘》	你们四个身上味道可太冲了！ (~衝<COO>v:脱 r:你们+m:四+q:个+nl:身上+n:味道+d:可+d:太+a:冲+u:了+wp:！) (~衝<role.type:A0>你们四个身上味道 ~衝<role.type:ARGM-ADV>可 ~衝<role.type:ARGM-ADV>太 r:你们+m:四+q:个+nl:身上+n:味道+d:可+d:太+a:冲+u:了+wp:！)
 a:冲	d:太+~衝+u:了
@@ -4570,7 +4571,8 @@ v:冲垮	~衝垮<role.type:A0>/军队/
 v:冲击	~沖擊<role.type:A0>/浪/
 
 // 《我师兄实在太稳健了》	如山洪冲散土坝， (~沖散<COO>v:杀 ~沖散<role.type:A1>土坝 v:如+n:山洪+v:冲散+n:土坝+wp:，) (~沖散<POB>v:如 ~沖散<role.type:A0>山洪 ~沖散<role.type:A1>土坝 v:如+n:山洪+v:冲散+n:土坝+wp:，)
-v:冲散	~沖散<role.type:A0>/洪/	~沖散<role.type:A1>土坝
+// 《术师手册》	显然流金河并不能冲散她的意志， (~沖<role.type:ARGM-ADV>显然 ~沖<role.type:A0>流金河 ~沖<role.type:ARGM-ADV>并 ~沖<role.type:ARGM-ADV>不 ~沖<role.type:A1>她的意志 a:显然+ns:流金河+d:并+d:不+v:能+v:冲+v:散+r:她+u:的+n:意志+wp:，) 匹配的條件式: d:并 → ~並 單純 zh_conversion 轉換過程: 冲散→衝散
+v:冲散	~沖散<role.type:A0>/(?:河|山洪)$/	~沖散<role.type:A1>土坝
 
 
 // --------------------------------------------------------------------------------------------------------------------
