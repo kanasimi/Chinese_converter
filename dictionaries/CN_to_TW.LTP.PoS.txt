@@ -1713,7 +1713,8 @@ n:面	v:放+u:着+u:的+~麵
 // 《我的一天有48小时》	山药皮去干净， (n:山药皮+v:去+a:干净)
 a:干净	~乾淨
 // 解析錯誤 @ 《咫尺之间人尽敌国》	花洒的水滴源源不断的冲刷而下，冲干净了百里青锋身上泥土的气息。 (v:冲+v:刷+c:而下+wp:，+v:冲干+a:净+u:了) (~沖<COO>v:下 ~沖<parent.relate:eSUCC>v:下 ~沖<←CMP>a:干净 v:冲+a:干净+u:了) (~沖<COO>v:冲刷 ~沖<role.type:A0>花洒的水滴 ~沖<role.type:A1>百里青锋身上泥土的气息 v:冲刷+c:而+v:下+wp:，+v:冲+a:干净+u:了+nh:百里青锋+nl:身上+n:泥土+u:的+n:气息) 匹配的條件式: "a:干净" 另外轉換，因此 "沖" 被獨立轉換。
-v:冲	~沖+a:干净
+// 《术师手册》	因为早上水流不会将整条水渠冲刷一遍，所以怎么倒就有讲究，不然冲不干净只能自己处理。 (~沖<COO>v:有 c:因为+nt:早上+n:水流+d:不+v:会+p:将+m:整+q:条+n:水渠+v:冲刷+m:一+q:遍+wp:，+c:所以+r:怎么+v:倒+d:就+v:有+v:讲究+wp:，+c:不然+v:冲+d:不+a:干净+v:只能+r:自己+v:处理+wp:。) 匹配的條件式: a:干净 → ~乾淨 單純 zh_conversion 轉換過程: 渠冲→渠衝 冲→衝
+v:冲	~沖+d:不?+a:干净
 
 // 《烂柯棋缘》	干不干净， (a:干+d:不+a:干净+wp:，) 匹配的條件式: a:干净
 a:干	~乾+d:不+a:干净
@@ -3648,6 +3649,8 @@ v:回旋	~迴旋
 // 《咫尺之间人尽敌国》	整个天地都回荡在这片浩荡的雷鸣之中， (~迴蕩<role.type:A0>整个天地 ~迴蕩<role.type:ARGM-ADV>都 ~迴蕩<role.type:A1>在这片浩荡的雷鸣之中 b:整个+n:天地+d:都+v:回荡+p:在+r:这+q:片+v:浩荡+u:的+v:雷鸣+nd:之中+wp:，)
 // 《烂柯棋缘》	计缘离去前的话还是在墓前回荡。 (~迴蕩<role.type:A0>计缘离去前的话 ~迴蕩<role.type:ARGM-ADV>还是 ~迴蕩<role.type:A1>在墓前 nh:计缘+v:离去+nd:前+u:的+n:话+d:还是+p:在+n:墓+nd:前+v:回荡+wp:。)
 v:回荡	~迴盪
+// 《术师手册》	但像她这样时常提起未婚夫来回避不纯异性交往， (~迴避<COO>v:提起 ~迴避<role.type:A1>不纯异性交往 c:但+v:像+r:她+r:这样+d:时常+v:提起+n:未婚夫+v:来+v:回避+d:不+a:纯+n:异性+v:交往+wp:，) 單純 zh_conversion 轉換過程: 来回→來回
+v:回避	v:来+~迴避
 
 
 // --------------------------------------------------------------------------------------------------------------------
@@ -3671,6 +3674,7 @@ v:复生	~復生
 // 《神国之上》	也极有可能在她的身上复现。 (~復現<role.type:ARGM-ADV>也 ~復現<role.type:ARGM-ADV>极 ~復現<role.type:A1>在她的身上 d:也+d:极+v:有+n:可能+p:在+r:她+u:的+nl:身上+v:复现+wp:。)
 v:复现	~復現
 
+// 恢復
 // 解析錯誤 @ 《大奉打更人》	正处在空闲状态的怀庆率先传书回复： (~回覆<COO>v:传书 ~回覆<role.type:A0>正处在空闲状态的怀庆 ~回覆<role.type:ARGM-ADV>率先 d:正+v:处在+n:空闲+n:状态+u:的+nh:怀庆+d:率先+v:传书+v:回复+wp:：) 匹配的條件式: v:回复 → ~回復<role>/状态|力气|体力|电力|法力|修为|灵性|生活|淡定|知觉|身躯|价格|伤|聚焦|全盛|资源/
 v:回复	~回覆<role.type:A0>/状态的/
 // [general.TW.txt]	没想到对方体力回复得这么快。 (~回復<VOB>v:想到 ~回復<role.type:A1>对方体力 ~回復<role.type:ARGM-EXT>这么快 d:没+v:想到+n:对方+n:体力+v:回复+u:得+r:这么+a:快)
@@ -3684,15 +3688,17 @@ v:回复	~回覆<role.type:A0>/状态的/
 // 《我在幕后调教大佬》	到时候就能让太公给我回复前世修为了！ (~回復<VOB>v:让 ~回復<role.type:A0>太公 ~回復<role.type:ARGM-BNF>给我 ~回復<role.type:A1>前世修为 p:到+n:时候+d:就+v:能+v:让+n:太公+p:给+r:我+v:回复+n:前世修为+u:了+wp:！)
 // 《我在幕后调教大佬》	让他快速回复全盛。 (~回復<VOB>v:让 ~回復<role.type:A0>他 ~回復<role.type:ARGM-ADV>快速 ~回復<role.type:A1>全盛 v:让+r:他+d:快速+v:回复+b:全盛+wp:。)
 // 《苍青之剑》	让这位红发美人的受损灵性回复下来。 (~回復<VOB>v:让 ~回復<role.type:A1>这位红发美人的受损灵性 v:让+r:这+q:位+n:红发+n:美人+u:的+v:受损+n:灵性+v:回复+v:下来+wp:。)
+// 《苍青之剑》	一方面她的灵性受损还没回复， (~回復<COO>v:跳 ~回復<role.type:A1>她的灵性受损 ~回復<role.type:ARGM-ADV>还 ~回復<role.type:ARGM-ADV>没 c:一方面+r:她+u:的+n:灵性+v:受损+d:还+d:没+v:回复+wp:，) 單純 zh_conversion 轉換過程: 没回复→沒回覆
 // 《苍青之剑》	感觉右臂缓慢地回复了知觉。 (~回復<VOB>v:感觉 ~回復<role.type:A0>右臂 ~回復<role.type:ARGM-ADV>缓慢地 ~回復<role.type:A1>知觉 v:感觉+n:右臂+a:缓慢+u:地+v:回复+u:了+n:知觉+wp:。)
 // 《苍青之剑》	总算再次回复到了亡灵特有的古井无波的状态。 (~回復<role.type:ARGM-ADV>总算 ~回復<role.type:ARGM-ADV>再次 ~回復<role.type:A1>亡灵特有的古井无波的状态 d:总算+d:再次+v:回复+v:到+u:了+n:亡灵+b:特有+u:的+n:古井+v:无+n:波+u:的+n:状态+wp:。)
+// 《苍青之剑》	顺带将对建筑的破坏也回复过来。 (~回復<COO>v:拉 ~回復<role.type:A0>蜜儿 ~回復<role.type:ARGM-DIS>则 ~回復<role.type:ARGM-ADV>不断 ~回復<role.type:ARGM-MNR>用状态覆盖的能力 ~回復<role.type:ARGM-ADV>顺带 ~回復<role.type:A1>对建筑的破坏 ~回復<role.type:ARGM-DIS>也 ~回復<role.type:A0>小莉莉丝 ~回復<role.type:A1>我去支援大皇宫 d:顺带+p:将+p:对+n:建筑+u:的+v:破坏+d:也+v:回复+v:过来+wp:。) 單純 zh_conversion 轉換過程: 回复→回覆
 // 《玩家超正义》	那种资源会随时间快速回复， (~回復<role.type:A0>那种资源 ~回復<role.type:ARGM-ADV>随时间 ~回復<role.type:ARGM-ADV>快速 r:那种+n:资源+v:会+p:随+n:时间+d:快速+v:回复+wp:，)
 // 《剑宗旁门》	所以才会清醒之后依然无法回复意识。 (~回復<COO>a:虚弱 ~回復<role.type:ARGM-DIS>所以 ~回復<role.type:ARGM-DIS>才 ~回復<role.type:ARGM-TMP>清醒之后 ~回復<role.type:ARGM-ADV>依然 ~回復<role.type:ARGM-ADV>无法 ~回復<role.type:A1>意识 c:所以+d:才+v:会+a:清醒+nd:之后+d:依然+v:无法+v:回复+n:意识+wp:。)
 // 《我的成神日志》	灵念再次回复十万米范围感知， (~回復<COO>v:挪开 ~回復<role.type:A0>师尊你 ~回復<role.type:ARGM-ADV>怎么 ~回復<role.type:ARGM-ADV>还 ~回復<role.type:A0>灵念 ~回復<role.type:ARGM-ADV>再次 ~回復<role.type:A1>十万米范 围感知 n:灵念+d:再次+v:回复+m:十万+q:米+n:范围+v:感知+wp:，)
 // 《道诡异仙》	重新回复了原样。 (~回復<COO>v:蠕动 ~回復<role.type:ARGM-DIS>可 ~回復<role.type:A0>那变成两半的血肉 ~回復<role.type:ARGM-ADV>重新 ~回復<role.type:A1>原样 ~回復<role.type:ARGM-ADV>不能 d:重新+v:回复+u:了+n:原样+wp:。)
 // 《术师手册》	怪不得术力不会自动回复， (~回復<COO>v:需要 ~回復<role.type:ARGM-ADV>怪不得 ~回復<role.type:A1>术力 ~回復<role.type:ARGM-ADV>不 ~回復<role.type:ARGM-ADV>自动 d:怪不得+n:术力+d:不+v:会+d:自动+v:回复+wp:，) 單純 zh_conversion 轉換過程: 回复→回覆
 // 《术师手册》	哪怕仍没有回复所有战力， (~回復<COO>v:止血 ~回復<role.type:ARGM-DIS>哪怕 ~回復<role.type:ARGM-ADV>仍 ~回復<role.type:ARGM-ADV>没有 ~回復<role.type:A1>所有战力 c:哪怕+d:仍+d:没有+v:回复+b:所有+n:战力+wp:，) 單純 zh_conversion 轉換過程: 回复→回覆
-v:回复	~回復<role>/(?:意识|状态|原样|力气|体力|电力|法力|术力|战力|修为|灵性|灵念|生活中?|淡定|知觉|身躯|价格上?|伤|聚焦|全盛|资源)$/
+v:回复	~回復<role>/(?:伤|意识|状态|原样|力气|体力|电力|法力|术力|战力|修为|灵念|生活中?|淡定|知觉|身躯|资源|价格上?|聚焦|全盛|破坏)$|灵性/
 // 《请公子斩妖》	不受伤怎么回复，不回复他为什么要执掌这条大道？ (~回復<COO>v:受伤 ~回復<role.type:ARGM-ADV>怎么 d:不+v:受伤+r:怎么+v:回复+wp:，+d:不+v:回复+r:他+r:为什么+v:要+v:执掌+r:这+q:条+n:大道+wp:？)
 v:回复	~回復<COO>v:受伤
 
@@ -4476,6 +4482,10 @@ v:冲	~衝<role.type:A0>/雨/+u:了+v:出去
 v:冲	~衝<role.type:A1>/云霄/+v:上+u:了
 // 解析錯誤 @ 《一品修仙》	阴影冲到那艘海盗船之下时， (~衝<ATT>n:时 ~衝<role.type:A0>阴影 ~衝<role.type:A0>海浪 n:阴影+v:冲+v:到+r:那+q:艘+n:海盗船+nd:之下+n:时+wp:，) 匹配的條件式: v:冲 → ~沖<role.type:A0>/雨|海浪/
 v:冲	n:阴影+~衝+v:到+r:那
+// 解析錯誤 @ 《一品修仙》	丑格兽双肩一抖，硬着奔雷浪头冲了上去。 (~衝<COO>v:绵延 ~衝<role.type:A0>丑格兽和黑袍女人 ~衝<role.type:ARGM-ADV>已经 ~衝<role.type:ARGM-DIS>可 ~衝<role.type:A0>奔雷长河 nh:丑格兽+m:双肩+d:一+v:抖+wp:，+v:硬+u:着+n:奔雷+n:浪头+v:冲+u:了+v:上去+wp:。) 匹配的條件式: v:冲 → ~沖<role.type:A0>/(?:河|雨天?|山洪|激流|海浪|的水)$/ 單純 zh_conversion 轉換過程: 冲了上→衝了上
+v:冲	~衝<role.type:A0>奔雷长河+u:了+v:上去
+// 解析錯誤 @ 《开局奖励一亿条命》	看到这帮八品帝丹师也往里面冲， (~衝<VOB>v:看到 ~衝<role.type:A0>玉河 ~衝<role.type:ARGM-ADV>正常 ~衝<role.type:A1>里面 ~衝<role.type:ARGM-DIS>也 ~衝<role.type:A2>往里面 v:看到+r:这+q:帮+b:八品+n:帝丹师+d:也+p:往+nd:里面+v:冲+wp:，) 匹配的條件式: v:冲 → ~沖<role.type:A0>/(?:河|雨天?|山洪|激流|海浪|的水)$/ 單純 zh_conversion 轉換過程: 往里面冲→往裏面衝
+v:冲	p:往+nd:里面+~衝
 // [general.TW.txt]	被雨冲去了光彩。 (~沖<role.type:A0>雨 p:被+n:雨+v:冲+v:去+u:了+n:光彩)	一场雨冲去了多少繁华。 (~沖<role.type:A0>一场雨 ~沖<role.type:A1>多少繁华 m:一+q:场+n:雨+v:冲+v:去+u:了+r:多少+a:繁华)	雨天冲去你所有的忧愁。 (~沖<role.type:A0>雨天 ~沖<role.type:A1>你所有的忧愁 n:雨天+v:冲+v:去+r:你+b:所有+u:的+a:忧愁)
 // 《女主从书里跑出来了怎么办》	就算海浪冲不掉， (~沖<role.type:ARGM-DIS>就算 ~沖<role.type:A0>海浪 c:就算+n:海浪+v:冲+d:不+v:掉+wp:，)
 // 《我在田宗剑道成仙》	之前的茅草屋才被山洪冲了， (~沖<VOB>v:说 ~沖<role.type:A1>鲜花与草木 ~沖<role.type:A1>之前的茅草屋 ~沖<role.type:ARGM-ADV>才 ~沖<role.type:A0>山洪 nd:之前+u:的+n:茅草屋+d:才+p:被+n:山洪+v:冲+u:了+wp:，)
@@ -4581,7 +4591,8 @@ v:冲击	~沖擊<role.type:A0>/浪/
 
 // 《我师兄实在太稳健了》	如山洪冲散土坝， (~沖散<COO>v:杀 ~沖散<role.type:A1>土坝 v:如+n:山洪+v:冲散+n:土坝+wp:，) (~沖散<POB>v:如 ~沖散<role.type:A0>山洪 ~沖散<role.type:A1>土坝 v:如+n:山洪+v:冲散+n:土坝+wp:，)
 // 《术师手册》	显然流金河并不能冲散她的意志， (~沖<role.type:ARGM-ADV>显然 ~沖<role.type:A0>流金河 ~沖<role.type:ARGM-ADV>并 ~沖<role.type:ARGM-ADV>不 ~沖<role.type:A1>她的意志 a:显然+ns:流金河+d:并+d:不+v:能+v:冲+v:散+r:她+u:的+n:意志+wp:，) 匹配的條件式: d:并 → ~並 單純 zh_conversion 轉換過程: 冲散→衝散
-v:冲散	~沖散<role.type:A0>/(?:河|山洪)$/	~沖散<role.type:A1>土坝
+// 《我在田宗剑道成仙》	任何灵性若是贸然触及法则都会轻易地被那法则的洪流所冲散、 (~沖散<COO>v:是 ~沖散<role.type:A1>任何灵性 ~沖散<role.type:ARGM-CND>若是贸然触及法则 ~沖散<role.type:ARGM-ADV>都 ~沖散<role.type:ARGM-ADV>轻易地 ~沖散<role.type:A0>那法则的洪流 r:任何+n:灵性+c:若是+d:贸然+v:触及+n:法则+d:都+v:会+d:轻易+u:地+p:被+r:那+n:法则+u:的+n:洪流+u:所+v:冲散+wp:、) 單純 zh_conversion 轉換過程: 冲散→衝散
+v:冲散	~沖散<role.type:A0>/(?:河|山洪|洪流)$/	~沖散<role.type:A1>土坝
 
 
 // --------------------------------------------------------------------------------------------------------------------
@@ -6802,6 +6813,20 @@ v:扇	~搧<ATT>散修
 // 《女侠且慢》	便一巴掌给扇南薰河里去了， (~搧<COO>v:想 ~搧<role.type:ARGM-ADV>再怎么滴 ~搧<role.type:ARGM-ADV>也 ~搧<role.type:A0>夜惊堂 ~搧<role.type:ARGM-DIS>便 ~搧<role.type:ARGM-ADV>一巴掌 ~搧<role.type:A2>南薰河里 ~搧<role.type:ARGM-EXT>小半里 d:便+m:一+n:巴掌+p:给+v:扇+ns:南薰河+nd:里+v:去+u:了+wp:，) (~搧<role.type:ARGM-ADV>便 ~搧<role.type:ARGM-MNR>一巴掌 ~搧<role.type:A2>南薰河里 d:便+m:一+n:巴掌+p:给+v:扇+ns:南薰河+nd:里+v:去+u:了+wp:，)
 // 《术师手册》	然后她一边扇他脸一边骂他小喇叭。 (~搧<COO>v:让 ~搧<role.type:ARGM-DIS>然后 ~搧<role.type:A0>她 ~搧<role.type:ARGM-DIS>一边 ~搧<role.type:A1>他脸 ~搧<role.type:ARGM-MNR>用尸体 c:然后+r:她+d:一边+v:扇+r:他+n:脸+d:一边+v:骂+r:他+a:小+n:喇叭+wp:。)
 v:扇	~搧<role>/(?:巴掌|耳光|嘴巴子|脸|大逼斗)$/
+// 解析錯誤 @ 《剑宗旁门》	舞阳扇了扇自己的脸， (~搧<CMP>v:扇 nh:舞阳+v:扇+u:了+q:扇+r:自己+u:的+n:脸+wp:，)
+q:扇	v:扇<role>/(?:巴掌|耳光|嘴巴子|脸|大逼斗)$/+u:了+~搧
+
+
+// 《我的一天有48小时》	“法比诺大人， (~法比諾<ATT>n:大人 wp:“+nh:法比诺+n:大人+wp:，) 單純 zh_conversion 轉換過程: 诺大→諾大
+// 《第一序列》	我既然敢承诺大家， (~承諾<VOB>v:说道 ~承諾<role.type:ARGM-DIS>既然 ~承諾<role.type:A1>大家 r:我+c:既然+v:敢+v:承诺+r:大家+wp:，) 單純 zh_conversion 轉換過程: 诺大→偌大
+// 解析錯誤 @ 《术师手册》	诺大一个剑花， (~偌大<ATT>m:一个 nh:诺大+m:一个+n:剑花+wp:，) 單純 zh_conversion 轉換過程: 诺→諾
+// 《术师手册》	诺大一个剑花， (~偌大<ATT>m:一个 b:诺大+m:一个+n:剑花+wp:，) 單純 zh_conversion 轉換過程: 诺→諾
+诺大	~偌大
+// 《苍青之剑》	在诺大段大段的说教后， (~諾<ATT>v:说教 p:在+nh:诺+a:大+q:段+a:大段+u:的+v:说教+nd:后+wp:，) 匹配的條件式: 诺 → ~偌+a:大 單純 zh_conversion 轉換過程: 诺→諾
+// 《咫尺之间人尽敌国》 诺大的逐日门， (~偌<ADV>a:大 b:诺+a:大+u:的+n:逐日门+wp:，) 單純 zh_conversion 轉換過程: 诺→諾
+b:诺	~偌+a:大
+// 解析錯誤 @ 《随波逐流之一代军师》	诺大的陆府， (~偌<ADV>a:大 n:诺+a:大+u:的+nh:陆府+wp:，) 單純 zh_conversion 轉換過程: 诺→諾
+n:诺	~偌+a:大
 
 
 // --------------------------------------------------------------------------------------------------------------------
