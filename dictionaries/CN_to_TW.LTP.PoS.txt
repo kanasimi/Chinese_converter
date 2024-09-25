@@ -5767,7 +5767,8 @@ v:克制	~剋制<ATT>n:手段+!c:而
 // 《道诡异仙》	克制坐忘道的修炼功法？ (~剋制<ATT>n:功法 ~剋制<role.type:A1>坐忘道 v:克制+v:坐忘道+u:的+v:修炼+n:功法+wp:？)
 // 《我只想安静的做个苟道中人》	本座此番专门炼制了一件克制你的法宝， (~剋制<ATT>n:法宝 ~剋制<role.type:A1>你 r:本座+r:此+q:番+d:专门+v:炼制+u:了+m:一+q:件+v:克制+r:你+u:的+n:法宝+wp:，)
 // 《请公子斩妖》	多亏这神火天生有克制幽冥鬼物的效果， (~剋制<ATT>n:效果 ~剋制<role.type:A1>幽冥鬼物 ~剋制<role.type:A1>迷雾 v:多亏+r:这+n:神火+d:天生+v:有+v:克制+a:幽冥+n:鬼+n:物+u:的+n:效果+wp:，)
-v:克制	~剋制<ATT>n:/^(?:技术|功法|法宝|效果)$/
+// 《术师手册》	从此不存在完全克制你的术法。 (~剋制<ATT>n:术法 ~剋制<role.type:ARGM-ADV>完全 ~剋制<role.type:A1>你 d:从此+d:不+v:存在+a:完全+v:克制+r:你+u:的+n:术法+wp:。) 單純 zh_conversion 轉換過程: 克制→克制
+v:克制	~剋制<ATT>n:/^(?:技术|术法|功法|法宝|效果)$/
 // 《我为长生仙》	也是最为克制伏羲的方法， (~剋制<ATT>n:方法 ~剋制<role.type:ARGM-ADV>最为 ~剋制<role.type:A1>伏羲 ~剋制<role.type:ARGM-MNR>方法 ~剋制<role.type:A0>星辰 d:也+v:是+d:最为+v:克制+nh:伏羲+u:的+n:方法+wp:，)
 v:克制	~剋制<ATT>n:方法+nh:
 
@@ -6821,7 +6822,8 @@ v:扇	~搧<ATT>散修
 // 《回到过去变成猫》	被郑叹扇了几巴掌， (~搧<role.type:A0>郑叹 ~搧<role.type:ARGM-FRQ>几巴掌 p:被+nh:郑叹+v:扇+u:了+m:几+q:巴掌+wp:，)
 // 《女侠且慢》	便一巴掌给扇南薰河里去了， (~搧<COO>v:想 ~搧<role.type:ARGM-ADV>再怎么滴 ~搧<role.type:ARGM-ADV>也 ~搧<role.type:A0>夜惊堂 ~搧<role.type:ARGM-DIS>便 ~搧<role.type:ARGM-ADV>一巴掌 ~搧<role.type:A2>南薰河里 ~搧<role.type:ARGM-EXT>小半里 d:便+m:一+n:巴掌+p:给+v:扇+ns:南薰河+nd:里+v:去+u:了+wp:，) (~搧<role.type:ARGM-ADV>便 ~搧<role.type:ARGM-MNR>一巴掌 ~搧<role.type:A2>南薰河里 d:便+m:一+n:巴掌+p:给+v:扇+ns:南薰河+nd:里+v:去+u:了+wp:，)
 // 《术师手册》	然后她一边扇他脸一边骂他小喇叭。 (~搧<COO>v:让 ~搧<role.type:ARGM-DIS>然后 ~搧<role.type:A0>她 ~搧<role.type:ARGM-DIS>一边 ~搧<role.type:A1>他脸 ~搧<role.type:ARGM-MNR>用尸体 c:然后+r:她+d:一边+v:扇+r:他+n:脸+d:一边+v:骂+r:他+a:小+n:喇叭+wp:。)
-v:扇	~搧<role>/(?:巴掌|耳光|嘴巴子|脸|大逼斗)$/
+// 《术师手册》	摸了摸自己被扇红的脸蛋。 (~搧<ATT>n:脸蛋 ~搧<role.type:A1>脸蛋 v:摸+u:了+v:摸+r:自己+p:被+v:扇+a:红+u:的+n:脸蛋+wp:。)
+v:扇	~搧<role>/(?:巴掌|耳光|嘴巴子|脸蛋?|大逼斗)$/
 // 解析錯誤 @ 《剑宗旁门》	舞阳扇了扇自己的脸， (~搧<CMP>v:扇 nh:舞阳+v:扇+u:了+q:扇+r:自己+u:的+n:脸+wp:，)
 q:扇	v:扇<role>/(?:巴掌|耳光|嘴巴子|脸|大逼斗)$/+u:了+~搧
 
