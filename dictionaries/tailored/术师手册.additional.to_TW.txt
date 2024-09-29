@@ -92,3 +92,10 @@ zh_conversion 用作品特設辭典
 // 《术师手册》	但血色婚礼与剑征蜜月好像也很浪漫， (~征<ATT>n:蜜月 c:但+n:血色+n:婚礼+c:与+n:剑+v:征+n:蜜月+v:好像+d:也+d:很+a:浪漫+wp:，) 單純 zh_conversion 轉換過程: 征→徵
 剑征蜜月	劍征蜜月
 
+// 《术师手册》	<span class="num">第1056章</span><br/>烟</h2>\r\n   (~菸<ATT>ws:c wp:<span class=+wp:"+n:num+wp:"+wp:>+m:第1056+q:章+wp:</span+wp:>+wp:<br/>+n:烟+wp:</h2+wp:>\r\n  ) 單純 zh_conversion 轉換過程: 烟→煙
+<br/>烟</h2>	<br/>菸</h2>
+// 《术师手册》	<p>“烟。”</p>\r\n   (~菸<COO>r:什么 wp:<p>+wp:“+n:烟+wp:。+wp:”+wp:</p>\r\n  ) 單純 zh_conversion 轉換過程: 烟→煙
+“烟。”	「菸。」
+// 《术师手册》	海水都熄灭不了她的烟瘾。 (~菸癮<VOB>v:熄灭 n:海水+d:都+v:熄灭+d:不+v:了+r:她+u:的+n:烟瘾+wp:。) 單純 zh_conversion 轉換過程: 烟瘾→煙癮
+熄灭不了她的烟瘾	熄滅不了她的菸癮
+
