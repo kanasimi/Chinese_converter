@@ -1597,7 +1597,8 @@ a:微干	n:+~微乾
 // [general.TW.txt]	行走时汗很容易干。 (~乾<role.type:ARGM-TMP>行走时 ~乾<role.type:A0>汗 v:行走+n:时+n:汗+d:很+a:容易+a:干)
 // [general.TW.txt]	橘子有些干了。 (~乾<role.type:A0>橘子 ~乾<role.type:ARGM-ADV>有些 n:橘子+r:有些+a:干+u:了)
 // [general.TW.txt]	火鸡非常干。 (~乾<role.type:A0>火鸡 ~乾<role.type:ARGM-ADV>非常 n:火鸡+d:非常+a:干+wp:。)
-a:干	~乾<role.type:A0>/^(?:毛巾?|嗓子?|橘子|喉咙|嘴巴|眼?泪|汗|火鸡|气候)$/
+// 《术师手册》	你熬夜后的嘴唇似乎有些干， (~乾<COO>v:有 ~乾<role.type:ARGM-DIS>不然 ~乾<role.type:A0>我 ~乾<role.type:ARGM-ADV>迟早 ~乾<role.type:ARGM-ADV>真的 ~乾<role.type:ARGM-DIS>那 ~乾<role.type:ARGM-DIS>就 ~乾<role.type:A0>你熬夜后的嘴唇 ~乾<role.type:ARGM-ADV>似乎 ~乾<role.type:ARGM-ADV>有些 r:你+v:熬夜+nd:后+u:的+n:嘴唇+d:似乎+r:有些+a:干+wp:，) 單純 zh_conversion 轉換過程: 干→幹
+a:干	~乾<role.type:A0>/(?:毛巾?|嗓子?|橘子|喉咙|嘴巴|嘴唇|眼?泪|汗|火鸡|气候)$/
 a:干	n:+r:有些+~乾
 a:干	n:+d:有点+~乾
 a:干	n:+d:有点儿+~乾	n:+v:有+q:点儿+~乾
