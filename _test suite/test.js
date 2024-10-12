@@ -753,11 +753,11 @@ async function test_正確率檢核(assert, setup_test, finish_test, options) {
 		//console.trace([file_path, answer_file_path]);
 		// IIFE
 		{
-			const matched = file_path.match(Chinese_converter.PATTERN_watch_target_file_name);
-			if (matched) {
-				convert_options.tailored_key = matched.groups.work_title;
+			const work_title = Chinese_converter.extract_work_title_from_file_path(file_path);
+			if (work_title) {
+				convert_options.tailored_key = work_title;
 				cecc.load_tailored_dictionary({
-					export: { work_title: matched.groups.work_title }
+					export: { work_title }
 				});
 			}
 		}

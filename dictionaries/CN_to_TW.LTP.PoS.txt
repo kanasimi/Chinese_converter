@@ -5882,6 +5882,8 @@ v:喂喂	~喂喂+n:阿方
 // 《我师兄实在太稳健了》	负责给姜家小少爷喂饭喂水的婢女睁开眼来， (~餵<COO>v:喂 ~餵<role.type:ARGM-BNF>给姜家小少爷 ~餵<role.type:A1>水 v:负责+p:给+nh:姜+n:家+a:小+n:少爷+v:喂+n:饭+v:喂+n:水+u:的+n:婢女+v:睁+v:开+n:眼+v:来+wp:，)
 v:喂	~餵+n:
 
+// 《术师手册》	片刻后，笛雅试探性喂了一声， (~喂<COO>v:回到 ~喂<role.type:ARGM-TMP>片刻后 ~喂<role.type:A0>笛雅 ~喂<role.type:ARGM-ADV>试探性 ~喂<role.type:ARGM-EXT>一声 m:片刻+nd:后+wp:，+nh:笛雅+n:试探性+v:喂+u:了+m:一+q:声+wp:，) 匹配的條件式: v:喂 → ~餵<role.type:A0>/./ 單純 zh_conversion 轉換過程: 喂了一声→喂了一聲
+v:喂	~喂<role>/./+u:了+m:一+q:声
 // 《我的一天有48小时》	他的小女友正在温柔的给他喂着葡萄。 (~餵<role.type:A0>他的小女友 ~餵<role.type:ARGM-ADV>正在 ~餵<role.type:ARGM-ADV>温柔的 ~餵<role.type:A2>给他 ~餵<role.type:A1>葡萄 r:他+u:的+a:小+n:女友+d:正在+a:温柔+u:的+p:给+r:他+v:喂+u:着+n:葡萄+wp:。)
 // [general.TW.txt]	让他自己喂。 (~餵<VOB>v:让 ~餵<role.type:A0>他 ~餵<role.type:ARGM-ADV>自己 v:让+r:他+r:自己+v:喂)
 // 《我不可能是剑神》	他们有没有喂你吃什么毒药， (~餵<role.type:A0>他们 ~餵<role.type:A1>你 ~餵<role.type:A2>吃什么毒药 r:他们+v:有+d:没+v:有+v:喂+r:你+v:吃+r:什么+n:毒药+wp:，) 匹配的條件式: 喂 → ~喂+r:你+v:
@@ -6380,7 +6382,8 @@ v:扎	p:在+n:+nd:里+~扎+u:着
 
 // 《第一序列》	扎在这里的帐篷连绵一片， (~紮<ATT>n:帐篷 ~紮<role.type:ARGM-LOC>在这里 v:扎+p:在+r:这里+u:的+n:帐篷+z:连绵+m:一+q:片+wp:，)
 // 《我为长生仙》	把手里面一年多前那位寄宿于此的师叔道人扎的扫帚往地上一扔， (~紮<ATT>n:扫帚 ~紮<role.type:A0>一年多前那位寄宿于此的师叔道人 p:把+nl:手+nd:里面+m:一+q:年+m:多+nd:前+r:那位+v:寄宿+p:于+r:此+u:的+n:师叔+n:道人+v:扎+u:的+n:扫帚+p:往+nl:地上+d:一+v:扔+wp:，)
-v:扎	~紮<ATT>n:/^(?:帐篷|扫帚)$/
+// 《术师手册》	好像她扎的高马尾就是不够完美。 (~紮<ATT>n:马尾 ~紮<role.type:A0>她 v:好像+r:她+v:扎+u:的+a:高+n:马尾+d:就是+d:不+v:够+a:完美+wp:。)
+v:扎	~紮<ATT>n:/^(?:帐篷|扫帚|马尾)$/
 // 《中国历史那些事儿系列套装》	只要报信的人不是在路上扎了帐篷， (~紮<VOB>v:是 ~紮<role.type:ARGM-LOC>在路上 ~紮<role.type:A1>帐篷 c:只要+v:报信+u:的+n:人+d:不+v:是+p:在+nl:路上+v:扎+u:了+n:帐篷+wp:，)
 // 《我师兄实在太稳健了》	只是扎了个简单凤尾辫的她， (~紮<ATT>r:她 ~紮<role.type:ARGM-ADV>只是 ~紮<role.type:A1>个简单凤尾辫 ~紮<role.type:A2>她 d:只是+v:扎+u:了+q:个+a:简单+n:凤尾辫+u:的+r:她+wp:，)
 // 《我为长生仙》	把手里面一年多前那位寄宿于此的师叔道人扎的扫帚往地上一扔， (~紮<ATT>n:扫帚 ~紮<role.type:A1>扫帚 p:把+n:手+nd:里面+m:一+q:年+m:多+nd:前+r:那位+v:寄宿+p:于+r:此+u:的+n:师叔+n:道人+v:扎+u:的+n:扫帚+p:往+nl:地上+d:一+v:扔+wp:，)

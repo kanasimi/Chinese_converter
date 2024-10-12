@@ -375,7 +375,8 @@ function load_tailored_dictionary(options) {
 		}
 
 		const contains = CeL.read_file(dictionary_file_path_to_load);
-		const PATTERN_indicate_work_title = /(\n\/\/|@)\s*(《(?<work_title>[^.\n]{3,}?)》)/g;
+		// @see extract_work_title_from_file_path()
+		const PATTERN_indicate_work_title = /(\n\/\/|@)\s*(《(?<work_title>[^.\n]+?)》)/g;
 		let matched;
 		while (matched = PATTERN_indicate_work_title.exec(contains)) {
 			//console.trace(matched);
@@ -422,9 +423,28 @@ function load_tailored_dictionary(options) {
 const KEY_files_loaded = Symbol('files loaded');
 /** {String}辭典修訂測試集檔名前綴。 */
 const KEY_watch_target_file_name_prefix = 'watch_target.';
+/** {Number}最短英文作品標題長度。 */
+const MIN_English_WORK_TITLE_LENGTH = 3;
+/** {Number}最短非英文作品名稱長度。 */
+const MIN_NON_English_WORK_TITLE_LENGTH = 2;
 /** {RegExp}辭典修訂測試集檔名模式。 */
 const PATTERN_watch_target_file_name = new RegExp(CeL.to_RegExp_pattern(KEY_watch_target_file_name_prefix)
-	+ /(?<work_title>[^.\n]{3,})\.(?<to_language>TW|CN)\.\w+$/.source);
+	+ /(?<work_title>[^.\n]+)\.(?<to_language>TW|CN)\.\w+$/.source);
+
+function extract_work_title_from_file_path(file_path) {
+	const matched = file_path.match(PATTERN_watch_target_file_name);
+	if (!matched)
+		return;
+
+	const work_title = matched.groups.work_title;
+	const MIN_WORK_TITLE_LENGTH = /^[\u0020-\u00ff]*$/.test(work_title) ? MIN_English_WORK_TITLE_LENGTH : MIN_NON_English_WORK_TITLE_LENGTH;
+	if (work_title.length < MIN_WORK_TITLE_LENGTH) {
+		CeL.error(`${extract_work_title_from_file_path.name}: 作品名稱長度起碼須有${MIN_WORK_TITLE_LENGTH}個字元！跳過字典檔: ${file_path}`);
+		return;
+	}
+
+	return work_title;
+}
 
 /**
  * 載入個別作品辭典修訂測試集。
@@ -440,10 +460,10 @@ function load_text_to_check(should_be_text__file_name, options) {
 		if (should_be_text__file_name.all) {
 			function load_directory(directory_name) {
 				CeL.read_directory(directory_name).forEach(from_file_name => {
-					const matched = from_file_name.match(PATTERN_watch_target_file_name);
-					if (matched) {
+					const work_title = extract_work_title_from_file_path(from_file_name);
+					if (work_title) {
 						this.load_text_to_check(from_file_name, {
-							export: { work_title: matched.groups.work_title }
+							export: { work_title }
 						});
 					}
 				});
@@ -489,7 +509,7 @@ function load_text_to_check(should_be_text__file_name, options) {
 	let check_language = should_be_text__file_name.match(/\.(TW|CN)\.\w+$/);
 	//console.trace([should_be_text__file_name, check_language]);
 	if (!check_language) {
-		CeL.error(`無法判別檔案之語言: ${should_be_text__file_name}`);
+		CeL.error(`${load_text_to_check.name}: 無法判別檔案之語言: ${should_be_text__file_name}`);
 		return;
 	}
 
@@ -2686,7 +2706,7 @@ Object.assign(Chinese_converter, {
 	//print_correction_condition,
 
 	KEY_watch_target_file_name_prefix,
-	PATTERN_watch_target_file_name,
+	extract_work_title_from_file_path,
 
 	get_paragraphs_of_text, get_paragraphs_of_file,
 	beautify_tagged_word_list,
