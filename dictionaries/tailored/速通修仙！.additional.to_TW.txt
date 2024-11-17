@@ -65,6 +65,27 @@ zh_conversion 用作品特設辭典
 克制忍道	剋制忍道
 // 《速通修仙！》	长生大帝克制的不是忍道， (~剋制<SBV>v:是 ~剋制<role.type:A0>长生大帝 n:长生+n:大帝+v:克制+u:的+d:不+v:是+n:忍道+wp:，) 單純 zh_conversion 轉換過程: 克制→克制
 克制的不是忍道	剋制的不是忍道
+// 《速通修仙！》	大兄的太极图和天地玄黄玲珑宝塔天克昊天。 (~剋<VOB>v:道 ~剋<role.type:A1>昊天 ~剋<role.type:A1>玄都大法师 n:大兄+u:的+n:太极图+c:和+n:天地+a:玄黄+a:玲珑+n:宝塔天+v:克+n:昊天+wp:。)
+天克昊天	天剋昊天
+// 《速通修仙！》	还远远克制不了整个天地。 (~剋制<COO>v:克制 ~剋制<role.type:ARGM-DIS>但是 ~剋制<role.type:ARGM-LOC>在圣人面前 ~剋制<role.type:A0>祂 ~剋制<role.type:ARGM-ADV>也 ~剋制<role.type:ARGM-ADV>只能 ~剋制<role.type:ARGM-ADV>还 ~剋制<role.type:ARGM-ADV>远远
+克制不了整个天地	剋制不了整個天地
+// 《速通修仙！》	这也是因为昊天先天克制孔宣。 (~剋制<POB>p:因为 ~剋制<role.type:A0>谁 ~剋制<role.type:A0>昊天 ~剋制<role.type:ARGM-ADV>先天 ~剋制<role.type:A1>孔宣 r:这+d:也+v:是+p:因为+n:昊天+n:先天+v:克制+nh:孔宣+wp:。) 單純 zh_conversion 轉換過程: 克制→克制
+// 《速通修仙！》	他不仅克制孔宣。 (~剋制<COO>v:爆 ~剋制<role.type:A0>他 ~剋制<role.type:A1>孔宣 r:他+c:不仅+v:克制+nh:孔宣+wp:。) 單純 zh_conversion 轉換過程: 克制→克制
+克制孔宣	剋制孔宣	
+// 《速通修仙！》	实力强了，根本无法克制。 (~剋制<COO>a:强 ~剋制<role.type:ARGM-ADV>根本 ~剋制<role.type:ARGM-ADV>无法 n:实力+a:强+u:了+wp:，+d:根本+v:无法+v:克制+wp:。) 單純 zh_conversion 轉換過程: 克制→克制
+实力强了，根本无法克制	實力強了，根本無法剋制
+// 《速通修仙！》	杨戬都克制不了，孔宣拿什么去克制玄都大法师？ (~剋制<COO>v:遇到 ~剋制<role.type:A0>实力 ~剋制<role.type:A0>杨戬 ~剋制<role.type:ARGM-ADV>都 nh:杨戬+d:都+v:克制+d:不+v:了+wp:，+nh:孔宣+p:拿+r:什么+v:去+v:克制+nh:玄都+n:大法师+wp:？) 單純 zh_conversion 轉換過程: 克制→克制
+杨戬都克制不了	楊戩都剋制不了
+// 《速通修仙！》	不是祂不够强，而是祂先天就被东极青华大帝克制。 (~剋制<COO>v:是 ~剋制<role.type:ARGM-ADV>就 ~剋制<role.type:A0>东极青华大帝 d:不+v:是+r:祂+d:不+v:够+a:强+wp:，+c:而是+r:祂+n:先天+d:就+p:被+ns:东极+nz:青华+n:大帝+v:克制+wp:。) 單純 zh_conversion 轉換過程: 克制→克制
+被东极青华大帝克制	被東極青華大帝剋制
+// 《速通修仙！》	我恰好克制九灵，把祂克的死死的。 (~剋制<COO>v:有 ~剋制<role.type:A0>我 ~剋制<role.type:ARGM-ADV>恰好 ~剋制<role.type:A1>九灵 ~剋制<role.type:A0>你 ~剋制<role.type:A0>你 ~剋制<role.type:A1>本座对手 r:我+d:恰好+v:克制+n:九灵+wp:，+p:把+r:祂+v:克+u:的+z:死死的+wp:。) 單純 zh_conversion 轉換過程: 克制→克制
+克制九灵	剋制九靈
+// 《速通修仙！》	遇到其他妖圣，我都没这么克制。 (~剋制<COO>v:遇到 ~剋制<role.type:ARGM-ADV>遇到其他妖圣 ~剋制<role.type:A0>我 ~剋制<role.type:ARGM-ADV>都 ~剋制<role.type:ARGM-ADV>没 ~剋制<role.type:ARGM-ADV>这么 ~剋制<role.type:ARGM-ADV>绝不 ~剋制<role.type:ARGM-DIS>但 ~剋制<role.type:A0>我 ~剋制<role.type:ARGM-ADV>不 ~剋制<role.type:A1>你 v:遇到+r:其他+n:妖圣+wp:，+r:我+d:都+d:没+r:这么+v:克制+wp:。) 單純 zh_conversion 轉換過程: 克制→克制
+遇到其他妖圣，我都没这么克制	遇到其他妖聖，我都沒這麼剋制
+// 《速通修仙！》	克制这个九头妖圣很正常。 (~剋制<SBV>a:正常 ~剋制<role.type:A1>这个九头妖圣 v:克制+r:这个+n:九头+n:妖圣+d:很+a:正常+wp:。) 單純 zh_conversion 轉換過程: 克制→克制
+克制这个九头妖圣	剋制這個九頭妖聖
+// 《速通修仙！》	季长生又不是罗睺，他怎么也能克制？ (~剋制<COO>v:是 ~剋制<role.type:A0>他 ~剋制<role.type:ARGM-ADV>怎么 ~剋制<role.type:ARGM-ADV>也 nh:季长生+d:又+d:不+v:是+n:罗睺+wp:，+r:他+r:怎么+d:也+v:能+v:克制+wp:？) 單純 zh_conversion 轉換過程: 克制→克制
+不是罗睺，他怎么也能克制	不是羅睺，他怎麼也能剋制
 
 // 《速通修仙！》	俩圣人背“天道贷”都差点被榨干。 (~揹<FOB>v:榨干 m:俩+n:圣人+v:背+wp:“+n:天道贷+wp:”+d:都+d:差点+p:被+v:榨干+wp:。)
 背“天道贷”	揹「天道貸」
@@ -80,3 +101,13 @@ zh_conversion 用作品特設辭典
 低低凹凹随流**	低低凹凹隨流蕩
 // 《速通修仙！》	这锅我还真不会为祂背。 (~揹<COO>i:叹为观止 r:这+n:锅+r:我+d:还+d:真+d:不+v:会+p:为+r:祂+v:背+wp:。)
 锅我还真不会为祂背	鍋我還真不會為祂揹
+
+// 《速通修仙！》	但玄都大法师用太极图和天地玄黄玲珑宝塔这两个“盾”去拼昊天的攻击， (~拚<role.type:ARGM-DIS>但 ~拚<role.type:A0>玄都大法师 ~拚<role.type:ARGM-MNR>用太极图和天地玄黄玲珑宝塔这两个“盾” ~拚<role.type:A1>昊天的攻击 c:但+nh:玄都+n:大法师+p:用+n:太极图+c:和+n:天地+a:玄黄+a:玲珑+n:宝塔+r:这+m:两+q:个+wp:“+n:盾+wp:”+v:去+v:拼+n:昊天+u:的+v:攻击+wp:，)
+拼昊天的攻击	拚昊天的攻擊
+// 《速通修仙！》	分别化为一图、一幡和一钟。 (~鐘<COO>n:幡 d:分别+v:化为+m:一+n:图+wp:、+m:一+n:幡+c:和+m:一+n:钟+wp:。) 單純 zh_conversion 轉換過程: 钟→鍾
+一幡和一钟	一幡和一鐘
+// 《速通修仙！》	唯有钟落到了鸿钧手中。 (~鐘<SBV>v:落 v:唯有+n:钟+v:落+v:到+u:了+n:鸿钧+nl:手中+wp:。) 單純 zh_conversion 轉換過程: 钟→鍾
+唯有钟落到了	唯有鐘落到了
+// 《速通修仙！》	父神想让季长生当——老师。 (~當<VOB>v:让 ~當<role.type:A0>季长生 ~當<role.type:A1>老师 n:父神+v:想+v:让+nh:季长生+v:当+wp:——+n:老师+wp:。) 單純 zh_conversion 轉換過程: 当—→噹—
+让季长生当—	讓季長生當—
+
