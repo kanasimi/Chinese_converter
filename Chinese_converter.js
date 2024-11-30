@@ -2582,6 +2582,7 @@ function execute_convert_Chinese(paragraphs, options) {
 		some_async = some_async || CeL.is_thenable(converted_paragraph);
 	}
 
+	//console.trace(some_async);
 	if (!some_async)
 		return return_converted_paragraphs(options, converted_paragraphs);
 
@@ -2596,6 +2597,7 @@ function return_converted_paragraphs(options, converted_paragraphs) {
 	if (options.input_string && Array.isArray(converted_paragraphs) && converted_paragraphs.length === 1)
 		converted_paragraphs = converted_paragraphs[0];
 
+	//console.trace(options.get_full_data);
 	if (options.get_full_data)
 		return { converted_paragraphs, tagged_word_list_of_paragraphs: options.tagged_word_list_of_paragraphs };
 
