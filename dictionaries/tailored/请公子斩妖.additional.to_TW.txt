@@ -89,4 +89,6 @@ zh_conversion 用作品特設辭典
 克制恶地藏	剋制惡地藏
 // 解析錯誤 @ 《请公子斩妖》	酒气也就干了。 (~乾<COO>v:是 ~乾<role.type:ARGM-DIS>就 n:酒气+d:也+d:就+v:干+u:了+wp:。) (~乾<COO>v:带 ~乾<role.type:A0>酒气 ~乾<role.type:ARGM-ADV>也 ~乾<role.type:ARGM-DIS>就 ~乾<role.type:ARGM-ADV>也 ~乾<role.type:ARGM-DIS>就 n:酒气+d:也+d:就+v:干+u:了+wp:。)
 酒气也就干了	酒氣也就乾了
+// 《请公子斩妖》	不受伤怎么回复，不回复他为什么要执掌这条大道？ (~回復<COO>v:受伤 ~回復<role.type:ARGM-ADV>怎么 d:不+v:受伤+r:怎么+v:回复+wp:，+d:不+v:回复+r:他+r:为什么+v:要+v:执掌+r:这+q:条+n:大道+wp:？) (~回復<COO>z:夭矫 ~回復<role.type:ARGM-ADV>怎么 d:不+v:受伤+r:怎么+v:回复+wp:，+d:不+v:回复+r:他+r:为什么+v:要+v:执掌+r:这+q:条+n:大道+wp:？) 單純 zh_conversion 轉換過程: 回复→回覆
+受伤怎么回复	受傷怎麼回復
 

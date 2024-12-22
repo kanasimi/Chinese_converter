@@ -14,4 +14,10 @@ zh_conversion 用作品特設辭典
 和这索命马面血拼	和這索命馬面血拚
 // 《长生从宗门杂役开始》	元灵洪炉功，可克制阴阳魔炉功， (~剋制<SBV>v:入 ~剋制<role.type:A0>元灵洪炉功 ~剋制<role.type:A1>阴阳魔炉功 ~剋制<role.type:A0>你 ~剋制<role.type:A1>天阳城 n:元灵+n:洪炉功+wp:，+v:可+v:克制+n:阴阳+n:魔炉功+wp:，) 單純 zh_conversion 轉換過程
 可克制阴阳魔炉功	可剋制陰陽魔爐功
+// 《长生从宗门杂役开始》	天宁村人见李安背个死尸，都是上前关怀问讯，李安只说是自己亲友，背到了梨花祖父的坟旁边准备埋葬。 (~揹<COO>v:说 n:天宁村人+v:见+nh:李安+v:背+q:个+n:死尸+wp:，+d:都+v:是+v:上前+v:关怀+v:问讯+wp:，+nh:李安+d:只+v:说+v:是+r:自己+n:亲友+wp:，+v:背+v:到+u:了+nh:梨花+n:祖父+u:的+n:坟+nd:旁边+v:准备+v:埋葬+wp:。)
+背到了梨花祖父的坟旁	揹到了梨花祖父的墳旁
+// 《长生从宗门杂役开始》	直接将陈麟扇飞了。 (~搧<COO>v:成型 ~搧<role.type:ARGM-DIS>若非 ~搧<role.type:ARGM-PRP>那些阵法 ~搧<role.type:ARGM-EXT>第二次 ~搧<role.type:A0>我 ~搧<role.type:ARGM-ADV>一定 ~搧<role.type:A1>知客峰诸多客卿 ~搧<role.type:ARGM-ADV>无 ~搧<role.type:ARGM-ADV>不 ~搧<role.type:A1>李安 ~搧<role.type:ARGM-ADV>居然 ~搧<role.type:ARGM-DIS>还 ~搧<role.type:ARGM-ADV>直接 a:直接+p:将+nh:陈麟+v:扇+v:飞+u:了+wp:。) (~搧<role.type:ARGM-ADV>直接 a:直接+p:将+nh:陈麟+v:扇+v:飞+u:了+wp:。)
+将陈麟扇飞	將陳麟搧飛
+// 《长生从宗门杂役开始》	就算是四阶阵法师中的高手，也不敢这么拼， (~拚<COO>v:敢 ~拚<role.type:ARGM-ADV>也 ~拚<role.type:ARGM-ADV>也 ~拚<role.type:ARGM-ADV>不 ~拚<role.type:ARGM-ADV>这么 d:就算是+m:四+n:阶+n:阵+n:法师+nd:中+u:的+n:高手+wp:，+d:也+d:不+v:敢+r:这么+v:拼+wp:，)
+阵法师中的高手，也不敢这么拼，	陣法師中的高手，也不敢這麼拚，
 
