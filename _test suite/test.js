@@ -1,17 +1,16 @@
 ﻿/*
 
-CLS && npm test nowiki
+reset && npm test nowiki
 
 // the 2>&1 instructs that the STDERR to be redirected to STDOUT
 npm test nowiki > "test_report.txt" 2>&1
 
-CHCP 65001
-CLS && type "test_report.txt"
+reset && cat "test_report.txt"
 
 
 歸檔 general.TW.txt → general.archived.TW.txt
-CLS && npm test nowiki merge_new_general_test_text_to_archived remove_duplicate_lines_in_test_text_file
-若為修改錯字，應在除欲修改的語句外**無轉換錯誤的情況下**執行完上述指令後才修改 `general.archived.TW.txt` 的錯別字。
+reset && npm test nowiki merge_new_general_test_text_to_archived remove_duplicate_lines_in_test_text_file
+若為修改錯字，應在除欲修改的語句外**無其他轉換錯誤的情況下**執行完上述指令後才修改 `general.archived.TW.txt` 的錯別字。
 
 */
 
