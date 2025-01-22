@@ -849,13 +849,32 @@ async function test_wiki_pages() {
 
 	// 抽取 HTML 文字。
 	function extract_HTML_text(html) {
-		return CeL.HTML_to_Unicode(html
+		html = html
+			// 去掉不同的語言。
+			.replace(/<(span)\slang="[^<>"]+"[^<>]*>[\s\S]+?<\/\1>/g, '')
 			// 閱論編 模板
-			.replace(/<abbr(\s[^<>]*)?>[\s\S]+?<\/abbr>/g, '')
+			.replace(/<(abbr|style)(?:\s[^<>]*)?>[\s\S]+?<\/\1>/g, '')
 			.replace(/<p(\s[^<>]*)?>/g, '\n')
 			.replace(/<[^<>]+>/g, '')
 			//.replace(/\n{3,}/g, '\n\n')
-		);
+			;
+
+		html = CeL.HTML_to_Unicode(html);
+
+		html = html
+			.replace(/(?:\s*\n){2,}/g, '\n\n')
+			// 去掉註釋("n:注 2")
+			//.replace(/\[[注註]\s*\d+\]/g, '')
+
+			// 切斷句子以簡化報告。
+			//.replace(/([。？！])\n?/g, '$1\n')
+
+			// /[\u4e00-\u9fa5]/: 匹配中文字 RegExp。
+			.replace(/^[^\u4e00-\u9fa5]+/, '')
+			.replace(/[^\u4e00-\u9fa5]+$/, '')
+			;
+
+		return html;
 	}
 
 	function get_parsed_wikitext(page_data, uselang) {
@@ -868,12 +887,16 @@ async function test_wiki_pages() {
 				return remove_token;
 			}
 			// e.g., {{Cite book}}, {{Citejournal}}
-			if (token.type === 'transclusion' && /^Cite[ a-z]/.test(token.name)) {
+			if (token.type === 'transclusion' && (
+				/^Cite[ a-z]/.test(token.name)
+				// 去掉不同的語言。
+				|| /^Lang/.test(token.name)
+			)) {
 				return remove_token;
 			}
 		});
 
-		const wikitext = parsed.toString();
+		const wikitext = CeL.wiki.wikitext_to_plain_text(parsed, CeL.wiki.add_session_to_options(zhwiki));
 
 		return new Promise((resolve, reject) => {
 			CeL.wiki.query([zhwiki.API_URL, 'action=parse'], (data, error) => {

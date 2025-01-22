@@ -41,4 +41,6 @@ zh_conversion 用作品特設辭典
 泡面味和烟味	泡麵味和菸味
 // 《都重生了谁谈恋爱啊》	江勤卷了一个卷儿， (~捲兒<VOB>v:卷 nh:江勤+v:卷+u:了+m:一个+n:卷儿+wp:，) 單純 zh_conversion 轉換過程: 卷了→捲了 卷儿→卷兒
 卷了一个卷儿	捲了一個捲兒
+// 《都重生了谁谈恋爱啊》	后续的很多风口好像都是从这个地方刮起来的。 (~颳<VOB>v:是 ~颳<role.type:A0>小伙子 ~颳<role.type:ARGM-ADV>不行 ~颳<role.type:ARGM-DIR>从这个地方 ~颳<role.type:A0>杭城 ~颳<role.type:ARGM-ADV>不 ~颳<role.type:A1>人 b:后续+u:的+m:很多+n:风口+v:好像+d:都+v:是+p:从+r:这个+n:地方+v:刮+v:起来+u:的+wp:。) 單純 zh_conversion 轉換過程: 刮起来→刮起來
+风口好像都是从这个地方刮起来	風口好像都是從這個地方颳起來
 
