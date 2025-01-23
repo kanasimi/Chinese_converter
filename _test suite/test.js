@@ -843,6 +843,7 @@ function load_all_tailored_dictionaries() {
 
 // ============================================================================
 
+// TODO: 處理地區詞轉換
 async function test_wiki_pages() {
 	/** {Object}wiki operator 操作子. */
 	const zhwiki = await get_zhwiki_session();
@@ -850,11 +851,16 @@ async function test_wiki_pages() {
 	// 抽取 HTML 文字。
 	function extract_HTML_text(html) {
 		html = html
+			// 去掉其中文字不會被繁簡轉換的 token。
+			.replace(/<ol class="references">[\s\S]*?<\/ol>/, '')
+
 			// 去掉不同的語言。
 			.replace(/<(span)\slang="[^<>"]+"[^<>]*>[\s\S]+?<\/\1>/g, '')
 			// 閱論編 模板
 			.replace(/<(abbr|style)(?:\s[^<>]*)?>[\s\S]+?<\/\1>/g, '')
 			.replace(/<p(\s[^<>]*)?>/g, '\n')
+
+			// 去掉所有 HTML tags。
 			.replace(/<[^<>]+>/g, '')
 			//.replace(/\n{3,}/g, '\n\n')
 			;
@@ -864,7 +870,7 @@ async function test_wiki_pages() {
 		html = html
 			.replace(/(?:\s*\n){2,}/g, '\n\n')
 			// 去掉註釋("n:注 2")
-			//.replace(/\[[注註]\s*\d+\]/g, '')
+			.replace(/\[[注註]\s*\d+\]/g, '')
 
 			// 切斷句子以簡化報告。
 			//.replace(/([。？！])\n?/g, '$1\n')
@@ -877,43 +883,56 @@ async function test_wiki_pages() {
 		return html;
 	}
 
-	function get_parsed_wikitext(page_data, uselang) {
-		const remove_token = CeL.wiki.parser.parser_prototype.each.remove_token;
-		const parsed = page_data.parse();
-		parsed.each(token => {
-			if (!token) return;
-			// 去掉其中文字不會被繁簡轉換的 token。
-			if (token.type === 'tag' && token.tag === 'ref') {
-				return remove_token;
-			}
-			// e.g., {{Cite book}}, {{Citejournal}}
-			if (token.type === 'transclusion' && (
-				/^Cite[ a-z]/.test(token.name)
-				// 去掉不同的語言。
-				|| /^Lang/.test(token.name)
-			)) {
-				return remove_token;
-			}
-		});
+	function get_parsed_paragraphs(page_data, uselang) {
+		if (false) {
+			const remove_token = CeL.wiki.parser.parser_prototype.each.remove_token;
+			const parsed = page_data.parse();
+			parsed.each(token => {
+				if (!token) return;
 
-		const wikitext = CeL.wiki.wikitext_to_plain_text(parsed, CeL.wiki.add_session_to_options(zhwiki));
+				// 去掉其中文字不會被繁簡轉換的 token。
+				// e.g., {{Cite book}}, {{Citejournal}}
+				if (token.type === 'transclusion' && (
+					/^Cite[ a-z]/.test(token.name)
+					// 去掉不同的語言。
+					|| /^Lang/.test(token.name)
+				)) {
+					return remove_token;
+				}
+			});
+
+			// CeL.wiki.wikitext_to_plain_text()會消掉 {{NoteTA}}。不如原封不動直接parse。
+			const wikitext = CeL.wiki.wikitext_to_plain_text(parsed, CeL.wiki.add_session_to_options(zhwiki));
+		}
+		const wikitext = page_data.wikitext;
 
 		return new Promise((resolve, reject) => {
 			CeL.wiki.query([zhwiki.API_URL, 'action=parse'], (data, error) => {
 				//console.trace(data);
-				if (error)
+				if (error) {
 					reject(error);
-				else
-					resolve(extract_HTML_text(data.parse.text['*']));
+					return;
+				}
+
+				const html = data.parse.text['*'];
+
+				const page_cache_path = CeL.append_path_separator(module_base_path + 'wiki pages');
+				CeL.create_directory(page_cache_path);
+				CeL.write_file(`${page_cache_path}${CeL.to_file_name(page_data.original_title || page_data.title)}.${uselang}.html`, html, default_write_file_options);
+
+				const paragraphs = CeCC.get_paragraphs_of_text(extract_HTML_text(html));
+				resolve(paragraphs);
 			}, {
 				title: page_data.title,
-				//prop: 'text|indicators|displaytitle|modules|jsconfigvars|categorieshtml|templates|langlinks|limitreporthtml|parsewarnings',
+				//prop: 'text|indicators|displaytitle|modules|jsconfigvars|categorieshtml|sections|templates|langlinks|limitreporthtml|parsewarningshtml',
 				prop: 'text',
 				text: wikitext,
 				pst: true,
 				preview: true,
 				disableeditsection: true,
+				//useskin: 'vector',
 				uselang,
+				variant: uselang,
 			});
 		});
 	}
@@ -921,6 +940,8 @@ async function test_wiki_pages() {
 	// --------------------------
 
 	add_test('zhwiki 正確率檢核', async (assert, setup_test, finish_test, options) => {
+		const content_language = 'zh-tw';
+		const answer_language = 'zh-cn';
 		const page_title_list = CeCC.get_paragraphs_of_file(module_base_path + 'zhwiki pages.txt');
 		//console.trace([articles_directory, page_title_list]);
 
@@ -930,6 +951,8 @@ async function test_wiki_pages() {
 			error_count: 0, max_error_tags_showing: 0,
 			text_is_TW: true,
 			convert_options: {
+				forced_convert_mode: 'combine',
+
 				// 不檢查/跳過通同字/同義詞，通用詞彙不算錯誤。用於無法校訂原始文件的情況。
 				skip_check_for_synonyms: true,
 			}
@@ -943,8 +966,8 @@ async function test_wiki_pages() {
 
 				await for_each_test_set(Object.assign(test_configuration, {
 					test_title: page_title,
-					content_paragraphs: CeCC.get_paragraphs_of_text(await get_parsed_wikitext(page_data, 'zh-tw')),
-					answer_paragraphs: CeCC.get_paragraphs_of_text(await get_parsed_wikitext(page_data, 'zh-cn')),
+					content_paragraphs: await get_parsed_paragraphs(page_data, content_language),
+					answer_paragraphs: await get_parsed_paragraphs(page_data, answer_language),
 				}));
 			}
 		} else {

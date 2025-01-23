@@ -901,7 +901,7 @@ function print_correction_condition(correction_condition, {
 		let zh_conversion_converted;
 		if (Array.isArray(zh_conversion_converted_pairs) && zh_conversion_converted_pairs.length > 0) {
 			const condition_text = correction_condition.parsed.text;
-			const pattern = new RegExp(`[${CeL.to_RegExp_pattern(condition_text)}]`);
+			const pattern = new RegExp(`[${CeL.to_RegExp_pattern(condition_text).replace(/([-])/g, '\\$1')}]`);
 			//console.trace([condition_text, pattern]);
 			zh_conversion_converted = zh_conversion_converted_pairs.filter(
 				pair_text => pattern.test(pair_text.replace(/→.*$/, ''))
