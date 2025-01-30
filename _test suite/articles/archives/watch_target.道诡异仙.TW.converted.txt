@@ -215,6 +215,7 @@
 右手胸口托宝玉瓶，
 “当……当……当……当心！
 可否借我一观？
+一团黑烟忽然从天花板落下，
 
 
 // insert_watch_target_to_general_test_text
