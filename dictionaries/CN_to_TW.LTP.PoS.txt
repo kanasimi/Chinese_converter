@@ -5675,7 +5675,9 @@ n:签子	~籤子
 // 解析錯誤 @ 好讀《潛規則》	签上说， (~籤<ATT>nd:上 ~籤<parent.relate:LOC>v:说 n:签+nd:上+v:说)
 n:签	~籤<parent.relate:LOC>v:说
 // 《我师兄实在太稳健了》	李长寿在那些竹签中迅速挑选，选了一支‘上上’签， (~籤<VOB>v:选 ~籤<parent.relate:CONT>v:选 ~籤<←ATT>q:支 nh:李长寿+p:在+r:那些+n:竹签+nd:中+a:迅速+v:挑选+wp:，+v:选+u:了+m:一+q:支+wp:‘+nd:上上+wp:’+n:签+wp:，)
-n:签	~籤<VOB>v:选
+// 《都重生了谁谈恋爱啊》	她替冯楠舒和江勤求了个签， (~籤<VOB>v:求 ~籤<parent.relate:CONT>v:求 r:她+p:替+nh:冯楠舒+c:和+nh:江勤+v:求+u:了+q:个+n:签+wp:，) 單純 zh_conversion 轉換過程: 签→簽
+// 《都重生了谁谈恋爱啊》	求了个很好的签吗？ (~籤<VOB>v:求 ~籤<parent.relate:CONT>v:求 v:求+u:了+q:个+d:很+a:好+u:的+n:签+u:吗+wp:？) 單純 zh_conversion 轉換過程: 签→簽
+n:签	~籤<VOB>v:/^[选求]$/
 // 《我师兄实在太稳健了》	好赖全凭一支签， (~籤<VOB>v:凭 ~籤<←ATT>q:支 ~籤<parent.relate:MANN>v:凭 n:好赖+d:全+v:凭+m:一+q:支+n:签+wp:，)
 n:签	q:支+~籤
 // 《我师兄实在太稳健了》	好赖全凭一只签， (~籤<VOB>v:凭 ~籤<parent.relate:CONT>v:前来 ~籤<parent.relate:EXP>v:凭 n:好赖+d:全+v:凭+m:一+q:只+n:签+wp:，)
