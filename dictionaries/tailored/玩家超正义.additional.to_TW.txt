@@ -34,5 +34,8 @@ zh_conversion 用作品特設辭典
 茶发少女	茶髮少女
 // 《玩家超正义》	她似乎一直困到睁不开眼、 (~睏<role.type:A0>她 ~睏<role.type:ARGM-ADV>似乎 ~睏<role.type:ARGM-ADV>一直 ~睏<role.type:ARGM-EXT>到睁不开眼 r:她+d:似乎+d:一直+v:困+v:到+v:睁+d:不+v:开+n:眼+wp:、)
 困到睁不开眼	睏到睜不開眼
-
+// 《玩家超正义》	但“艾蕾”反倒是将双手藏了起来，背在身后。 (~背<COO>v:藏 ~背<role.type:ARGM-LOC>在身后 c:但+wp:“+nh:艾蕾+wp:”+d:反倒+v:是+p:将+n:双手+v:藏+u:了+v:起来+wp:，+v:背+p:在+nd:身后+wp:。) 單純 zh_conversion 轉換過程: 背在身后→揹在身後
+手藏了起来，背在身后	手藏了起來，背在身後
+// 《玩家超正义》	他的左臂并非是断臂、而是如管家般背在身后…… (~背<COO>v:是 ~背<role.type:A1>他的左臂 ~背<role.type:ARGM-DIS>而是 ~背<role.type:ARGM-LOC>在身后 r:他+u:的+n:左臂+v:并非+v:是+n:断臂+wp:、+c:而是+v:如+n:管家+u:般+v:背+p:在+nd:身后+wp:……) 單純 zh_conversion 轉換過程: 背在身后→揹在身後 匹配的條件式: v:并非 → ~並非
+断臂、而是如管家般背在身后	斷臂、而是如管家般背在身後
 

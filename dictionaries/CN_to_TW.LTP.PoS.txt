@@ -1658,6 +1658,8 @@ a:干	u:等+d:一+~干
 v:干	u:等+d:一+~干
 // 解析錯誤 匹配的條件式: a:干 → ~乾+n:
 a:干	~幹+n:/处女|嘴巴|菊花/	d:光+v:是+~幹+n:+d:也+d:有点
+// 解析錯誤	能干妹！电车啪啪 #2 “留学生是个宅女！”。 (~幹<ATT>n:妹 v:能+a:干+n:妹+wp:！+n:电车+o:啪啪+ m:#2+ wp:“+n:留学生+v:是+q:个+n:宅女+wp:！+wp:”+wp:。) 匹配的條件式: a:干 → ~乾+n:/^[^面]/ 單純 zh_conversion 轉換過程: 能干→能幹
+a:干	v:能+~幹+n:妹
 // 《都重生了谁谈恋爱啊》	在这个时期，干妹妹干哥哥什么的还挺流行的。 (~乾<ATT>n:妹妹 p:在+r:这个+n:时期+wp:，+a:干+n:妹妹+v:干+n:哥哥+r:什么+u:的+d:还+d:挺+v:流行+u:的+wp:。) 匹配的條件式: a:干 → ~幹+n:/妹|处女|嘴巴|菊花/ 單純 zh_conversion 轉換過程: 干妹妹→乾妹妹 干哥哥→乾哥哥
 // 《都重生了谁谈恋爱啊》	对象没有一个，但干妹妹成群结对。 (~乾<ATT>n:妹妹 n:对象+v:没有+m:一个+wp:，+c:但+a:干+n:妹妹+i:成群结对+wp:。) 匹配的條件式: a:干 → ~幹+n:/妹|处女|嘴巴|菊花/ 單純 zh_conversion 轉換過程: 干妹妹→乾妹妹
 // 《我的一天有48小时》	他吃过晚饭后又在周围捡了点干树枝， (~乾<ATT>n:树枝 r:他+v:吃+u:过+n:晚饭+nd:后+d:又+p:在+nd:周围+v:捡+u:了+q:点+a:干+n:树枝+wp:，)
@@ -6067,9 +6069,12 @@ n:背	v:+u:着+~背
 // 《我的一天有48小时》	其中一个扎着辫子的女孩儿还在趁着这个时间争分夺秒的背着课文， (~背<COO>v:有 ~背<role.type:A0>其中一个扎着辫子的女孩儿 ~背<role.type:ARGM-ADV>还 ~背<role.type:ARGM-ADV>在 ~背<role.type:A1>课文 ~背<role.type:ARGM-PRP>因为一直在这个时间坐这趟路线 ~背<role.type:A0>张恒 ~背<role.type:ARGM-ADV>并 ~背<role.type:ARGM-ADV>不 ~背<role.type:ARGM-ADV>第一次 ~背<role.type:A1>辫子女生 r:其中+m:一个+v:扎+u:着+n:辫子+u:的+n:女孩儿+d:还+d:在+p:趁着+r:这个+n:时间+i:争分夺秒+u:的+v:背+u:着+n:课文+wp:，) (~背著<role.type:A0>其中一个扎着辫子的女孩儿 ~背著<role.type:ARGM-ADV>还 ~背著<role.type:ARGM-ADV>在 ~背著<role.type:ARGM-ADV>趁着这个时间 ~背著<role.type:ARGM-ADV>争分夺秒的 ~背著<role.type:A1>课文 r:其中+m:一个+v:扎+u:着+n:辫子+u:的+n:女孩儿+d:还+d:在+p:趁着+r:这个+n:时间+i:争分夺秒+u:的+v:背着+n:课文+wp:，)
 // 《我的一天有48小时》	后者在低头背着单词， (~背<COO>v:低头 ~背<role.type:A0>后者 ~背<role.type:ARGM-ADV>在 ~背<role.type:A1>单词 r:后者+d:在+v:低头+v:背+u:着+n:单词+wp:，)
 // 《神国之上》	她嘴上背着心法口诀， (~背<COO>v:问道 ~背<role.type:A0>身体 ~背<role.type:A1>心法口诀 r:她+n:嘴+nd:上+v:背+u:着+n:心法+n:口诀+wp:，) (~背著<role.type:A0>她 ~背著<role.type:ARGM-LOC>嘴上 ~背著<role.type:A1>心法口诀 r:她+n:嘴+nd:上+v:背着+n:心法+n:口诀+wp:，)
-v:背着	~背著<role.type:A1>/(?:光|单词|课文|口诀)$/
-v:背	~背<role.type:A1>/(?:单词|课文|口诀)$/+u:着
-
+// 《我为长生仙》	少女一只手背在身后， (~背<ADV>v:道 ~背<role.type:A1>一只手 ~背<role.type:ARGM-LOC>在身后 n:少女+m:一+q:只+n:手+v:背+p:在+nd:身后+wp:，) 單純 zh_conversion 轉換過程: 背在身后→揹在身後
+v:背着	~背著<role.type:A1>/(?:光|单词|课文|口诀|只手)$/
+v:背	~背<role.type:A1>/(?:光|单词|课文|口诀|只手)$/+u:着
+// 《我师兄实在太稳健了》	而背在身后的左手， (~背<ATT>n:左手 ~背<role.type:ARGM-LOC>在身后 ~背<role.type:A0>左手 c:而+v:背+p:在+nd:身后+u:的+n:左手+wp:，) 單純 zh_conversion 轉換過程: 背在身→揹在身
+// 《我的一天有48小时》	但是下一刻就见零号一直背在身后的右手伸到了脸前， (~背<ATT>n:右手 ~背<role.type:A1>命 ~背<role.type:ARGM-ADV>一直 ~背<role.type:ARGM-LOC>在身后 ~背<role.type:A0>右手 c:但是+nd:下一刻+d:就+v:见+nh:零号+d:一直+v:背+p:在+nd:身后+u:的+n:右手+v:伸+v:到+u:了+n:脸+nd:前+wp:，) 單純 zh_conversion 轉換過程: 背在身→揹在身
+v:背	~背<ATT>n:/^[左右]?手$/
 
 // 《駱駝祥子》: 教我一個人背黑鍋
 // 《速通修仙！》	毕竟他要背的锅也很多， (~揹<ATT>n:锅 ~揹<role.type:A0>他 ~揹<role.type:A1>锅 d:毕竟+r:他+v:要+v:背+u:的+n:锅+d:也+m:很+a:多+wp:，)
