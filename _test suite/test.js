@@ -9,8 +9,10 @@ reset && cat "test_report.txt"
 
 
 歸檔 general.TW.txt → general.archived.TW.txt
+** -周海杰
 reset && npm test nowiki merge_new_general_test_text_to_archived remove_duplicate_lines_in_test_text_file
 若為修改錯字，應在除欲修改的語句外**無其他轉換錯誤的情況下**執行完上述指令後才修改 `general.archived.TW.txt` 的錯別字。
+
 
 */
 
