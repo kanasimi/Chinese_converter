@@ -58,6 +58,6 @@ zh_conversion 用作品特設辭典
 // 《这里曾经是汉朝》	铄王师兮征荒裔， (~征<COO>v:铄 ~征<role.type:A0>人 ~征<role.type:ARGM-LOC>在上面 ~征<role.type:A1>荒裔 v:铄+n:王师+u:兮+v:征+n:荒裔+wp:，) 單純 zh_conversion 轉換過程: 征→徵
 征荒裔	征荒裔
 // 《这里曾经是汉朝》	小黄门赵津为患县里， (~縣里<VOB>v:患 a:小+n:黄门+nh:赵津+v:为+v:患+n:县里+wp:，) 單純 zh_conversion 轉換過程: 县里→縣裏
-为患县里，	為患縣里，
+//为患县里，	為患縣里，
 // 《这里曾经是汉朝》	提着一大盆水冲上来待命了。 (~衝<COO>v:提 ~衝<role.type:ARGM-TMP>在雄鹰展翅高飞之前 ~衝<role.type:A0>丁鸿 v:提+u:着+m:一+a:大+q:盆+n:水+v:冲+v:上来+v:待命+u:了+wp:。) 單純 zh_conversion 轉換過程: 水冲→水沖
 提着一大盆水冲上来	提著一大盆水衝上來
