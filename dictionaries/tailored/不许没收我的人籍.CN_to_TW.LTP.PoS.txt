@@ -11,3 +11,13 @@ CeCC 用作品特設辭典
 // 解析錯誤 @ 《不许没收我的人籍》	«其他專有名詞»	>虽然塔莉娅承认自己在伊刻里忒这一年多过得有点堕落。 (~里<POB>p:在 wp:>+c:虽然+nh:塔莉娅+v:承认+r:自己+p:在+ns:伊刻+nd:里+a:忒+r:这+m:一+q:年+m:多+v:过+u:得+d:有+q:点+v:堕落+wp:。) 匹配的條件式: nd:里 → ~裡 單純 zh_conversion 轉換過程: 伊刻里忒→伊刻里忒
 nd:里	伊刻+~里+忒
 
+
+// 解析錯誤 @ 《不许没收我的人籍》	当表洛伦不见了，里洛伦就要全力出手了。 (~裡洛倫<SBV>v:出手 p:当+n:表+nh:洛伦+v:不见+u:了+wp:，+nh:里洛伦+d:就要+d:全力+v:出手+u:了+wp:。) 匹配的條件式: nh:/里/ → ~~/裡/里/g 單純 zh_conversion 轉換過程: 伦→倫 里→裏
+nh:里洛伦	~裡洛倫
+
+
+// 《不许没收我的人籍》	同时是极克制<span style='color:#0b5de4'>【核聚变狼】</span>的封印卡。 (~剋制<COO>v:封 ~剋制<role.type:ARGM-ADV>同时 ~剋制<role.type:ARGM-ADV>极 ~剋制<role.type:ARGM-DIS>可 ~剋制<role.type:ARGM-ADV>仍旧 c:同时+v:是+d:极+v:克制+wp:<span style=+wp:'color:#0b5de4'+wp:>+wp:【+n:核聚变+n:狼+wp:】+wp:</span+wp:>+u:的+n:封印卡+wp:。) 單純 zh_conversion 轉換過程: 克制→克制
+v:克制	~剋制<←VOB>n:封印卡
+// 《不许没收我的人籍》	同时是极克制<span style='color:#0b5de4'>【核聚变狼】</span>的封印卡。 (~剋制<ATT>n:封印卡 ~剋制<role.type:ARGM-ADV>极 ~剋制<role.type:A1><span style='color:#0b5de4'>【核聚变狼】</span> c:同时+v:是+d:极+v:克制+wp:<+n:span +n:style=+wp:'+n:color+wp::#0b5de4+wp:'+wp:>+wp:【+n:核聚变+n:狼+wp:】+wp:</span+wp:>+u:的+n:封印卡+wp:。) 單純 zh_conversion 轉換過程: 克制→克制v:克制  ~剋制<ATT>n:封印卡
+v:克制	~剋制<ATT>n:封印卡
+
