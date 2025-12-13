@@ -7237,6 +7237,10 @@ wp:/[“”‘’]/	<修正引號>
 //<postfix>	<修正引號>
 
 
+// [general.TW.txt]	高质量的黑洞。 (~質量<ATT>n:黑洞 a:高+n:质量+u:的+n:黑洞+wp:。) 單純 zh_conversion 轉換過程: 高质量的→高品質的
+n:质量	a:高+~質量<ATT>n:黑洞
+
+
 // 《从红月开始》	这个女孩只在半空中的位置，呆了十秒左右， (~待<COO>v:有 ~待<role.type:A1>双膝 ~待<role.type:ARGM-ADV>一 ~待<role.type:A0>这个女孩 ~待<role.type:ARGM-ADV>只 ~待<role.type:A1>在半空中的位置 ~待<role.type:ARGM-EXT>十秒左右 r:这个+n:女孩+d:只+p:在+nl:半空+nd:中+u:的+n:位置+wp:，+v:呆+u:了+m:十+q:秒+m:左右+wp:，)
 // 《从红月开始》	自己应该也曾经在这里呆过。 (~待<role.type:A0>自己 ~待<role.type:ARGM-DIS>也 ~待<role.type:ARGM-ADV>曾经 ~待<role.type:A1>在这里 r:自己+v:应该+d:也+d:曾经+p:在+r:这里+v:呆+u:过+wp:。)
 // 《从红月开始》	自己和孤儿院里的其他小孩，其实都在这里的某个地方呆过。 (~待<VOB>v:是 ~待<role.type:ARGM-TMP>红月亮事件发生之后 ~待<role.type:ARGM-LOC>在这样一片建筑里面 ~待<role.type:A0>自己和孤儿院里的其他小孩 ~待<role.type:ARGM-ADV>其实 ~待<role.type:ARGM-ADV>都 ~待<role.type:ARGM-LOC>在这里的某个地方 ~待<role.type:A1>这里 r:自己+c:和+n:孤儿院+nd:里+u:的+r:其他+n:小孩+wp:，+d:其实+d:都+p:在+r:这里+u:的+r:某个+n:地方+v:呆+u:过+wp:。) (~待<role.type:A0>自己和孤儿院里的其他小孩 ~待<role.type:ARGM-ADV>其实 ~待<role.type:ARGM-ADV>都 ~待<role.type:A1>在这里的某个地方 r:自己+c:和+n:孤儿院+nd:里+u:的+r:其他+n:小孩+wp:，+d:其实+d:都+p:在+r:这里+u:的+r:某个+n:地方+v:呆+u:过+wp:。)
