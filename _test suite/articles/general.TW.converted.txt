@@ -12,6 +12,11 @@ https://github.com/Fanhuaji/discussion/issues/18
 
 https://www.zhihu.com/question/23570519
 
+
+归档 general.TW.txt → general.archived.TW.txt
+reset && npm test nowiki merge_new_general_test_text_to_archived remove_duplicate_lines_in_test_text_file
+若为修改错字，应在除欲修改的语句外**无其他转换错误的情况下**执行完上述指令后才修改 `general.archived.TW.txt` 的错别字。
+
 */
 
 
@@ -46,6 +51,7 @@ https://www.zhihu.com/question/23570519
 
 
 // ↓ 冲 → 冲 冲 冲 。
+地震将大量岩石和土壤冲入当地溪流与河流。
 // ↑ 冲 → 冲 冲 冲 。
 
 
@@ -83,14 +89,17 @@ https://www.zhihu.com/question/23570519
 
 // ↓ 系 → 系 系 系 繋 縘 。
 给星系起名。
+狮子座双星系引力透镜系统。
 // ↑ 系 → 系 系 系 繋 縘 。
 
 
 // ↓ 发 → 发 彂 发 髪 。
 头发烧起来了。
 微软发言人。
+向微软发出正式关注函。
 发现发顶分界越来越阔。
 养出一头乌发可摄取以下食物。
+烫发，高温美发过程。
 // ↑ 发 → 发 彂 发 髪 。
 
 
@@ -112,6 +121,8 @@ https://www.zhihu.com/question/23570519
 
 
 // ↓ 只 → 只 祇 衹 秖 只 。
+这只蜗牛。
+一只蜗牛。
 // ↑ 只 → 只 祇 衹 秖 只 。
 
 
@@ -179,6 +190,9 @@ https://www.zhihu.com/question/23570519
 
 
 // ↓ 面 → 面 面 面 面 。
+义式千层面。
+宽条面。
+锅烧意面。
 // ↑ 面 → 面 面 面 面 。
 
 
@@ -197,6 +211,9 @@ https://www.zhihu.com/question/23570519
 
 // ↓ 制 → 制 制 。
 最后制定的政策。
+限制成人网站。
+自制肉酱。
+控制器制造商。
 // ↑ 制 → 制 制 。
 
 

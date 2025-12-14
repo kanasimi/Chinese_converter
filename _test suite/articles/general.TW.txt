@@ -12,6 +12,11 @@ https://github.com/Fanhuaji/discussion/issues/18
 
 https://www.zhihu.com/question/23570519
 
+
+歸檔 general.TW.txt → general.archived.TW.txt
+reset && npm test nowiki merge_new_general_test_text_to_archived remove_duplicate_lines_in_test_text_file
+若為修改錯字，應在除欲修改的語句外**無其他轉換錯誤的情況下**執行完上述指令後才修改 `general.archived.TW.txt` 的錯別字。
+
 */
 
 
@@ -46,6 +51,7 @@ https://www.zhihu.com/question/23570519
 
 
 // ↓ 冲 → 沖 冲 衝 。
+地震將大量岩石和土壤沖入當地溪流與河流。
 // ↑ 冲 → 沖 冲 衝 。
 
 
@@ -83,14 +89,17 @@ https://www.zhihu.com/question/23570519
 
 // ↓ 系 → 系 係 繫 繋 縘 。
 給星系起名。
+獅子座雙星系引力透鏡系統。
 // ↑ 系 → 系 係 繫 繋 縘 。
 
 
 // ↓ 发 → 發 彂 髮 髪 。
 頭髮燒起來了。
 微軟發言人。
+向微軟發出正式關注函。
 發現髮頂分界越來越闊。
 養出一頭烏髮可攝取以下食物。
+燙髮，高溫美髮過程。
 // ↑ 发 → 發 彂 髮 髪 。
 
 
@@ -112,6 +121,8 @@ https://www.zhihu.com/question/23570519
 
 
 // ↓ 只 → 只 祇 衹 秖 隻 。
+這隻蝸牛。
+一隻蝸牛。
 // ↑ 只 → 只 祇 衹 秖 隻 。
 
 
@@ -179,6 +190,9 @@ https://www.zhihu.com/question/23570519
 
 
 // ↓ 面 → 面 麵 麪 麫 。
+義式千層麵。
+寬條麵。
+鍋燒意麵。
 // ↑ 面 → 面 麵 麪 麫 。
 
 
@@ -197,6 +211,9 @@ https://www.zhihu.com/question/23570519
 
 // ↓ 制 → 制 製 。
 最後制定的政策。
+限制成人網站。
+自製肉醬。
+控制器製造商。
 // ↑ 制 → 制 製 。
 
 

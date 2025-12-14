@@ -4627,10 +4627,10 @@ v:冲	v:去+~衝+r:人家
 v:冲	进+厕所+~沖
 // 《咫尺之间人尽敌国》	他撑不过冲入狂战军团中的这十几千米。 (~衝<COO>v:撑 ~衝<role.type:A0>他 ~衝<role.type:A1>狂战军团中的这十几千米 r:他+v:撑+d:不+v:过+v:冲+v:入+d:狂+v:战+n:军团+nd:中+u:的+r:这+m:十几千+q:米+wp:。)
 v:冲	d:不+v:过+~衝+v:入
-// [general.TW.txt]	下雨时过多的磷、氮等营养物质会冲入湖泊和河流。 (~沖入<role.type:ARGM-TMP>下雨时 ~沖入<role.type:A0>过多的磷、氮等营养物质 ~沖入<role.type:A1>湖泊和河流 v:下雨+n:时+d:过+a:多+u:的+n:磷+wp:、+n:氮+u:等+n:营养+n:物质+v:会+v:冲入+n: 湖泊+c:和+n:河流+wp:。)
-v:冲入	~沖入<role.type:ARGM-TMP>下雨时
+// [general.TW.txt]	地震将大量岩石和土壤冲入当地溪流与河流。 (~沖入<role.type:A0>地震 ~沖入<role.type:A0>大量岩石和土壤 ~沖入<role.type:A1>当地溪流与河流 n:地震+p:将+m:大量+n:岩石+c:和+n:土壤+v:冲入+nl:当地+n:溪流+c:与+n:河流+wp:。) 單純 zh_conversion 轉換過程: 冲入→衝入
 // [general.TW.txt]	房屋也被冲入河流！ (~沖入<role.type:A1>房屋 ~沖入<role.type:ARGM-ADV>也 ~沖入<role.type:A2>河流 n:房屋+d:也+p:被+v:冲入+n:河流+wp:！) 單純 zh_conversion 轉換過程: 冲入→衝入
-v:冲入	~沖入<role.type:A2>河流
+// [general.TW.txt]	下雨时过多的磷、氮等营养物质会冲入湖泊和河流。 (~沖入<role.type:ARGM-TMP>下雨时 ~沖入<role.type:A0>过多的磷、氮等营养物质 ~沖入<role.type:A1>湖泊和河流 v:下雨+n:时+d:过+a:多+u:的+n:磷+wp:、+n:氮+u:等+n:营养+n:物质+v:会+v:冲入+n: 湖泊+c:和+n:河流+wp:。)
+v:冲入	~沖入<role>/[溪河雨]/
 
 // 《烂柯棋缘》	不断同对方争夺御雷权或御风相冲， (~衝<COO>v:争夺 ~衝<role.type:ARGM-ADV>不断 ~衝<role.type:A0>御风 ~衝<role.type:ARGM-ADV>相 d:不断+p:同+n:对方+v:争夺+n:御雷+n:权+c:或+v:御+n:风+d:相+v:冲+wp:，)
 v:冲	v:御+n:+d:相+~衝
