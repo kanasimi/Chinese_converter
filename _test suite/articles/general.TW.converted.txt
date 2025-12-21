@@ -33,6 +33,7 @@ reset && npm test nowiki merge_new_general_test_text_to_archived remove_duplicat
 
 
 // ↓ 注 → 注 注 。
+这次押注失败。
 // ↑ 注 → 注 注 。
 
 
@@ -52,6 +53,9 @@ reset && npm test nowiki merge_new_general_test_text_to_archived remove_duplicat
 
 // ↓ 冲 → 冲 冲 冲 。
 地震将大量岩石和土壤冲入当地溪流与河流。
+更多冲突。
+脑脊液被反复冲入大脑。
+脑脊液被冲入大脑。
 // ↑ 冲 → 冲 冲 冲 。
 
 
@@ -100,6 +104,10 @@ reset && npm test nowiki merge_new_general_test_text_to_archived remove_duplicat
 发现发顶分界越来越阔。
 养出一头乌发可摄取以下食物。
 烫发，高温美发过程。
+戏机开发套件。
+引发长达数周的争论。
+微生物群落发生了改变。
+在恒星宜居带发现一颗超级地球。
 // ↑ 发 → 发 彂 发 髪 。
 
 
@@ -123,6 +131,7 @@ reset && npm test nowiki merge_new_general_test_text_to_archived remove_duplicat
 // ↓ 只 → 只 祇 衹 秖 只 。
 这只蜗牛。
 一只蜗牛。
+如今每月都会收到数百篇综述，其中很多只是带注释的参考文献。
 // ↑ 只 → 只 祇 衹 秖 只 。
 
 
@@ -193,6 +202,7 @@ reset && npm test nowiki merge_new_general_test_text_to_archived remove_duplicat
 义式千层面。
 宽条面。
 锅烧意面。
+地面团队。
 // ↑ 面 → 面 面 面 面 。
 
 
@@ -206,6 +216,8 @@ reset && npm test nowiki merge_new_general_test_text_to_archived remove_duplicat
 
 
 // ↓ 余 → 余 余 。
+一年半内，便借此获利十余万元。
+20余万个组件。
 // ↑ 余 → 余 余 。
 
 
@@ -238,6 +250,8 @@ reset && npm test nowiki merge_new_general_test_text_to_archived remove_duplicat
 
 
 // ↓ 后 → 后 后 。
+蚁后从工匠收获蚁雄蚁的精子。
+蚁后因某种未知原因失去了生产本物种工蚁的能力。
 // ↑ 后 → 后 后 。
 
 
@@ -311,6 +325,7 @@ reset && npm test nowiki merge_new_general_test_text_to_archived remove_duplicat
 
 
 // ↓ 征 → 征 征 。
+加征 100% 关税。
 // ↑ 征 → 征 征 。
 
 
@@ -319,6 +334,7 @@ reset && npm test nowiki merge_new_general_test_text_to_archived remove_duplicat
 
 
 // ↓ 喂 → 喂 喂 。
+喂饱孩子。
 // ↑ 喂 → 喂 喂 。
 
 

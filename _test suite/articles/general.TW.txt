@@ -33,6 +33,7 @@ reset && npm test nowiki merge_new_general_test_text_to_archived remove_duplicat
 
 
 // ↓ 注 → 注 註 。
+這次押注失敗。
 // ↑ 注 → 注 註 。
 
 
@@ -52,6 +53,9 @@ reset && npm test nowiki merge_new_general_test_text_to_archived remove_duplicat
 
 // ↓ 冲 → 沖 冲 衝 。
 地震將大量岩石和土壤沖入當地溪流與河流。
+更多衝突。
+腦脊液被反覆沖入大腦。
+腦脊液被沖入大腦。
 // ↑ 冲 → 沖 冲 衝 。
 
 
@@ -100,6 +104,10 @@ reset && npm test nowiki merge_new_general_test_text_to_archived remove_duplicat
 發現髮頂分界越來越闊。
 養出一頭烏髮可攝取以下食物。
 燙髮，高溫美髮過程。
+戲機開發套件。
+引發長達數週的爭論。
+微生物群落發生了改變。
+在恆星宜居帶發現一顆超級地球。
 // ↑ 发 → 發 彂 髮 髪 。
 
 
@@ -123,6 +131,7 @@ reset && npm test nowiki merge_new_general_test_text_to_archived remove_duplicat
 // ↓ 只 → 只 祇 衹 秖 隻 。
 這隻蝸牛。
 一隻蝸牛。
+如今每月都會收到數百篇綜述，其中很多只是帶註釋的參考文獻。
 // ↑ 只 → 只 祇 衹 秖 隻 。
 
 
@@ -193,6 +202,7 @@ reset && npm test nowiki merge_new_general_test_text_to_archived remove_duplicat
 義式千層麵。
 寬條麵。
 鍋燒意麵。
+地面團隊。
 // ↑ 面 → 面 麵 麪 麫 。
 
 
@@ -206,6 +216,8 @@ reset && npm test nowiki merge_new_general_test_text_to_archived remove_duplicat
 
 
 // ↓ 余 → 余 餘 。
+一年半內，便藉此獲利十餘萬元。
+20餘萬個元件。
 // ↑ 余 → 余 餘 。
 
 
@@ -238,6 +250,8 @@ reset && npm test nowiki merge_new_general_test_text_to_archived remove_duplicat
 
 
 // ↓ 后 → 後 后 。
+蟻后從工匠收穫蟻雄蟻的精子。
+蟻后因某種未知原因失去了生產本物種工蟻的能力。
 // ↑ 后 → 後 后 。
 
 
@@ -311,6 +325,7 @@ reset && npm test nowiki merge_new_general_test_text_to_archived remove_duplicat
 
 
 // ↓ 征 → 征 徵 。
+加徵 100% 關稅。
 // ↑ 征 → 征 徵 。
 
 
@@ -319,6 +334,7 @@ reset && npm test nowiki merge_new_general_test_text_to_archived remove_duplicat
 
 
 // ↓ 喂 → 喂 餵 。
+餵飽孩子。
 // ↑ 喂 → 喂 餵 。
 
 
