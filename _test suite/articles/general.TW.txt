@@ -33,7 +33,6 @@ reset && npm test nowiki merge_new_general_test_text_to_archived remove_duplicat
 
 
 // ↓ 注 → 注 註 。
-這次押注失敗。
 // ↑ 注 → 注 註 。
 
 
@@ -42,8 +41,6 @@ reset && npm test nowiki merge_new_general_test_text_to_archived remove_duplicat
 
 
 // ↓ 干 → 乾 亁 乹 干 幹 榦 。
-安眠藥確實干擾了大腦。
-妳也有乾眼症嗎？
 // ↑ 干 → 乾 亁 乹 干 幹 榦 。
 
 
@@ -52,10 +49,6 @@ reset && npm test nowiki merge_new_general_test_text_to_archived remove_duplicat
 
 
 // ↓ 冲 → 沖 冲 衝 。
-地震將大量岩石和土壤沖入當地溪流與河流。
-更多衝突。
-腦脊液被反覆沖入大腦。
-腦脊液被沖入大腦。
 // ↑ 冲 → 沖 冲 衝 。
 
 
@@ -92,27 +85,14 @@ reset && npm test nowiki merge_new_general_test_text_to_archived remove_duplicat
 
 
 // ↓ 系 → 系 係 繫 繋 縘 。
-給星系起名。
-獅子座雙星系引力透鏡系統。
 // ↑ 系 → 系 係 繫 繋 縘 。
 
 
 // ↓ 发 → 發 彂 髮 髪 。
-頭髮燒起來了。
-微軟發言人。
-向微軟發出正式關注函。
-發現髮頂分界越來越闊。
-養出一頭烏髮可攝取以下食物。
-燙髮，高溫美髮過程。
-戲機開發套件。
-引發長達數週的爭論。
-微生物群落發生了改變。
-在恆星宜居帶發現一顆超級地球。
 // ↑ 发 → 發 彂 髮 髪 。
 
 
 // ↓ 松 → 松 枀 枩 柗 鬆 。
-舒鬆筋骨。
 // ↑ 松 → 松 枀 枩 柗 鬆 。
 
 
@@ -129,9 +109,6 @@ reset && npm test nowiki merge_new_general_test_text_to_archived remove_duplicat
 
 
 // ↓ 只 → 只 祇 衹 秖 隻 。
-這隻蝸牛。
-一隻蝸牛。
-如今每月都會收到數百篇綜述，其中很多只是帶註釋的參考文獻。
 // ↑ 只 → 只 祇 衹 秖 隻 。
 
 
@@ -152,7 +129,6 @@ reset && npm test nowiki merge_new_general_test_text_to_archived remove_duplicat
 
 
 // ↓ 象 → 象 像 。
-力道之大像是要折斷他的手指。
 // ↑ 象 → 象 像 。
 
 
@@ -165,7 +141,6 @@ reset && npm test nowiki merge_new_general_test_text_to_archived remove_duplicat
 
 
 // ↓ 准 → 準 凖 准 。
-還是妳的瞄準太差了？
 // ↑ 准 → 準 凖 准 。
 
 
@@ -182,7 +157,6 @@ reset && npm test nowiki merge_new_general_test_text_to_archived remove_duplicat
 
 
 // ↓ 克 → 克 剋 尅 。
-大家都氣得揍他，我已算最克制的了。
 // ↑ 克 → 克 剋 尅 。
 
 
@@ -199,10 +173,6 @@ reset && npm test nowiki merge_new_general_test_text_to_archived remove_duplicat
 
 
 // ↓ 面 → 面 麵 麪 麫 。
-義式千層麵。
-寬條麵。
-鍋燒意麵。
-地面團隊。
 // ↑ 面 → 面 麵 麪 麫 。
 
 
@@ -211,21 +181,14 @@ reset && npm test nowiki merge_new_general_test_text_to_archived remove_duplicat
 
 
 // ↓ 回 → 回 囘 迴 廻 逥 。
-你去備份音檔，叫末峰回來。
 // ↑ 回 → 回 囘 迴 廻 逥 。
 
 
 // ↓ 余 → 余 餘 。
-一年半內，便藉此獲利十餘萬元。
-20餘萬個元件。
 // ↑ 余 → 余 餘 。
 
 
 // ↓ 制 → 制 製 。
-最後制定的政策。
-限制成人網站。
-自製肉醬。
-控制器製造商。
 // ↑ 制 → 制 製 。
 
 
@@ -250,13 +213,10 @@ reset && npm test nowiki merge_new_general_test_text_to_archived remove_duplicat
 
 
 // ↓ 后 → 後 后 。
-蟻后從工匠收穫蟻雄蟻的精子。
-蟻后因某種未知原因失去了生產本物種工蟻的能力。
 // ↑ 后 → 後 后 。
 
 
 // ↓ 念 → 念 唸 。
-全鎮悼念法蘭克西考克。
 // ↑ 念 → 念 唸 。
 
 
@@ -325,7 +285,6 @@ reset && npm test nowiki merge_new_general_test_text_to_archived remove_duplicat
 
 
 // ↓ 征 → 征 徵 。
-加徵 100% 關稅。
 // ↑ 征 → 征 徵 。
 
 
@@ -334,7 +293,6 @@ reset && npm test nowiki merge_new_general_test_text_to_archived remove_duplicat
 
 
 // ↓ 喂 → 喂 餵 。
-餵飽孩子。
 // ↑ 喂 → 喂 餵 。
 
 
@@ -367,7 +325,6 @@ reset && npm test nowiki merge_new_general_test_text_to_archived remove_duplicat
 
 
 // ↓ 云 → 雲 云 。
-在宇宙中寒冷的分子雲中。
 // ↑ 云 → 雲 云 。
 
 
@@ -452,7 +409,6 @@ reset && npm test nowiki merge_new_general_test_text_to_archived remove_duplicat
 
 
 // ↓ 了 → 了 瞭 。
-發展了解析數論。
 // ↑ 了 → 了 瞭 。
 
 
@@ -665,13 +621,6 @@ reset && npm test nowiki merge_new_general_test_text_to_archived remove_duplicat
 
 
 // ↓ 谷 → 谷 穀 。
-// 《礱谷機之研究》
-由礱穀機流出之混合物計有糙米粒，未碾穀（未脫秤者），糠仔及穀殼，此等混合物流經 A 篩後可分離出糠仔，並由風鼓靠風力分離穀殼。
 // ↑ 谷 → 谷 穀 。
 
-
-發言人無法給出確切原因，但強調使用者發布信息的規則沒有發生改變。
-根據專輯封面色調更改應用程式主題顏色。
-黑洞有極高質量。
-高質量的黑洞。
 
