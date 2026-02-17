@@ -41,6 +41,8 @@ reset && npm test nowiki merge_new_general_test_text_to_archived remove_duplicat
 
 
 // ↓ 干 → 乾 亁 乹 干 幹 榦 。
+乾了這碗。
+先乾為敬。
 // ↑ 干 → 乾 亁 乹 干 幹 榦 。
 
 
@@ -623,4 +625,9 @@ reset && npm test nowiki merge_new_general_test_text_to_archived remove_duplicat
 // ↓ 谷 → 谷 穀 。
 // ↑ 谷 → 谷 穀 。
 
+
+// ↓ 咸 → 鹹 咸 。
+鹹鮮就是鹹的鮮魚。
+鹹魷魚是發酵食品。
+// ↑ 咸 → 鹹 咸 。
 
