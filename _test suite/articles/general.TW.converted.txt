@@ -41,6 +41,8 @@ reset && npm test nowiki merge_new_general_test_text_to_archived remove_duplicat
 
 
 // ↓ 干 → 干 亁 乹 干 干 干 。
+干了这碗。
+先干为敬。
 // ↑ 干 → 干 亁 乹 干 干 干 。
 
 
@@ -623,4 +625,9 @@ reset && npm test nowiki merge_new_general_test_text_to_archived remove_duplicat
 // ↓ 谷 → 谷 谷 。
 // ↑ 谷 → 谷 谷 。
 
+
+// ↓ 咸 → 咸 咸 。
+咸鲜就是咸的鲜鱼。
+咸鱿鱼是发酵食品。
+// ↑ 咸 → 咸 咸 。
 
