@@ -68,4 +68,9 @@ zh_conversion 用作品特設辭典
 易后大获成功	易后大獲成功
 // 《唐史并不如烟》     贞观十一年，定制元景等为世代传袭刺史； (~定制<COO>v:是 nt:贞观+nt:十一年+wp:，+v:定制+nh:元景+u:等+v:为+n:世代+v:传袭+n:刺史+wp:；) 單純 zh_conversion 轉換過程: 定制→定製
 定制元景等为	定制元景等為
+// 《唐史并不如烟》	或协周亲； (~叶<COO>v:居 ~叶<role.type:A1>妖孽 ~叶<role.type:A0>公等 ~叶<role.type:ARGM-DIS>或 ~叶<role.type:A1>周亲 c:或+v:协+n:周+n:亲+wp:；) 單純 zh_conversion 轉換過程: 协→協
+或协周亲	或叶周親
+// 《唐史并不如烟》	首，发之美。 (~髮<ATT>a:美 m:首+wp:，+n:发+u:之+a:美+wp:。) 單純 zh_conversion 轉換過程: 发→發
+发之美	髮之美
+
 

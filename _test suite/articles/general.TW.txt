@@ -14,6 +14,7 @@ https://www.zhihu.com/question/23570519
 
 
 歸檔 general.TW.txt → general.archived.TW.txt
+cd Chinese_converter/
 reset && npm test nowiki merge_new_general_test_text_to_archived remove_duplicate_lines_in_test_text_file
 若為修改錯字，應在除欲修改的語句外**無其他轉換錯誤的情況下**執行完上述指令後才修改 `general.archived.TW.txt` 的錯別字。
 
@@ -41,8 +42,12 @@ reset && npm test nowiki merge_new_general_test_text_to_archived remove_duplicat
 
 
 // ↓ 干 → 乾 亁 乹 干 幹 榦 。
-乾了這碗。
-先乾為敬。
+動物才會幹的。
+幹點啥。
+準備幹點啥。
+一起幹點啥。
+幹成點事。
+才能幹成點事。
 // ↑ 干 → 乾 亁 乹 干 幹 榦 。
 
 
@@ -51,6 +56,7 @@ reset && npm test nowiki merge_new_general_test_text_to_archived remove_duplicat
 
 
 // ↓ 冲 → 沖 冲 衝 。
+強大的風暴沖毀了堤防。
 // ↑ 冲 → 沖 冲 衝 。
 
 
@@ -87,10 +93,14 @@ reset && npm test nowiki merge_new_general_test_text_to_archived remove_duplicat
 
 
 // ↓ 系 → 系 係 繫 繋 縘 。
+// [繁化姬]
+可以當假咧其實唔係好確定。
+佢係住緊公屋。
 // ↑ 系 → 系 係 繫 繋 縘 。
 
 
 // ↓ 发 → 發 彂 髮 髪 。
+隨著時間愈發香醇。
 // ↑ 发 → 發 彂 髮 髪 。
 
 
@@ -191,6 +201,7 @@ reset && npm test nowiki merge_new_general_test_text_to_archived remove_duplicat
 
 
 // ↓ 制 → 制 製 。
+全日制本科。
 // ↑ 制 → 制 製 。
 
 
@@ -215,6 +226,7 @@ reset && npm test nowiki merge_new_general_test_text_to_archived remove_duplicat
 
 
 // ↓ 后 → 後 后 。
+在 %1 天後到期。
 // ↑ 后 → 後 后 。
 
 
@@ -231,6 +243,7 @@ reset && npm test nowiki merge_new_general_test_text_to_archived remove_duplicat
 
 
 // ↓ 粘 → 粘 黏 。
+黏膜接觸。
 // ↑ 粘 → 粘 黏 。
 
 
@@ -343,6 +356,8 @@ reset && npm test nowiki merge_new_general_test_text_to_archived remove_duplicat
 
 
 // ↓ 并 → 并 幷 並 竝 併 倂 。
+// 並沒有
+就並冇出席。
 // ↑ 并 → 并 幷 並 竝 併 倂 。
 
 
@@ -451,6 +466,7 @@ reset && npm test nowiki merge_new_general_test_text_to_archived remove_duplicat
 
 
 // ↓ 向 → 向 嚮 曏 。
+正向導向。
 // ↑ 向 → 向 嚮 曏 。
 
 
@@ -627,7 +643,24 @@ reset && npm test nowiki merge_new_general_test_text_to_archived remove_duplicat
 
 
 // ↓ 咸 → 鹹 咸 。
-鹹鮮就是鹹的鮮魚。
-鹹魷魚是發酵食品。
 // ↑ 咸 → 鹹 咸 。
 
+
+這次刷新了世界紀錄。
+參見下表。
+宣稱重視承諾。
+準備一個萬無一失的證明。
+取出貓糧。
+家有很多牛。
+很多牛在農場。
+吹牛逼。
+養妻活兒。
+說真格的。
+動真格的。
+沒點用。
+幹啥啥不行。
+組合語言。
+郵遞區號。
+心裡。
+浸泡麵包屑。
+搭便車。
