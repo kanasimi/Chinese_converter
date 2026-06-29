@@ -1345,8 +1345,12 @@ function condition_filter_LTP(single_condition, word_data, options) {
 	//console.trace(options.conversion_pairs.get(KEY_tag_filter).v.get('干'));
 
 	const { tagged_word_list } = options;
-	// assert: word_data === tagged_word_list[options.index_of_tagged_word_list]
-	const tagged_word_list_index_offset = options.index_of_tagged_word_list - word_data.id;
+	// word_data: 所要檢測條件的詞。
+	// assert: word_data === tagged_word_list[options.word_data__index_of_target >= 0 ? options.word_data__index_of_target : options.index_of_tagged_word_list]
+	// tagged_word_list[options.index_of_tagged_word_list]: 所要轉換成的詞。
+	// 一般情況下，如 "~只<ATT>b:/表/"， word_data === tagged_word_list[options.index_of_tagged_word_list]
+	// 但在 "q:只<ATT>n:/[箱盒盖]子?$/+m:+~個<COO>q:只" ，測試 "q:只<ATT>n:/[箱盒盖]子?$/" 的情況下兩者不同。
+	const tagged_word_list_index_offset = (options.word_data__index_of_target >= 0 ? options.word_data__index_of_target : options.index_of_tagged_word_list) - word_data.id;
 
 	if (single_condition.filter_name === word_data.relation) {
 		// 指定關係。
@@ -1454,7 +1458,7 @@ function match_condition(options) {
 		if (index_of_target >= tagged_word_list.length)
 			return;
 		const condition = conditions[index_of_condition];
-		if (match_single_condition.call(this, condition, tagged_word_list[index_of_target], options)) {
+		if (match_single_condition.call(this, condition, tagged_word_list[index_of_target], { ...options, word_data__index_of_target: index_of_target })) {
 			index_of_target++;
 		} else {
 			if (!condition.is_optional)
@@ -1468,7 +1472,7 @@ function match_condition(options) {
 		if (index_of_target < 0)
 			return;
 		const condition = conditions[index_of_condition];
-		if (match_single_condition.call(this, condition, tagged_word_list[index_of_target], options)) {
+		if (match_single_condition.call(this, condition, tagged_word_list[index_of_target], { ...options, word_data__index_of_target: index_of_target })) {
 			index_of_target--;
 		} else {
 			if (!condition.is_optional)

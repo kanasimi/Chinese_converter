@@ -784,7 +784,8 @@ async function test_正確率檢核(assert, setup_test, finish_test, options) {
 				}
 
 				const answer_paragraph = answer_paragraphs[index];
-				const converted_text_without_rule = text_is_TW ? CeL.CN_to_TW(answer_paragraph) : CeL.TW_to_CN(answer_paragraph);
+				const initial_options = { show_debug_messages: true };
+				const converted_text_without_rule = text_is_TW ? CeL.CN_to_TW(answer_paragraph, initial_options) : CeL.TW_to_CN(answer_paragraph, initial_options);
 				//console.trace([converted_text_without_rule, content_paragraph]);
 				if (content_paragraph !== converted_text_without_rule) {
 					continue;

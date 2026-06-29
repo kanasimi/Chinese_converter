@@ -42,12 +42,6 @@ reset && npm test nowiki merge_new_general_test_text_to_archived remove_duplicat
 
 
 // ↓ 干 → 干 亁 乹 干 干 干 。
-动物才会干的。
-干点啥。
-准备干点啥。
-一起干点啥。
-干成点事。
-才能干成点事。
 // ↑ 干 → 干 亁 乹 干 干 干 。
 
 
@@ -56,7 +50,6 @@ reset && npm test nowiki merge_new_general_test_text_to_archived remove_duplicat
 
 
 // ↓ 冲 → 冲 冲 冲 。
-强大的风暴冲毁了堤防。
 // ↑ 冲 → 冲 冲 冲 。
 
 
@@ -93,14 +86,10 @@ reset && npm test nowiki merge_new_general_test_text_to_archived remove_duplicat
 
 
 // ↓ 系 → 系 系 系 繋 縘 。
-// [繁化姬]
-可以当假咧其实唔系好确定。
-佢系住紧公屋。
 // ↑ 系 → 系 系 系 繋 縘 。
 
 
 // ↓ 发 → 发 彂 发 髪 。
-随着时间愈发香醇。
 // ↑ 发 → 发 彂 发 髪 。
 
 
@@ -201,7 +190,6 @@ reset && npm test nowiki merge_new_general_test_text_to_archived remove_duplicat
 
 
 // ↓ 制 → 制 制 。
-全日制本科。
 // ↑ 制 → 制 制 。
 
 
@@ -226,7 +214,6 @@ reset && npm test nowiki merge_new_general_test_text_to_archived remove_duplicat
 
 
 // ↓ 后 → 后 后 。
-在 %1 天后到期。
 // ↑ 后 → 后 后 。
 
 
@@ -356,8 +343,6 @@ reset && npm test nowiki merge_new_general_test_text_to_archived remove_duplicat
 
 
 // ↓ 并 → 并 并 并 竝 并 倂 。
-// 并没有
-就并冇出席。
 // ↑ 并 → 并 并 并 竝 并 倂 。
 
 
@@ -466,7 +451,6 @@ reset && npm test nowiki merge_new_general_test_text_to_archived remove_duplicat
 
 
 // ↓ 向 → 向 向 向 。
-正向导向。
 // ↑ 向 → 向 向 向 。
 
 
@@ -646,21 +630,3 @@ reset && npm test nowiki merge_new_general_test_text_to_archived remove_duplicat
 // ↑ 咸 → 咸 咸 。
 
 
-这次刷新了世界纪录。
-参见下表。
-宣称重视承诺。
-准备一个万无一失的证明。
-取出猫粮。
-家有很多牛。
-很多牛在农场。
-吹牛逼。
-养妻活儿。
-说真格的。
-动真格的。
-没点用。
-干啥啥不行。
-汇编语言。
-邮递区号。
-心里。
-浸方便面包屑。
-搭便车。
