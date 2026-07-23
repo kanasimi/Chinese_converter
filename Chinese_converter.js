@@ -977,7 +977,7 @@ function print_section_report(configuration, options) {
 			const matched_condition_data = word_data[KEY_matched_condition];
 			if (matched_condition_data) {
 				//console.trace(matched_condition_data);
-				matched_conditions.push(matched_condition_data.matched_condition + ' → ' + matched_condition_data.condition_text);
+				matched_conditions.push(matched_condition_data.matched_condition + ' → ' + matched_condition_data.full_condition_text);
 			}
 			if (backward && (index -= backward) < 0) {
 				return text;
