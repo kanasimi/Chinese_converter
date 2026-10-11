@@ -42,6 +42,7 @@ reset && npm test nowiki merge_new_general_test_text_to_archived remove_duplicat
 
 
 // ↓ 干 → 乾 亁 乹 干 幹 榦 。
+只不過是拿了點餅乾和巧克力…
 // ↑ 干 → 乾 亁 乹 干 幹 榦 。
 
 
@@ -214,6 +215,7 @@ reset && npm test nowiki merge_new_general_test_text_to_archived remove_duplicat
 
 
 // ↓ 后 → 後 后 。
+太後知後覺。
 // ↑ 后 → 後 后 。
 
 
@@ -630,3 +632,5 @@ reset && npm test nowiki merge_new_general_test_text_to_archived remove_duplicat
 // ↑ 咸 → 鹹 咸 。
 
 
+第二天哪有動力工作啊。
+那邊的灌木有被踩踏的痕跡。
